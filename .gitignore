@@ -1,0 +1,14 @@
+node_modules/
+*.log
+/tmp/
+/build/
+/books/
+# fastchess match state
+/config.json
+# chessprogramming.org wiki dump, CC BY-SA: local reference only
+/vendor/cpw/
+# worker ssh targets for tools/sprt.sh, and local settings such as ARCHIVE
+/tools/hosts
+/tools/local.env
+# local copies of the CCRL Blitz list, which is not redistributed here
+/docs/ccrl-*.txt

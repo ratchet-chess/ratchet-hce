@@ -1,0 +1,168 @@
+/**
+ * Host wrapper around a WASM build: build/core.wasm (core/, `bun run
+ * build:wasm`) or a release's build/<release>.wasm, which re-exports the core
+ * beside its search. Loading, position setup and UCI move strings.
+ */
+import { readFileSync } from "node:fs";
+import { parseFen } from "./fen.ts";
+
+interface Exports {
+  /** a release's init, which also sets up the core */
+  init?(): void;
+  initCore(): void;
+  clear(): void;
+  put(s: number, p: number): void;
+  setState(side: number, castling: number, ep: number, halfmove: number, fullmove: number): void;
+  playMove(m: number): void;
+  legalMoves(): number;
+  rootMove(i: number): number;
+  perft(depth: number, bulk: number): number;
+  checkedWalk(depth: number): number;
+}
+
+/** The exports a release adds to the core's; build/core.wasm has none of them. */
+interface Search {
+  go(depth: number): number;
+  setHash(mb: number): void;
+  newGame(): void;
+  pvLength(): number;
+  pvMove(i: number): number;
+  nodesSearched(): number;
+  searchScore(): number;
+  searchDepth(): number;
+  evaluate(): number;
+  /** present only in a tuning build */
+  tuneSet?(id: number, value: number): void;
+}
+
+/** Called by the WASM search every 2048 nodes; a non-zero return stops the search. */
+export type Poll = () => number;
+
+/** Called after each finished iteration with its score and the nodes so far; non-zero stops the search. */
+export type OnIteration = (depth: number, score: number, nodes: number) => number;
+
+export const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+export const MATE = 32000;
+
+const FILES = "abcdefgh";
+const PROMO = " pnbrqk";
+
+export function moveToUci(m: number): string {
+  const from = m & 63;
+  const to = (m >>> 6) & 63;
+  const promo = (m >>> 12) & 7;
+  return FILES[from & 7] + ((from >> 3) + 1) + FILES[to & 7] + ((to >> 3) + 1) + (promo ? PROMO[promo] : "");
+}
+
+export class Engine {
+  poll: Poll = () => 0;
+  onIteration: OnIteration = () => 0;
+  private wasm: Exports & Partial<Search>;
+
+  private constructor(wasm: Exports & Partial<Search>) {
+    this.wasm = wasm;
+  }
+
+  /** the search exports, which only a release has */
+  private get search(): Search {
+    if (!this.wasm.go) throw new Error("this build has no search: load a release, not the core");
+    return this.wasm as Search;
+  }
+
+  /** loads build/<name>.wasm: "core", or a release's directory name under engines/ */
+  static async load(name: string): Promise<Engine> {
+    const bytes = readFileSync(new URL(`../build/${name}.wasm`, import.meta.url));
+    let engine: Engine | undefined;
+    const { instance } = await WebAssembly.instantiate(bytes, {
+      env: {
+        abort(_msg: number, _file: number, line: number, col: number) {
+          throw new Error(`${name}.wasm abort at ${line}:${col}`);
+        },
+        poll: () => engine!.poll(),
+        onIteration: (depth: number, score: number, nodes: number) => engine!.onIteration(depth, score, nodes),
+      },
+    });
+    engine = new Engine(instance.exports as unknown as Exports & Partial<Search>);
+    if (engine.wasm.init) engine.wasm.init();
+    else engine.wasm.initCore();
+    engine.setPosition(START_FEN, []);
+    return engine;
+  }
+
+  /** loads `fen` and plays the UCI `moves`; throws on an illegal move */
+  setPosition(fen: string, moves: string[]): void {
+    const f = parseFen(fen);
+    const w = this.wasm;
+    w.clear();
+    for (let s = 0; s < 64; s++) if (f.board[s]) w.put(s, f.board[s]);
+    w.setState(f.side, f.castling, f.ep, f.halfmove, f.fullmove);
+    for (const uci of moves) {
+      const m = this.legalMoves().find((x) => moveToUci(x) === uci);
+      if (m === undefined) throw new Error(`illegal move ${uci}`);
+      w.playMove(m);
+    }
+  }
+
+  legalMoves(): number[] {
+    const n = this.wasm.legalMoves();
+    const out: number[] = [];
+    for (let i = 0; i < n; i++) out.push(this.wasm.rootMove(i));
+    return out;
+  }
+
+  /** best move from iterations up to `maxDepth` plies, or 0 if the position has no legal move */
+  go(maxDepth: number): number {
+    return this.search.go(maxDepth);
+  }
+
+  /** sizes the transposition table in megabytes */
+  setHash(mb: number): void {
+    this.search.setHash(mb);
+  }
+
+  /** empties the transposition table */
+  newGame(): void {
+    this.search.newGame();
+  }
+
+  pv(): number[] {
+    const out: number[] = [];
+    const w = this.search;
+    for (let i = 0, n = w.pvLength(); i < n; i++) out.push(w.pvMove(i));
+    return out;
+  }
+
+  nodes(): number {
+    return this.search.nodesSearched();
+  }
+
+  /** the score of the last search's move, for the side to move */
+  score(): number {
+    return this.search.searchScore();
+  }
+
+  /** the deepest iteration the last search finished */
+  depth(): number {
+    return this.search.searchDepth();
+  }
+
+  evaluate(): number {
+    return this.search.evaluate();
+  }
+
+  /** sets tuning-build constant `id` to `value`; a release build has none */
+  tune(id: number, value: number): void {
+    this.search.tuneSet?.(id, value);
+  }
+
+  /** incremental-state mismatches found walking the current position's tree to `depth` */
+  checkedWalk(depth: number): number {
+    return this.wasm.checkedWalk(depth);
+  }
+
+  perft(fen: string, depth: number, bulk: boolean): number {
+    this.setPosition(fen, []);
+    return this.wasm.perft(depth, bulk ? 1 : 0);
+  }
+}
