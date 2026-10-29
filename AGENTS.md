@@ -27,7 +27,8 @@ rules in § Releases hold.
 
 ## Releases
 
-- **A release has an inventory record before it has code.**
+- **A release has an inventory record before it has code.** The record follows `inventory/TEMPLATE.md`.
+- **A record is reviewed before it is accepted.** A second agent checks a sample of its rows, and every quirk, against the source.
 - **A release owns everything above the board:** search, eval, move ordering, its tables and its time use.
 - **Releases share only the core.** Copy code between releases rather than share it.
 - **A change to the core keeps every release's node signature,** or its commit names each one that changes and why.
@@ -56,6 +57,7 @@ rules in § Releases hold.
 
 ## Running tools
 
+- **Build and run an original only inside the chess-bench image,** because its code is an untrusted download.
 - **Never edit a tool script while a run of it is live.** Stage the change beside it, and swap it in after the run.
 - **Stop a run by its PID or its process group,** never by a name pattern.
 - **Wait for a run to finish,** rather than polling it in a loop.
