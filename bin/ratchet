@@ -1,0 +1,12 @@
+#!/bin/sh
+# UCI launcher. Usage: ratchet [node|bun|deno] --release <name> [--nodestime N]   (default bun)
+# Arguments after the runtime go to the UCI front end (host/uci/main.ts).
+dir=$(dirname "$(readlink -f "$0")")/..
+runtime=${1:-bun}
+[ $# -gt 0 ] && shift
+case "$runtime" in
+  node) exec node "$dir/host/uci/main.ts" "$@" ;;
+  bun) exec bun "$dir/host/uci/main.ts" "$@" ;;
+  deno) exec deno run -A "$dir/host/uci/main.ts" "$@" ;;
+  *) echo "unknown runtime: $runtime" >&2; exit 2 ;;
+esac
