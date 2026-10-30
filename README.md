@@ -39,8 +39,7 @@ is a release here.
 - `test/`: the gates: perft, incremental state, and each release's own move generator; and the 0x88 board the perft gate checks the core against.
 - `bench/`: the perft benchmark.
 - `tools/`: fidelity checks, matches, ratings, the conversion suite, and readers of match PGNs and time logs.
-- `flake.nix` and `nix/`: the containers. The runner plays matches on the workers; the local runner plays them on the host and builds the anchor tree (`nix/anchors.sh`); the workspace is for work on originals. `tools/ws.ts` builds, loads and runs them.
-- `docker/chess-bench/`: the image the workers play in, with every anchor build, until the runner reproduces its references and anchor checks.
+- `flake.nix` and `nix/`: the containers. The runner plays matches on the workers; the local runner plays them on the host and builds the anchor tree (`nix/anchors.sh`); the workspace is for work on originals. `tools/ws.ts` builds, loads and runs them. `nix/anchor-tree` and `nix/syzygy` pin the anchor tree and the Syzygy tables in the Nix store.
 - `vendor/fastchess/`: the match runner, as a submodule.
 
 ## Build and test
@@ -80,7 +79,7 @@ The match tools play a UCI engine from a snapshot of each side, with fastchess:
 - `tools/mate-suite.sh`: the conversion suite, KQK and KRK starts to mate;
 - `tools/depth.ts` and `tools/time-rules.ts`: the mean depth of a match's PGNs, and which time rule ended each move.
 
-Each tool's header comment documents its options. `docker/chess-bench/Dockerfile` builds every anchor, and `nix/anchors.sh` ports its recipes to the local runner.
+Each tool's header comment documents its options. `nix/anchors.sh` builds every anchor, and `tools/anchors.ts` lists them with their CCRL ratings.
 
 ## License
 

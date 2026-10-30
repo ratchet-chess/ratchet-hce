@@ -88,7 +88,7 @@ The steps run in this order. Each step's output is the next step's input.
 
 ## Running tools
 
-- **Handle an original only inside a container,** because its code is an untrusted download. Build, run and disassemble it through `tools/ws.ts`, or in the chess-bench image until it retires.
+- **Handle an original only inside a container,** because its code is an untrusted download. Build, run and disassemble it through `tools/ws.ts`.
 - **Never run or open an original's binary on the host.** The anchor tree holds it only for containers to mount. On the host, open only an original's source text.
 - **A download enters through `tools/ws.ts fetch`,** pinned by its sha256. Containers have no network, except a fetch phase that runs no downloaded code.
 - **Never edit a tool script while a run of it is live.** Stage the change beside it, and swap it in after the run.
