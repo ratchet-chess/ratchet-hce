@@ -84,7 +84,7 @@ The steps run in this order. Each step's output is the next step's input.
 - **A tested tree is the committed tree.** Commit the tree as tested, not a rebuild of it.
 - **Build experiments on scratch branches.** Delete a branch once its result is committed or saved as a patch.
 - **Rebuild the wasm after switching branches,** before reading a node signature or a fidelity result.
-- **Match state, instrumented copies and other run state go in the repo's gitignored `tmp/`.** Research notes, scripts and patches go in the folder that `SCRATCH` in `tools/local.env` names, outside the repo.
+- **Match state, instrumented copies and other run state go in the repo's gitignored `tmp/`.** Research notes, scripts and patches go off-tree, in the store that `ARTIFACTS` in `tools/local.env` names. Its README has the layout, and records cite it as `<artifacts>`.
 
 ## Running tools
 
