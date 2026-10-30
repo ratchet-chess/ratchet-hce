@@ -3,12 +3,10 @@
  * one at a time. A search blocks this thread, so stop requests arrive through the
  * shared stop flag rather than as messages.
  */
-import { appendFileSync } from "node:fs";
-import { basename, join } from "node:path";
 import { parentPort, workerData } from "node:worker_threads";
 import { parseFen } from "../fen.ts";
 import { Engine, MATE, START_FEN, moveToUci } from "../wasm.ts";
-import { IterationClock, MAX_DEPTH, budget, type GoLimits } from "./time.ts";
+import type { GoLimits } from "./limits.ts";
 
 export type WorkerCommand =
   | { cmd: "position"; fen: string; moves: string[] }
@@ -20,6 +18,8 @@ export type WorkerCommand =
 const port = parentPort!;
 const stop: Int32Array = workerData.stop;
 const engine = await Engine.load(workerData.release);
+if (!engine.clocked) throw new Error(`${workerData.release} does not time itself, so it cannot play`);
+if (workerData.level) engine.setGameLevel(workerData.level);
 let sideToMove = 0;
 
 /**
@@ -35,15 +35,6 @@ const nodesTime: number = workerData.nodesTime;
 /** the engine's own remaining time under --nodestime, from the game's first go */
 let ownMs: number | undefined;
 
-/**
- * The time log: with RATCHET_TIMELOG set to a file, each search appends one JSON
- * line naming the rule that ended it, for tools/time-rules.ts. A line names the
- * engine by its build directory, so two sides of a match share one file. The
- * environment does not reach a worker's container, so it logs on the main box only.
- */
-const timeLog = process.env.RATCHET_TIMELOG;
-const engineName = basename(join(import.meta.dirname, "../.."));
-
 function scoreText(s: number): string {
   if (s > MATE - 256) return `mate ${Math.ceil((MATE - s) / 2)}`;
   if (s < -MATE + 256) return `mate -${Math.ceil((MATE + s) / 2)}`;
@@ -58,39 +49,36 @@ function ownClock(limits: GoLimits): GoLimits {
   return { ...limits, [key]: ownMs };
 }
 
+/**
+ * A search: the host passes the side to move's limits to the release, which
+ * times itself, and supplies its clock: wall time or, under --nodestime, nodes.
+ * The host's stop reaches the release as waiting input. A clock already run
+ * out passes as 0. A node limit is refused, since no original takes one. In an
+ * infinite search, the move waits for the GUI's stop, as UCI requires.
+ */
 function go(limits: GoLimits): void {
+  if (limits.nodes !== undefined) throw new Error("a release takes no node limit");
   if (nodesTime) limits = ownClock(limits);
-  const { hardMs } = budget(limits, sideToMove);
-  // under --nodestime the hard limit is a node count, so the clock reads nodes
-  const maxNodes = Math.min(limits.nodes ?? Infinity, nodesTime ? hardMs * nodesTime : Infinity);
-  const clock = new IterationClock(hardMs, maxNodes);
+  const given = (ms: number | undefined) => (ms === undefined ? undefined : Math.max(0, ms));
   const t0 = performance.now();
-  const elapsed = (nodes: number) => (nodesTime ? nodes / nodesTime : performance.now() - t0);
-  // the rule that ended the search; "depth" when the search ran to its depth
-  let rule = "depth";
-  engine.poll = () => {
-    if (Atomics.load(stop, 0) !== 0) rule = "stop";
-    else if (elapsed(engine.nodes()) >= hardMs) rule = "hard";
-    else if (engine.nodes() >= maxNodes) rule = "nodes";
-    else return 0;
-    return 1;
-  };
+  engine.clock = nodesTime ? (nodes) => nodes / nodesTime : () => performance.now();
+  engine.poll = () => Atomics.load(stop, 0);
   engine.onIteration = (depth, score, nodes) => {
     const ms = performance.now() - t0;
     const nps = Math.round((nodes * 1000) / Math.max(ms, 1));
     const pv = engine.pv().map(moveToUci).join(" ");
     port.postMessage(`info depth ${depth} score ${scoreText(score)} nodes ${nodes} nps ${nps} time ${Math.round(ms)} pv ${pv}`);
-    if (Atomics.load(stop, 0) !== 0) rule = "stop";
-    else if (clock.stopAfter(nodes, elapsed(nodes))) rule = clock.reason;
-    else return 0;
-    return 1;
+    return 0;
   };
-  const best = engine.go(Math.min(limits.depth ?? MAX_DEPTH, MAX_DEPTH));
-  if (timeLog) {
-    const left = sideToMove === 0 ? limits.wtime : limits.btime;
-    const line = { engine: engineName, rule, ms: Math.round(elapsed(engine.nodes())), hardMs: Math.round(hardMs), left, depth: engine.depth(), nodes: engine.nodes() };
-    appendFileSync(timeLog, JSON.stringify(line) + "\n");
-  }
+  const white = sideToMove === 0;
+  const best = engine.goClock({
+    timeMs: limits.infinite ? undefined : given(white ? limits.wtime : limits.btime),
+    incMs: white ? limits.winc : limits.binc,
+    movesToGo: limits.movestogo,
+    moveTimeMs: limits.infinite ? undefined : given(limits.movetime),
+    depth: limits.depth,
+  });
+  if (limits.infinite) Atomics.wait(stop, 0, 0);
   if (nodesTime && ownMs !== undefined) {
     const inc = (sideToMove === 0 ? limits.winc : limits.binc) ?? 0;
     ownMs = Math.max(1, ownMs - engine.nodes() / nodesTime + inc);

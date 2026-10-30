@@ -2,9 +2,13 @@
  * UCI front end. Reads commands from stdin and forwards engine work to the search
  * worker, so isready and stop are answered while a search runs.
  *
- *   bun host/uci/main.ts --release <name> [--nodestime N]   (or node, deno run -A)
+ *   bun host/uci/main.ts --release <name> [--nodestime N] [--level N]   (or node, deno run -A)
  *
  * --release names the release to play: build/<name>.wasm, from engines/<name>/.
+ *
+ * --level N sets the level of every game, for a release whose original has
+ * levels and no clock, such as Sargon (1978): one level per match, as its
+ * operator chose one, so its time controls are ignored.
  *
  * --nodestime N times the engine in nodes, N per millisecond of its own clock
  * (worker.ts). It is for test matches, so it is a launcher argument, not a UCI
@@ -14,7 +18,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { createInterface } from "node:readline";
 import { Worker } from "node:worker_threads";
 import { START_FEN } from "../wasm.ts";
-import type { GoLimits } from "./time.ts";
+import type { GoLimits } from "./limits.ts";
 import type { WorkerCommand } from "./worker.ts";
 
 const args = process.argv.slice(2);
@@ -22,8 +26,10 @@ const release = args.includes("--release") ? args[args.indexOf("--release") + 1]
 if (!release) throw new Error("--release needs a release name");
 const nodesTime = args.includes("--nodestime") ? Number(args[args.indexOf("--nodestime") + 1]) : 0;
 if (!(nodesTime >= 0)) throw new Error("--nodestime needs nodes per millisecond");
+const level = args.includes("--level") ? Number(args[args.indexOf("--level") + 1]) : 0;
+if (!Number.isInteger(level)) throw new Error("--level needs a whole number");
 const stop = new Int32Array(new SharedArrayBuffer(4));
-const worker = new Worker(new URL("./worker.ts", import.meta.url), { workerData: { stop, nodesTime, release } });
+const worker = new Worker(new URL("./worker.ts", import.meta.url), { workerData: { stop, nodesTime, release, level } });
 let markReady: () => void;
 const ready = new Promise<void>((r) => (markReady = r));
 
@@ -76,6 +82,7 @@ function parseGo(tokens: string[]): GoLimits {
 
 function quit(): never {
   Atomics.store(stop, 0, 1);
+  Atomics.notify(stop, 0);
   void worker.terminate();
   process.exit(0);
 }
@@ -117,6 +124,7 @@ for await (const raw of rl) {
       break;
     case "stop":
       Atomics.store(stop, 0, 1);
+      Atomics.notify(stop, 0);
       break;
     case "quit":
       quit();

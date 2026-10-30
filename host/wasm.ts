@@ -44,16 +44,29 @@ interface Game {
   gameNextMove(): void;
 }
 
+/**
+ * A release that times itself, as its original did, from the host's limits and
+ * clock; optional. A limit not given is -1.
+ */
+interface Clocked {
+  goClock(timeMs: number, incMs: number, movesToGo: number, moveTimeMs: number, depth: number): number;
+  /** the level of every later game, for a release whose original has levels and no clock */
+  setGameLevel?(level: number): void;
+}
+
 /** a release's leaf count of its own move generator, when its board is not the core's; optional */
 interface ReleasePerft {
   perftRelease(depth: number): number;
 }
 
-/** Called by the WASM search every 2048 nodes; a non-zero return stops the search. */
+/** Called by a release where its original read its input; non-zero means input is waiting, so the search stops. */
 export type Poll = () => number;
 
-/** Called after each finished iteration with its score and the nodes so far; non-zero stops the search. */
+/** Called after each finished iteration with its score and the nodes so far; a report only. */
 export type OnIteration = (depth: number, score: number, nodes: number) => number;
+
+/** The clock a clocked release reads, in milliseconds; `nodes` is its count in this search. */
+export type Clock = (nodes: number) => number;
 
 export const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -72,9 +85,10 @@ export function moveToUci(m: number): string {
 export class Engine {
   poll: Poll = () => 0;
   onIteration: OnIteration = () => 0;
-  private wasm: Exports & Partial<Search> & Partial<Game> & Partial<ReleasePerft>;
+  clock: Clock = () => performance.now();
+  private wasm: Exports & Partial<Search> & Partial<Game> & Partial<ReleasePerft> & Partial<Clocked>;
 
-  private constructor(wasm: Exports & Partial<Search> & Partial<Game> & Partial<ReleasePerft>) {
+  private constructor(wasm: Exports & Partial<Search> & Partial<Game> & Partial<ReleasePerft> & Partial<Clocked>) {
     this.wasm = wasm;
   }
 
@@ -95,9 +109,10 @@ export class Engine {
         },
         poll: () => engine!.poll(),
         onIteration: (depth: number, score: number, nodes: number) => engine!.onIteration(depth, score, nodes),
+        clock: (nodes: number) => engine!.clock(nodes),
       },
     });
-    engine = new Engine(instance.exports as unknown as Exports & Partial<Search> & Partial<Game> & Partial<ReleasePerft>);
+    engine = new Engine(instance.exports as unknown as Exports & Partial<Search> & Partial<Game> & Partial<ReleasePerft> & Partial<Clocked>);
     if (engine.wasm.init) engine.wasm.init();
     else engine.wasm.initCore();
     engine.setPosition(START_FEN, []);
@@ -128,6 +143,26 @@ export class Engine {
   /** best move from iterations up to `maxDepth` plies, or 0 if the position has no legal move */
   go(maxDepth: number): number {
     return this.search.go(maxDepth);
+  }
+
+  /** whether the release times itself: goClock, not go */
+  get clocked(): boolean {
+    return this.wasm.goClock !== undefined;
+  }
+
+  /**
+   * One move of a game, timed by the release from `limits` and `clock`: the side
+   * to move's time and increment, moves to go, a fixed time, or a depth.
+   */
+  goClock(limits: { timeMs?: number; incMs?: number; movesToGo?: number; moveTimeMs?: number; depth?: number }): number {
+    if (!this.wasm.goClock) throw new Error("this release does not time itself");
+    return this.wasm.goClock(limits.timeMs ?? -1, limits.incMs ?? -1, limits.movesToGo ?? -1, limits.moveTimeMs ?? -1, limits.depth ?? -1);
+  }
+
+  /** sets the level of every later game; throws if the release has no levels */
+  setGameLevel(level: number): void {
+    if (!this.wasm.setGameLevel) throw new Error("this release has no game level");
+    this.wasm.setGameLevel(level);
   }
 
   /** sizes the transposition table in megabytes */

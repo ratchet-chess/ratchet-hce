@@ -1,5 +1,5 @@
 #!/bin/sh
-# UCI launcher. Usage: ratchet [node|bun|deno] --release <name> [--nodestime N]   (default bun)
+# UCI launcher. Usage: ratchet [node|bun|deno] --release <name> [--nodestime N] [--level N]   (default bun)
 # Arguments after the runtime go to the UCI front end (host/uci/main.ts).
 dir=$(dirname "$(readlink -f "$0")")/..
 runtime=${1:-bun}
