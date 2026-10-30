@@ -18,23 +18,27 @@ is a release here.
   - what each mechanism depends on.
 - **A release owns everything above the board.** Its search, eval and time use are its own, tuned
   as its authors tuned them.
-- **Releases share only the core:** the board, move generation and hashing. These hold no chess
-  knowledge, so a release on Ratchet's bitboards plays its original's chess. Only the order in which
-  moves are generated differs, and it can break ties between equal moves another way.
-- **A release is tested for fidelity:** how closely it plays like its original.
+- **A release keeps its original's board when its play depends on it.** Move order breaks ties
+  between equal moves, and some programs read their own list orders and memory layout. Sargon
+  (1978) keeps its 10x12 board and its byte tables.
+- **The core is the shared board:** Ratchet's bitboards, move generation and hashing. It referees
+  every game for the host, checks each release's own move generator by perft, and is the board of
+  each release built on it.
+- **A release is tested for fidelity:** how closely it plays like its original. The original runs in
+  the chess-bench image, and the release must play its moves.
 
 `AGENTS.md` has the working rules and terms.
 
 ## Layout
 
 - `core/`: the board, in AssemblyScript: bitboards, magic sliders, legal move generation, Zobrist hashing and perft. It compiles to `build/core.wasm`.
-- `engines/`: one directory per release, each compiled with the core to `build/<release>.wasm`.
+- `engines/`: one directory per release, each compiled with the core to `build/<release>.wasm`, with its fidelity reference.
 - `inventory/`: one record per release.
 - `host/`: the TypeScript host: the WASM wrapper, FEN, and the UCI front end with its time limits.
 - `bin/`: the UCI launcher.
-- `test/`: the gates, and the 0x88 board the perft gate checks the core against.
+- `test/`: the gates: perft, incremental state, and each release's own move generator; and the 0x88 board the perft gate checks the core against.
 - `bench/`: the perft benchmark.
-- `tools/`: matches, ratings, the conversion suite, and readers of match PGNs and time logs.
+- `tools/`: fidelity checks, matches, ratings, the conversion suite, and readers of match PGNs and time logs.
 - `docker/chess-bench/`: the image the workers play in, with every anchor build.
 - `vendor/fastchess/`: the match runner, as a submodule.
 
@@ -49,14 +53,22 @@ bun install                  # dev dependencies
 git submodule update --init  # fetch fastchess
 make -C vendor/fastchess     # build it
 tools/fetch-book.sh          # opening books for matches, into books/
-bun run build:wasm           # compile core/ to build/core.wasm; tests and benches need it
+bun run build:wasm           # compile the core and every release into build/; tests and benches need it
 bun run typecheck
-bun run test                 # the perft and incremental-state gates (`bun test` is Bun's own test runner)
+bun run test                 # the perft, incremental-state and release-generator gates (`bun test` is Bun's own test runner)
 bun test/perft.ts --full     # every perft depth in the suite
 bun run bench:all            # perft throughput under Bun, Node and Deno
 ```
 
 `bin/ratchet` is the UCI engine for a GUI or a match runner: `bin/ratchet [bun|node|deno] --release <name>`.
+
+## Fidelity
+
+- `tools/positions.ts`: a fixed position set, drawn from the opening books;
+- `tools/reference.ts`: runs an original over a position set inside the chess-bench image, and records each depth's move and node count;
+- `tools/fidelity.ts`: checks a release against that reference, and against published games its original played.
+
+Each release keeps its reference in `engines/<release>/fidelity/`.
 
 ## Matches and ratings
 

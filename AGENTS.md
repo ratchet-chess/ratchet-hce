@@ -30,9 +30,12 @@ rules in § Releases hold.
 - **A release has an inventory record before it has code.** The record follows `inventory/TEMPLATE.md`.
 - **A record is reviewed before it is accepted.** A second agent checks a sample of its rows, and every quirk, against the source.
 - **A release owns everything above the board:** search, eval, move ordering, its tables and its time use.
+- **A release owns its board too when its fidelity depends on the original's board.** Generation order, list orders and memory layout all count.
+- **A release's own move generator matches the core's perft,** filtered by the release's rules, in `test/release-perft.ts`.
 - **Releases share only the core.** Copy code between releases rather than share it.
-- **A change to the core keeps every release's node signature,** or its commit names each one that changes and why.
+- **A change to the core keeps the node signature of every release built on it.** Otherwise its commit names each release that changes, and why.
 - **Fidelity is judged against the original,** by a standard set after the first releases.
+- **An original's reference is made in the chess-bench image,** and kept in `engines/<release>/fidelity/`.
 - **Label every reading of an ambiguous source,** and every guard that is Ratchet's own.
 
 ## Engineering rules

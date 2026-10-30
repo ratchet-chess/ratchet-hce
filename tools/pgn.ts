@@ -61,8 +61,18 @@ function apply(board: Uint8Array, uci: string, side: number): void {
 
 /** every game in the PGN file at `path` */
 export function readGames(path: string, engine: Replayer): Game[] {
+  return parseGames(splitGames(readFileSync(path, "utf8")), engine);
+}
+
+/** the text of each game in a PGN file's contents, tags included */
+export function splitGames(pgn: string): string[] {
+  return pgn.split(/\n\s*\n(?=\[)/);
+}
+
+/** each game whose text is in `texts`, as splitGames gives them */
+export function parseGames(texts: string[], engine: Replayer): Game[] {
   const out: Game[] = [];
-  for (const text of readFileSync(path, "utf8").split(/\n\s*\n(?=\[)/)) {
+  for (const text of texts) {
     const tag = (t: string) => new RegExp(`^\\[${t} "([^"]*)"\\]`, "m").exec(text)?.[1];
     const fen = tag("FEN") ?? START_FEN;
     const body = text.replace(/^\[.*\]\s*$/gm, "");

@@ -35,6 +35,20 @@ interface Search {
   tuneSet?(id: number, value: number): void;
 }
 
+/** A game played inside a release that keeps its own game state, as its original did; optional. */
+interface Game {
+  gameStart(level: number, black: number): void;
+  gamePlayer(from: number, to: number): number;
+  /** from | to << 6, or -1 for no move */
+  gameMove(): number;
+  gameNextMove(): void;
+}
+
+/** a release's leaf count of its own move generator, when its board is not the core's; optional */
+interface ReleasePerft {
+  perftRelease(depth: number): number;
+}
+
 /** Called by the WASM search every 2048 nodes; a non-zero return stops the search. */
 export type Poll = () => number;
 
@@ -58,9 +72,9 @@ export function moveToUci(m: number): string {
 export class Engine {
   poll: Poll = () => 0;
   onIteration: OnIteration = () => 0;
-  private wasm: Exports & Partial<Search>;
+  private wasm: Exports & Partial<Search> & Partial<Game> & Partial<ReleasePerft>;
 
-  private constructor(wasm: Exports & Partial<Search>) {
+  private constructor(wasm: Exports & Partial<Search> & Partial<Game> & Partial<ReleasePerft>) {
     this.wasm = wasm;
   }
 
@@ -83,7 +97,7 @@ export class Engine {
         onIteration: (depth: number, score: number, nodes: number) => engine!.onIteration(depth, score, nodes),
       },
     });
-    engine = new Engine(instance.exports as unknown as Exports & Partial<Search>);
+    engine = new Engine(instance.exports as unknown as Exports & Partial<Search> & Partial<Game> & Partial<ReleasePerft>);
     if (engine.wasm.init) engine.wasm.init();
     else engine.wasm.initCore();
     engine.setPosition(START_FEN, []);
@@ -164,5 +178,40 @@ export class Engine {
   perft(fen: string, depth: number, bulk: boolean): number {
     this.setPosition(fen, []);
     return this.wasm.perft(depth, bulk ? 1 : 0);
+  }
+
+  /** the leaf count of the release's own move generator from `fen`; throws if the release uses the core's */
+  perftRelease(fen: string, depth: number): number {
+    if (!this.wasm.perftRelease) throw new Error("this build has no generator of its own");
+    this.setPosition(fen, []);
+    return this.wasm.perftRelease(depth);
+  }
+
+  /** the game exports, which only a release that keeps its own game state has */
+  private get game(): Game {
+    if (!this.wasm.gameStart) throw new Error("this build plays no game of its own");
+    return this.wasm as Game;
+  }
+
+  /** a new game inside the release from the start position, the release playing black or white at `level` */
+  gameStart(level: number, black: boolean): void {
+    this.game.gameStart(level, black ? 1 : 0);
+  }
+
+  /** the opponent's move in UCI notation; false if the release finds it illegal */
+  gamePlayer(uci: string): boolean {
+    const sq = (s: string) => s.charCodeAt(0) - 97 + 8 * (s.charCodeAt(1) - 49);
+    return this.game.gamePlayer(sq(uci), sq(uci.slice(2, 4))) !== 0;
+  }
+
+  /** the release's move, made on its own board, in UCI notation without a promotion letter; "" for none */
+  gameMove(): string {
+    const m = this.game.gameMove();
+    return m < 0 ? "" : moveToUci(m & 4095);
+  }
+
+  /** the release's step after both sides have moved */
+  gameNextMove(): void {
+    this.game.gameNextMove();
   }
 }

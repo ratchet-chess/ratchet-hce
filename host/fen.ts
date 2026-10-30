@@ -1,5 +1,5 @@
 /**
- * FEN parsing into a representation-neutral record, shared by every board
+ * FEN reading and writing, through a representation-neutral record, shared by every board
  * representation so they all read positions the same way.
  *
  * Square index is rank * 8 + file, a1 = 0. Piece code is (color << 3) | type.
@@ -63,4 +63,32 @@ export function parseFen(fen: string): ParsedFen {
   }
   const epSq = ep && ep !== "-" ? (ep.charCodeAt(1) - 49) * 8 + (ep.charCodeAt(0) - 97) : -1;
   return { board, side: side === "b" ? BLACK : WHITE, castling: rights, ep: epSq, halfmove: Number(halfmove ?? 0) || 0, fullmove: Number(fullmove ?? 1) || 1 };
+}
+
+/** the FEN of `f` */
+export function formatFen(f: ParsedFen): string {
+  const ranks: string[] = [];
+  for (let rank = 7; rank >= 0; rank--) {
+    let row = "";
+    let empty = 0;
+    for (let file = 0; file < 8; file++) {
+      const p = f.board[rank * 8 + file];
+      if (!p) {
+        empty++;
+        continue;
+      }
+      if (empty) row += empty;
+      empty = 0;
+      const ch = FEN_PIECES[(p & 7) - 1];
+      row += p >> 3 ? ch : ch.toUpperCase();
+    }
+    ranks.push(empty ? row + empty : row);
+  }
+  let rights = "";
+  if (f.castling & CASTLE_WK) rights += "K";
+  if (f.castling & CASTLE_WQ) rights += "Q";
+  if (f.castling & CASTLE_BK) rights += "k";
+  if (f.castling & CASTLE_BQ) rights += "q";
+  const ep = f.ep < 0 ? "-" : "abcdefgh"[f.ep & 7] + ((f.ep >> 3) + 1);
+  return `${ranks.join("/")} ${f.side ? "b" : "w"} ${rights || "-"} ${ep} ${f.halfmove} ${f.fullmove}`;
 }
