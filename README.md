@@ -25,7 +25,7 @@ is a release here.
   every game for the host, checks each release's own move generator by perft, and is the board of
   each release built on it.
 - **A release is tested for fidelity:** how closely it plays like its original. The original runs in
-  the chess-bench image, and the release must play its moves.
+  a runner container (`tools/ws.ts`), and the release must play its moves.
 
 `AGENTS.md` has the working rules and terms.
 
@@ -66,7 +66,7 @@ bun run bench:all            # perft throughput under Bun, Node and Deno
 ## Fidelity
 
 - `tools/positions.ts`: a fixed position set, drawn from the opening books;
-- `tools/reference.ts`: runs an original over a position set inside the chess-bench image, and records each depth's move and node count;
+- `tools/reference.ts`: runs an original over a position set inside a runner container, and records each depth's move and node count;
 - `tools/fidelity.ts`: checks a release against that reference, and against published games its original played.
 
 Each release keeps its reference in `engines/<release>/fidelity/`.
