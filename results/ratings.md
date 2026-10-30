@@ -14,3 +14,9 @@ key, and a run under another protocol adds its own.
 
 | player | rating | ± | games | score | anchors | protocol | commit | date |
 |---|---|---|---|---|---|---|---|---|
+| sargon-1978@1 | 582 | 124 | 100 | 9.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
+| sargon-1978@2 | 785 | 91 | 100 | 21.5% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
+| sargon-1978@3 | 860 | 85 | 100 | 28.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
+| sargon-1978@4 | 981 | 80 | 100 | 40.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
+| sargon-1978@5 | 1168 | 81 | 100 | 59.5% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
+| sargon-1978@6 | 1212 | 82 | 100 | 64.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
