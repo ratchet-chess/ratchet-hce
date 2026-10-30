@@ -66,8 +66,8 @@ bun run bench:all            # perft throughput under Bun, Node and Deno
 ## Fidelity
 
 - `tools/positions.ts`: a fixed position set, drawn from the opening books;
-- `tools/reference.ts`: runs an original over a position set inside a runner container, and records each depth's move and node count;
-- `tools/fidelity.ts`: checks a release against that reference, and against published games its original played.
+- `tools/reference.ts`: runs an original over a position set inside a runner container, and records each depth's move and node count, and the search's time;
+- `tools/fidelity.ts`: checks a release against that reference, and against published games its original played. Over a timed reference it also compares the two speeds, for `results/speed.md`.
 
 Each release keeps its reference in `engines/<release>/fidelity/`.
 
