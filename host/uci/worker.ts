@@ -32,6 +32,16 @@ let sideToMove = 0;
  * runs down slower, never flags.
  */
 const nodesTime: number = workerData.nodesTime;
+
+/**
+ * Ratchet's guard, for a release with levels in place of a clock: its move waits
+ * until this long after the go. Such a release can reply within a millisecond,
+ * and an anchor that hands each go to a search thread can miss a go that comes
+ * before the thread waits again (Stash 9, MissingPawn), and lose on time. The
+ * wait costs the release nothing, since it ignores its clock.
+ */
+const MIN_REPLY_MS = 100;
+const pause = new Int32Array(new SharedArrayBuffer(4));
 /** the engine's own remaining time under --nodestime, from the game's first go */
 let ownMs: number | undefined;
 
@@ -82,6 +92,10 @@ function go(limits: GoLimits): void {
   if (nodesTime && ownMs !== undefined) {
     const inc = (sideToMove === 0 ? limits.winc : limits.binc) ?? 0;
     ownMs = Math.max(1, ownMs - engine.nodes() / nodesTime + inc);
+  }
+  if (engine.leveled) {
+    const wait = MIN_REPLY_MS - (performance.now() - t0);
+    if (wait > 0) Atomics.wait(pause, 0, 0, wait);
   }
   port.postMessage(`bestmove ${best ? moveToUci(best) : "0000"}`);
 }

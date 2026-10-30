@@ -34,6 +34,7 @@ is a release here.
 - `core/`: the board, in AssemblyScript: bitboards, magic sliders, legal move generation, Zobrist hashing and perft. It compiles to `build/core.wasm`.
 - `engines/`: one directory per release, each compiled with the core to `build/<release>.wasm`, with its fidelity reference.
 - `inventory/`: one record per release.
+- `results/`: measured results that change as protocols change, such as ratings, anchor checks and timings; the tools write their rows.
 - `host/`: the TypeScript host: the WASM wrapper, FEN, and the UCI front end, which passes each `go`'s limits and a clock to the release.
 - `bin/`: the UCI launcher.
 - `test/`: the gates: perft, incremental state, and each release's own move generator; and the 0x88 board the perft gate checks the core against.

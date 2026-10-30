@@ -76,7 +76,7 @@ The steps run in this order. Each step's output is the next step's input.
 - **Keep hot paths allocation-free.** Use typed arrays, packed moves, and preallocated per-ply buffers. Never use BigInt.
 - **Keep hot functions monomorphic.** Each release owns its recursion. The host calls it once per search, never once per node.
 - **Use erasable TypeScript only.** No `enum`, `namespace` or parameter properties, because Node runs the source through type stripping.
-- **Record results in commit messages, not in docs.** Docs hold decisions and invariants. Measured numbers go stale.
+- **Measured results go in `results/`, written by the tools.** Each row names its protocol, so a protocol change shows which rows are old. Commit messages and ticket comments point at `results/` and contain no such numbers. Docs hold decisions and invariants.
 
 ## History and scratch
 

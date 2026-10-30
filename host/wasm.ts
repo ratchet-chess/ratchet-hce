@@ -159,6 +159,11 @@ export class Engine {
     return this.wasm.goClock(limits.timeMs ?? -1, limits.incMs ?? -1, limits.movesToGo ?? -1, limits.moveTimeMs ?? -1, limits.depth ?? -1);
   }
 
+  /** whether the release has game levels in place of a clock */
+  get leveled(): boolean {
+    return this.wasm.setGameLevel !== undefined;
+  }
+
   /** sets the level of every later game; throws if the release has no levels */
   setGameLevel(level: number): void {
     if (!this.wasm.setGameLevel) throw new Error("this release has no game level");
