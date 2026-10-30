@@ -14,6 +14,7 @@ key, and a run under another protocol adds its own.
 
 | player | rating | ± | games | score | anchors | protocol | commit | date |
 |---|---|---|---|---|---|---|---|---|
+| phalanx-xii | 2260 | 93 | 100 | 77.5% | rustic-alpha1, stash-11.0.1, stash-13.0.1, stash-15.3, crucible-1.0.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | eb20240 | 2026-10-30 |
 | sargon-1978@1 | 582 | 124 | 100 | 9.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
 | sargon-1978@2 | 785 | 91 | 100 | 21.5% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
 | sargon-1978@3 | 860 | 85 | 100 | 28.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
