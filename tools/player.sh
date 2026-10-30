@@ -1,0 +1,49 @@
+#!/bin/sh
+# A match player: a release of one commit, at a level if its original has levels.
+#
+#   tools/player.sh spec <player>
+#   tools/player.sh launcher <snapshot-dir> <release> [level] [nodestime]
+#
+# A player is [ref:]release[@level]: ref is a git ref or "worktree" (default
+# HEAD), release a directory under engines/, level the --level of a release whose
+# original has levels and no clock, such as sargon-1978@3.
+#
+# spec prints "ref release level", with "-" for no level.
+#
+# launcher writes a wrapper in the snapshot that starts bin/ratchet with the
+# release and its arguments, and prints its path. The match tools start an
+# engine through it, because fastchess's args= does not survive ssh's word
+# splitting. The wrapper takes the runtime as its one argument. It is written to
+# a temporary name and renamed, since parallel runs share snapshots.
+set -eu
+
+case "${1:-}" in
+  spec)
+    p=$2
+    case "$p" in *:*) ref=${p%%:*} rest=${p#*:} ;; *) ref=HEAD rest=$p ;; esac
+    release=${rest%%@*}
+    level=-
+    case "$rest" in *@*) level=${rest#*@} ;; esac
+    [ -n "$release" ] || { echo "no release in player $p" >&2; exit 2; }
+    echo "$ref $release $level"
+    ;;
+  launcher)
+    dir=$2 release=$3 level=${4:--} nodestime=${5:-}
+    [ -d "$dir/engines/$release" ] || { echo "no release $release in $dir" >&2; exit 2; }
+    name="ratchet-$release"
+    flags="--release $release"
+    if [ "$level" != - ]; then name="$name-l$level" flags="$flags --level $level"; fi
+    if [ -n "$nodestime" ]; then name="$name-nt$nodestime" flags="$flags --nodestime $nodestime"; fi
+    w="$dir/bin/$name"
+    if [ ! -x "$w" ]; then
+      printf '#!/bin/sh\nexec "$(dirname "$0")/ratchet" "${1:-bun}" %s\n' "$flags" > "$w.$$"
+      chmod +x "$w.$$"
+      mv "$w.$$" "$w"
+    fi
+    echo "$w"
+    ;;
+  *)
+    echo "usage: tools/player.sh spec <player> | launcher <snapshot-dir> <release> [level] [nodestime]" >&2
+    exit 2
+    ;;
+esac

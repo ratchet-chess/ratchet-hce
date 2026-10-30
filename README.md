@@ -72,7 +72,7 @@ Each release keeps its reference in `engines/<release>/fidelity/`.
 
 ## Matches and ratings
 
-The match tools play a UCI engine from a snapshot of each side, with fastchess:
+The match tools play releases with fastchess, each side from a snapshot of its commit. A player is `[ref:]release[@level]` (`tools/player.sh`), such as `phalanx-xii` or `HEAD:sargon-1978@3`:
 
 - `tools/sprt.sh` and `tools/pool.ts`: an SPRT match, on one host or spread over every free host;
 - `tools/calibrate.sh`: a rating on the CCRL Blitz scale, against anchor engines with published ratings;
