@@ -14,6 +14,8 @@ const maxDepth = args.includes("--depth") ? Number(args[args.indexOf("--depth") 
 /** each release with its own generator, and the core moves its rules allow */
 const RELEASES: { name: string; allows: (uci: string) => boolean }[] = [
   { name: "sargon-1978", allows: (uci) => uci.length === 4 || uci[4] === "q" },
+  // Phalanx XII promotes to every piece; its perftRelease takes the core's castling rights
+  { name: "phalanx-xii", allows: () => true },
 ];
 
 const core = await Engine.load("core");
