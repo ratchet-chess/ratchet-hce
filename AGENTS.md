@@ -88,8 +88,9 @@ The steps run in this order. Each step's output is the next step's input.
 
 ## Running tools
 
-- **Handle an original only inside the chess-bench image.** Build, run and disassemble it there, because its code is an untrusted download.
-- **Never copy an original's binary out of the image.** On the host, open only its source text.
+- **Handle an original only inside a container,** because its code is an untrusted download. Build, run and disassemble it through `tools/ws.ts`, or in the chess-bench image until it retires.
+- **Never run or open an original's binary on the host.** The anchor tree holds it only for containers to mount. On the host, open only an original's source text.
+- **A download enters through `tools/ws.ts fetch`,** pinned by its sha256. Containers have no network, except a fetch phase that runs no downloaded code.
 - **Never edit a tool script while a run of it is live.** Stage the change beside it, and swap it in after the run.
 - **Stop a run by its PID or its process group,** never by a name pattern.
 - **Wait for a run to finish,** rather than polling it in a loop.
