@@ -18,6 +18,8 @@ interface Exports {
   rootMove(i: number): number;
   perft(depth: number, bulk: number): number;
   checkedWalk(depth: number): number;
+  /** build/core.wasm only */
+  attacked?(s: number, by: number): number;
 }
 
 /** The exports a release adds to the core's; build/core.wasm has none of them. */
@@ -208,6 +210,12 @@ export class Engine {
   /** sets tuning-build constant `id` to `value`; a release build has none */
   tune(id: number, value: number): void {
     this.search.tuneSet?.(id, value);
+  }
+
+  /** whether color `by` (0 White) attacks square `s` in the current position; build/core.wasm only */
+  attacked(s: number, by: number): boolean {
+    if (!this.wasm.attacked) throw new Error("this build has no attack test: load the core");
+    return this.wasm.attacked(s, by) !== 0;
   }
 
   /** incremental-state mismatches found walking the current position's tree to `depth` */
