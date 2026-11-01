@@ -50,11 +50,11 @@ The steps run in this order. Each step's output is the next step's input.
 7. **Build the board and move generator first.** Pass `test/release-perft.ts` before writing the search.
 8. **Write the engine.** Each search starts from the state the original had in the reference run. That is a fresh process or import, with every table empty.
 9. **Reproduce the reference build,** not an idealized original. Where play depends on the build's memory or stack layout, copy that layout and label it.
-10. **Check fidelity** with `tools/fidelity.ts`, working up one depth at a time.
+10. **Check fidelity** with `tools/fidelity.ts`, from the lowest depth up. Check every depth in one pass, and stop at the first mismatch.
 11. **Count the reach.** In an instrumented copy under `tmp/`, count how often the reference reaches each quirk and rare path.
-12. **Have the code reviewed.** A second agent reads it against the original. Give the reviewer the paths the reference never reached, by name.
-13. **Check each review finding against the source** before fixing it.
-14. **Update the record** with what the port measured: resolved ambiguities, and every place the record proved wrong.
+12. **Have the code reviewed.** A second agent reads it against the original. Give the reviewer the paths the reference never reached, by name. When fidelity is exact at every depth, the review reads only those paths.
+13. **Check each review finding against the source** before fixing it. A finding on a path the reference never reaches gets at most one run of the original, over a small position set. If that run does not settle it, the record labels it as an ambiguity. A longer hunt needs the user's word.
+14. **Update the record** with what the port measured: resolved ambiguities, and every place the record proved wrong. Mark each quirk the reference reached as confirmed by run. Write new prose only for the exceptions: corrections, new quirks and unreached paths.
 15. **Commit the release, its reference and its `test/release-perft.ts` entry together,** because the gate needs the release.
 
 ## Fidelity
