@@ -100,9 +100,9 @@ export class Engine {
     return this.wasm as Search;
   }
 
-  /** loads build/<name>.wasm: "core", or a release's directory name under engines/ */
+  /** loads build/<name>.wasm: "core", or a release's directory name under engines/; or a path ending in .wasm, such as a tuning build */
   static async load(name: string): Promise<Engine> {
-    const bytes = readFileSync(new URL(`../build/${name}.wasm`, import.meta.url));
+    const bytes = readFileSync(name.endsWith(".wasm") ? name : new URL(`../build/${name}.wasm`, import.meta.url));
     let engine: Engine | undefined;
     const { instance } = await WebAssembly.instantiate(bytes, {
       env: {

@@ -2,10 +2,12 @@
  * Move-generator gate for releases with a board of their own: each one's leaf
  * counts must equal the core's over the perft suite, after the core's moves are
  * filtered by the release's rules. Sargon (1978) promotes to a queen only; Chess
- * 4.6 refuses O-O-O while b1 or b8 is attacked (its Q1).
+ * 4.6 refuses O-O-O while b1 or b8 is attacked (its Q1). A variant,
+ * engines/<release>-<name>/, is gated by its release's entry.
  *
  *   bun test/release-perft.ts [--depth <n>]
  */
+import { readdirSync } from "node:fs";
 import { Engine, moveToUci } from "../host/wasm.ts";
 import { PERFT_SUITE } from "./boards/suite.ts";
 
@@ -26,6 +28,12 @@ const RELEASES: { name: string; allows: (move: number, core: Engine) => boolean 
     allows: (m, core) => !(m & FLAG_CASTLE) || ((m >>> 6) & 7) !== 2 || !core.attacked(((m >>> 6) & 63) - 1, ((m >>> 6) & 63) < 8 ? 1 : 0),
   },
 ];
+
+// A variant, engines/<release>-<name>/, keeps its release's generator, so it takes its release's entry.
+const variants = readdirSync(new URL("../engines/", import.meta.url), { withFileTypes: true })
+  .filter((d) => d.isDirectory())
+  .flatMap((d) => RELEASES.filter((r) => d.name.startsWith(`${r.name}-`)).map((r) => ({ ...r, name: d.name })));
+RELEASES.push(...variants);
 
 const core = await Engine.load("core");
 function coreCount(fen: string, moves: string[], depth: number, allows: (move: number, core: Engine) => boolean): number {

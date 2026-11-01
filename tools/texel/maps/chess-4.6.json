@@ -1,0 +1,348 @@
+{
+  "subject": "chess-4.6",
+  "release": "chess-4.6",
+  "eval": {
+    "form": "search",
+    "depth": 2
+  },
+  "quirks": [
+    "reads-search-state"
+  ],
+  "defaults": {
+    "type": "i32",
+    "step": 8
+  },
+  "blocks": [
+    {
+      "name": "VALUE",
+      "size": 7,
+      "layout": "count",
+      "fixed": [0, 6],
+      "step": 4,
+      "sources": [
+        { "file": "eval.ts", "symbol": "VALUE" }
+      ]
+    },
+    {
+      "name": "FMAXMT",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FMAXMT" }
+      ]
+    },
+    {
+      "name": "FTRADE",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FTRADE" }
+      ]
+    },
+    {
+      "name": "FTRDSL",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FTRDSL" }
+      ]
+    },
+    {
+      "name": "FTRPOK",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FTRPOK" }
+      ]
+    },
+    {
+      "name": "FTRPWN",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FTRPWN" }
+      ]
+    },
+    {
+      "name": "FMTEGE",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FMTEGE" },
+        { "file": "search.ts", "symbol": "FMTEGE" }
+      ]
+    },
+    {
+      "name": "FKCORN",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FKCORN" }
+      ]
+    },
+    {
+      "name": "FKKNMT",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FKKNMT" }
+      ]
+    },
+    {
+      "name": "FCHKOP",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FCHKOP" }
+      ]
+    },
+    {
+      "name": "FPNPAS",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FPNPAS" }
+      ]
+    },
+    {
+      "name": "FKSQBN",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FKSQBN" }
+      ]
+    },
+    {
+      "name": "FKSANQ",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FKSANQ" }
+      ]
+    },
+    {
+      "name": "FKSCNQ",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FKSCNQ" }
+      ]
+    },
+    {
+      "name": "FKSCRM",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FKSCRM" }
+      ]
+    },
+    {
+      "name": "FKS2BS",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FKS2BS" }
+      ]
+    },
+    {
+      "name": "FKSMNF",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FKSMNF" }
+      ]
+    },
+    {
+      "name": "FKSFRD",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FKSFRD" }
+      ]
+    },
+    {
+      "name": "FKSATK",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FKSATK" }
+      ]
+    },
+    {
+      "name": "FKSMAT",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FKSMAT" }
+      ]
+    },
+    {
+      "name": "FKSOPF",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FKSOPF" }
+      ]
+    },
+    {
+      "name": "FKSCOF",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FKSCOF" }
+      ]
+    },
+    {
+      "name": "FKSISO",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FKSISO" }
+      ]
+    },
+    {
+      "name": "FKCTRP",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FKCTRP" }
+      ]
+    },
+    {
+      "name": "FKPTRP",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FKPTRP" }
+      ]
+    },
+    {
+      "name": "FNCTRP",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FNCTRP" }
+      ]
+    },
+    {
+      "name": "FNKTRP",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FNKTRP" }
+      ]
+    },
+    {
+      "name": "FNBKRK",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FNBKRK" }
+      ]
+    },
+    {
+      "name": "FNATKD",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FNATKD" }
+      ]
+    },
+    {
+      "name": "FNATNP",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FNATNP" }
+      ]
+    },
+    {
+      "name": "FBBKRK",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FBBKRK" }
+      ]
+    },
+    {
+      "name": "FBMOBL",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FBMOBL" }
+      ]
+    },
+    {
+      "name": "FRMOBL",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FRMOBL" }
+      ]
+    },
+    {
+      "name": "FRKTRP",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FRKTRP" }
+      ]
+    },
+    {
+      "name": "FRK7TH",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FRK7TH" }
+      ]
+    },
+    {
+      "name": "FRKOPF",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FRKOPF" }
+      ]
+    },
+    {
+      "name": "FRKVNP",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FRKVNP" }
+      ]
+    },
+    {
+      "name": "FRKDBL",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FRKDBL" }
+      ]
+    },
+    {
+      "name": "FQKTRP",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FQKTRP" }
+      ]
+    },
+    {
+      "name": "FQMOBL",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FQMOBL" }
+      ]
+    },
+    {
+      "name": "FPNBSC",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FPNBSC" }
+      ]
+    },
+    {
+      "name": "FPNDBL",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FPNDBL" }
+      ]
+    },
+    {
+      "name": "FPNISO",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FPNISO" }
+      ]
+    },
+    {
+      "name": "FPNISC",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FPNISC" }
+      ]
+    },
+    {
+      "name": "FPNVBK",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FPNVBK" }
+      ]
+    },
+    {
+      "name": "FPNLBK",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FPNLBK" }
+      ]
+    },
+    {
+      "name": "FPNMAJ",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FPNMAJ" }
+      ]
+    },
+    {
+      "name": "FPNPSB",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FPNPSB" }
+      ]
+    },
+    {
+      "name": "FPNPSA",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FPNPSA" }
+      ]
+    },
+    {
+      "name": "FPNPSD",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FPNPSD" }
+      ]
+    },
+    {
+      "name": "FTMBON",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FTMBON" }
+      ]
+    },
+    {
+      "name": "FRHUNG",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FRHUNG" }
+      ]
+    },
+    {
+      "name": "FORKBN",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FORKBN" }
+      ]
+    },
+    {
+      "name": "FPDCOL",
+      "size": 8,
+      "layout": "file",
+      "sources": [
+        { "file": "eval.ts", "symbol": "FPDCOL" }
+      ]
+    }
+  ]
+}
