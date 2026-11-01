@@ -20,6 +20,23 @@ interface Exports {
   checkedWalk(depth: number): number;
   /** build/core.wasm only */
   attacked?(s: number, by: number): number;
+  /** build/core.wasm only: the neutral resolver and the position read back */
+  resolveQuiet?(): number;
+  pieceAt?(s: number): number;
+  sideToMove?(): number;
+  castlingRights?(): number;
+  epSquare?(): number;
+  halfmoveClock?(): number;
+  inCheckNow?(): number;
+}
+
+/** a position as the core holds it: a piece code per square, the side to move, castling rights, en passant square (64 for none), halfmove clock */
+export interface CorePosition {
+  board: Uint8Array;
+  side: number;
+  castling: number;
+  ep: number;
+  halfmove: number;
 }
 
 /** The exports a release adds to the core's; build/core.wasm has none of them. */
@@ -215,6 +232,27 @@ export class Engine {
   /** sets tuning-build constant `id` to `value`; a release build has none */
   tune(id: number, value: number): void {
     this.search.tuneSet?.(id, value);
+  }
+
+  /** the core's position, read back; build/core.wasm only */
+  corePosition(): CorePosition {
+    const w = this.wasm;
+    if (!w.pieceAt) throw new Error("this build cannot read its position back: load the core");
+    const board = new Uint8Array(64);
+    for (let s = 0; s < 64; s++) board[s] = w.pieceAt(s);
+    return { board, side: w.sideToMove!(), castling: w.castlingRights!(), ep: w.epSquare!(), halfmove: w.halfmoveClock!() };
+  }
+
+  /** whether the side to move is in check; build/core.wasm only */
+  inCheck(): boolean {
+    if (!this.wasm.inCheckNow) throw new Error("this build has no check test: load the core");
+    return this.wasm.inCheckNow() !== 0;
+  }
+
+  /** plays the neutral resolver's capture line (core/resolve.ts) on the position; returns its length; build/core.wasm only */
+  resolveQuiet(): number {
+    if (!this.wasm.resolveQuiet) throw new Error("this build has no resolver: load the core");
+    return this.wasm.resolveQuiet();
   }
 
   /** whether color `by` (0 White) attacks square `s` in the current position; build/core.wasm only */

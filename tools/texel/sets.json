@@ -1,0 +1,11 @@
+[
+  {
+    "name": "zurichess-quiet",
+    "url": "https://bitbucket.org/zurichess/tuner/downloads/tuner.7z",
+    "sha256": "56273c54c6c8724740971012562692ec5cf3f8013546eb8949f280055f838842",
+    "license": "BSD-3-Clause (LICENSE in the archive)",
+    "archive": "tuner.7z",
+    "member": "quiet-labeled.epd",
+    "format": "epd-c9"
+  }
+]

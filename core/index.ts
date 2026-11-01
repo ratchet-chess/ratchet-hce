@@ -1,12 +1,13 @@
 /**
- * WASM exports of the core: position setup, legal moves, perft and the state
- * walk. The host loads a position square by square, applies game moves with
- * playMove(), then runs perft in a single call. A release's own index re-exports
- * these beside its search.
+ * WASM exports of the core: position setup, legal moves, perft, the state walk,
+ * a position read back square by square, and the Texel tuner's neutral resolver
+ * (resolve.ts). The host loads a position square by square, applies game moves
+ * with playMove(), then runs perft in a single call. A release's own index
+ * re-exports these beside its search.
  */
 import { generateMoves } from "./movegen";
 import { MAX_MOVES, MAX_PLY } from "./constants";
-import { addPiece, attackedWith, bb, castling, clear, ep, hash, initPosition, make, playMove, ply, setState, side, unmake, board } from "./position";
+import { addPiece, attackedWith, bb, castling, clear, ep, halfmove, hash, inCheck, initPosition, make, playMove, ply, setState, side, unmake, board } from "./position";
 import { MAGIC_MUL, initTables } from "./tables";
 import { Z_CASTLE, Z_EP, Z_PIECE, Z_SIDE, initZobrist } from "./zobrist";
 
@@ -28,6 +29,32 @@ export function put(s: i32, p: i32): void {
 /** fills the root move list; read it with rootMove(i) */
 export function legalMoves(): i32 {
   return generateMoves(rootMoves, 0, true);
+}
+
+export { resolveQuiet } from "./resolve";
+
+/** the piece code on square `s`, 0 if empty */
+export function pieceAt(s: i32): i32 {
+  return <i32>board[s];
+}
+
+/** the side to move, castling rights, en passant square and halfmove clock, for a host reading a position back */
+export function sideToMove(): i32 {
+  return side;
+}
+export function castlingRights(): i32 {
+  return castling;
+}
+export function epSquare(): i32 {
+  return ep;
+}
+export function halfmoveClock(): i32 {
+  return halfmove;
+}
+
+/** true if the side to move is in check */
+export function inCheckNow(): bool {
+  return inCheck();
 }
 
 export function rootMove(i: i32): i32 {
