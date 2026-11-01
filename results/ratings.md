@@ -14,6 +14,10 @@ key, and a run under another protocol adds its own.
 
 | player | rating | ± | games | score | anchors | protocol | commit | date |
 |---|---|---|---|---|---|---|---|---|
+| chess-4.6@4 | 1289 | 89 | 100 | 24.5% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 3fa0961 | 2026-11-01 |
+| chess-4.6@5 | 1559 | 82 | 100 | 50.5% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 3fa0961 | 2026-11-01 |
+| chess-4.6@6 | 1594 | 83 | 100 | 54.0% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 3fa0961 | 2026-11-01 |
+| chess-4.6@7 | 1746 | 88 | 100 | 68.0% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 3fa0961 | 2026-11-01 |
 | phalanx-xii | 2260 | 93 | 100 | 77.5% | rustic-alpha1, stash-11.0.1, stash-13.0.1, stash-15.3, crucible-1.0.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | eb20240 | 2026-10-30 |
 | sargon-1978@1 | 582 | 124 | 100 | 9.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
 | sargon-1978@2 | 785 | 91 | 100 | 21.5% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
