@@ -102,7 +102,7 @@ export interface LoadedMap {
   elements: Element[];
   /** each source file's declarations that the map reads, by file */
   declarations: Map<string, Map<string, Declaration>>;
-  /** sha256 of the map, the release's and the core's sources and the tuner's own, which names its builds */
+  /** sha256 of the map, the release's and the core's sources and the writer, which names its builds */
   hash: string;
 }
 
@@ -204,9 +204,11 @@ export function loadMap(path: string): LoadedMap {
 
   // A build depends on the map, the release, the core it imports and the writer that made it.
   const hash = createHash("sha256").update(text);
-  const dirs = [...(releaseDir ? [releaseDir] : []), join(REPO, "core"), join(REPO, "tools", "texel")];
-  for (const dir of dirs) {
-    for (const f of readdirSync(dir).filter((f) => f.endsWith(".ts")).sort()) hash.update(f).update(readFileSync(join(dir, f)));
-  }
+  const files = [
+    ...(releaseDir ? readdirSync(releaseDir).filter((f) => f.endsWith(".ts")).sort().map((f) => join(releaseDir, f)) : []),
+    ...readdirSync(join(REPO, "core")).filter((f) => f.endsWith(".ts")).sort().map((f) => join(REPO, "core", f)),
+    ...["map.ts", "source.ts", "write.ts"].map((f) => join(REPO, "tools", "texel", f)),
+  ];
+  for (const f of files) hash.update(f.slice(REPO.length)).update(readFileSync(f));
   return { path, map, releaseDir, elements, declarations, hash: hash.digest("hex").slice(0, 12) };
 }

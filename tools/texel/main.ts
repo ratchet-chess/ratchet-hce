@@ -15,6 +15,11 @@
  *                                                           scores every position at the map's defaults, timed
  *   bun tools/texel/main.ts trace <map.json> <dataset.bin> [--workers <n>] [--limit <n>] [--delta <factor>] [--tol <cp>]
  *                                                           the probed trace, tmp/texel/traces/; reused when present
+ *   bun tools/texel/main.ts tune <map.json> <dataset.bin> --optimizer adam|local [--over trace|adapter]
+ *       [--workers <n>] [--limit <n>] [--delta <factor>] [--tol <cp>] [--min-touch <n>]
+ *       [--alpha <a>] [--epochs <n>] [--patience <n>] [--passes <n>]
+ *                                                           a run: K, the optimizer, the rounded values verified
+ *                                                           through the adapter; tmp/texel/runs/ and results/tuning.md
  *
  * values.json maps element names, as `map` prints them, to values.
  *
@@ -25,14 +30,18 @@
  *   bun tools/ws.ts run -- bun tools/texel/main.ts dataset --set <name>
  */
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { Engine } from "../../host/wasm.ts";
-import { type Position, type SetEntry, mergeAndSplit, readDataset, readDatasetRaw, readSet, resolveAll, sha256, writeDataset } from "./dataset.ts";
+import { type Position, type SetEntry, blankPosition, decodeRecord, mergeAndSplit, readDataset, readDatasetRaw, readSet, resolveAll, sha256, writeDataset } from "./dataset.ts";
+import type { Adapter } from "./adapter.ts";
+import type { LoadedMap } from "./map.ts";
 import { loadMap } from "./map.ts";
-import { probe, readTrace, writeTrace } from "./trace.ts";
+import { type Labels, adam, adapterTarget, fitK, localSearch, loss, traceTarget, tunable } from "./optimize.ts";
+import { type Trace, linearEval, probe, readTrace, writeTrace } from "./trace.ts";
 import { WasmAdapter } from "./wasm.ts";
-import { buildTuning, writeVariant } from "./write.ts";
+import { buildTuning, storable, writeVariant } from "./write.ts";
 
 const REPO = new URL("../../", import.meta.url).pathname;
 const DATASETS = join(REPO, "tmp", "texel", "datasets");
@@ -41,11 +50,30 @@ const DOWNLOADS = "/ws/downloads";
 const [step, ...rest] = process.argv.slice(2);
 const opt = (name: string) => (rest.includes(name) ? rest[rest.indexOf(name) + 1] : undefined);
 const positional = rest[0] && !rest[0].startsWith("--") ? rest[0] : undefined;
-const usage = "usage: bun tools/texel/main.ts map|build <map.json> | write <map.json> --name <name> [--values <values.json>] | dataset --set <name> [--valid <permille>] [--limit <n>] | resolve <dataset.bin> | info <dataset.bin> | eval|trace <map.json> <dataset.bin> [--workers <n>] [--limit <n>] [--delta <factor>] [--tol <cp>]";
+const usage = "usage: bun tools/texel/main.ts map|build <map.json> | write <map.json> --name <name> [--values <values.json>] | dataset --set <name> [--valid <permille>] [--limit <n>] | resolve <dataset.bin> | info <dataset.bin> | eval|trace <map.json> <dataset.bin> [--workers <n>] [--limit <n>] [--delta <factor>] [--tol <cp>] | tune <map.json> <dataset.bin> --optimizer adam|local [...] (see the header)";
 const die = (msg: string): never => {
   console.error(msg);
   process.exit(2);
 };
+
+/** the trace of `m` over the first `count` positions of a dataset, read when present, else probed through `adapter` */
+async function ensureTrace(m: LoadedMap, dsPath: string, name: string, count: number, limited: boolean, adapter: Adapter, deltaFactor: number, tol: number): Promise<Trace> {
+  // a trace depends on the build (m.hash), the dataset, and the code that probes and scores
+  const code = createHash("sha256");
+  for (const f of ["trace.ts", "adapter.ts", "wasm.ts", "wasm-worker.ts", "dataset.ts"]) code.update(readFileSync(join(REPO, "tools", "texel", f)));
+  const dir = join(REPO, "tmp", "texel", "traces");
+  const out = join(dir, `${m.map.subject}-${m.hash}-${code.digest("hex").slice(0, 8)}-${name}${limited ? `-${count}` : ""}-d${deltaFactor}-t${tol}.trace`);
+  if (existsSync(out)) {
+    const t = readTrace(out);
+    console.log(`${out}: reused, ${t.header.usable} usable positions, ${t.header.nnz} coefficients`);
+    return t;
+  }
+  const t = await probe(adapter, m, { name, sha256: sha256(dsPath), count }, { deltaFactor, tol }, (l) => console.log(l));
+  mkdirSync(dir, { recursive: true });
+  writeTrace(out, t);
+  console.log(`${out}: ${t.header.usable} usable positions, ${t.header.nnz} coefficients`);
+  return t;
+}
 
 if (step === "map" || step === "build" || step === "write") {
   const m = loadMap(positional ?? die(usage));
@@ -130,7 +158,7 @@ if (step === "map" || step === "build" || step === "write") {
   const usable = scores.filter((s) => !Number.isNaN(s));
   const mean = usable.reduce((a, s) => a + Math.abs(s), 0) / usable.length;
   console.log(`${count} positions, ${count - usable.length} unusable, mean |score| ${mean.toFixed(1)} cp, ${Math.round(ms)} ms, ${Math.round((count / ms) * 1000)} positions/s`);
-} else if (step === "trace") {
+} else if (step === "trace" || step === "tune") {
   const m = loadMap(positional ?? die(usage));
   const dsPath = rest[1] ?? die(usage);
   const { header, records } = readDatasetRaw(dsPath);
@@ -138,20 +166,89 @@ if (step === "map" || step === "build" || step === "write") {
   const count = Math.min(header.count, limit ?? header.count);
   const deltaFactor = Number(opt("--delta") ?? 4);
   const tol = Number(opt("--tol") ?? 2);
-  const dir = join(REPO, "tmp", "texel", "traces");
-  const out = join(dir, `${m.map.subject}-${m.hash}-${header.name}${limit ? `-${count}` : ""}-d${deltaFactor}-t${tol}.trace`);
-  if (existsSync(out)) {
-    const t = readTrace(out);
-    console.log(`${out}: reused, ${t.header.usable} usable positions, ${t.header.nnz} coefficients`);
+  const adapter = await WasmAdapter.open(buildTuning(m), m, opt("--workers") ? Number(opt("--workers")) : undefined);
+  await adapter.load(records, count);
+  if (step === "trace") {
+    await ensureTrace(m, dsPath, header.name, count, limit !== undefined, adapter, deltaFactor, tol);
   } else {
-    const adapter = await WasmAdapter.open(buildTuning(m), m, opt("--workers") ? Number(opt("--workers")) : undefined);
-    await adapter.load(records, count);
-    const t = await probe(adapter, m, { name: header.name, sha256: sha256(dsPath), count }, { deltaFactor, tol }, (l) => console.log(l));
-    await adapter.close();
-    mkdirSync(dir, { recursive: true });
-    writeTrace(out, t);
-    console.log(`${out}: ${t.header.usable} usable positions, ${t.header.nnz} coefficients`);
+    const optimizer = opt("--optimizer") ?? die(usage);
+    const over = opt("--over") ?? "trace";
+    if (!["adam", "local"].includes(optimizer) || !["trace", "adapter"].includes(over) || (optimizer === "adam" && over !== "trace")) die("--optimizer adam (over the trace) or local (over the trace or the adapter)");
+    const minTouch = Number(opt("--min-touch") ?? 100);
+    const trace = over === "trace" ? await ensureTrace(m, dsPath, header.name, count, limit !== undefined, adapter, deltaFactor, tol) : undefined;
+    const base = trace ? trace.base : await adapter.eval();
+    const labels: Labels = { result: new Float64Array(count), valid: new Uint8Array(count) };
+    const p = blankPosition();
+    for (let i = 0; i < count; i++) {
+      decodeRecord(records, i, p);
+      labels.result[i] = p.result;
+      labels.valid[i] = p.valid ? 1 : 0;
+    }
+    const K = fitK(base, labels);
+    const train0 = loss(base, labels, K, false);
+    const valid0 = loss(base, labels, K, true);
+    console.log(`K ${K.toFixed(4)}; at defaults: train ${train0.toFixed(6)}, valid ${valid0.toFixed(6)}`);
+    const ids = tunable(m, trace, minTouch);
+    const held = m.elements.filter((e) => !e.fixed && !ids.includes(e.id)).map((e) => e.name);
+    console.log(`${ids.length} elements tuned${held.length ? `; held for fewer than ${minTouch} positions touched: ${held.join(" ")}` : ""}`);
+    let theta: Float64Array;
+    let protocol: string;
+    if (optimizer === "adam") {
+      const alpha = Number(opt("--alpha") ?? 0.1);
+      const epochs = Number(opt("--epochs") ?? 2000);
+      const patience = Number(opt("--patience") ?? 100);
+      const r = adam(trace!, m, labels, K, ids, { alpha, epochs, patience }, (q) => console.log(`epoch ${q.epoch}: train ${q.train.toFixed(6)}, valid ${q.valid.toFixed(6)}`));
+      theta = r.theta;
+      console.log(`best epoch ${r.best.epoch}: valid ${r.best.valid.toFixed(6)} (linear)`);
+      protocol = `adam α ${alpha}, at most ${epochs} epochs, patience ${patience}`;
+    } else {
+      const passes = Number(opt("--passes") ?? 20);
+      const target = trace ? traceTarget(trace, m, labels, K) : adapterTarget(adapter, m, labels, K);
+      theta = await localSearch(target, m, ids, { maxPasses: passes }, (l) => console.log(l));
+      protocol = `local over the ${over}, at most ${passes} passes`;
+    }
+    // the values as the subject stores them, verified through the adapter
+    const values: Record<string, number> = {};
+    const rounded = Float64Array.from(m.elements.map((e) => e.default));
+    for (const id of ids) {
+      const e = m.elements[id];
+      rounded[id] = storable(e, theta[id]);
+      if (rounded[id] !== e.default) values[e.name] = rounded[id];
+    }
+    const linear = trace ? linearEval(trace, rounded) : undefined;
+    await adapter.reset();
+    for (const id of ids) await adapter.set(id, rounded[id]);
+    const truth = await adapter.eval();
+    const result = {
+      subject: m.map.subject,
+      map: m.path,
+      mapHash: m.hash,
+      dataset: header.name,
+      positions: count,
+      K,
+      train0,
+      valid0,
+      train1: loss(truth, labels, K, false),
+      valid1: loss(truth, labels, K, true),
+      linearTrain1: linear ? loss(linear, labels, K, false) : null,
+      linearValid1: linear ? loss(linear, labels, K, true) : null,
+      tuned: ids.length,
+      changed: Object.keys(values).length,
+      protocol: `${header.name}${limit !== undefined ? `, first ${count}` : ""}; ${protocol}${trace ? `; trace Δ ×${deltaFactor}, tol ${tol} cp; touched ≥ ${minTouch}` : ""}`,
+      values,
+    };
+    console.log(`after (true, rounded): train ${result.train1.toFixed(6)}, valid ${result.valid1.toFixed(6)}${linear ? `; linear: train ${result.linearTrain1!.toFixed(6)}, valid ${result.linearValid1!.toFixed(6)}` : ""}; ${result.changed} values changed`);
+    const runs = join(REPO, "tmp", "texel", "runs");
+    mkdirSync(runs, { recursive: true });
+    const id = `${m.map.subject}-${new Date().toISOString().replace(/[:.]/g, "-")}`;
+    writeFileSync(join(runs, `${id}.json`), `${JSON.stringify(result, null, 2)}\n`);
+    writeFileSync(join(runs, `${id}.values.json`), `${JSON.stringify(values, null, 2)}\n`);
+    console.log(`${join(runs, id)}.json; values for write: ${join(runs, id)}.values.json`);
+    const commit = spawnSync("git", ["rev-parse", "--short", "HEAD"], { cwd: REPO, encoding: "utf8" }).stdout.trim();
+    const r = spawnSync("bun", [join(REPO, "tools", "results.ts"), "tuning", m.map.subject, commit, result.protocol], { input: JSON.stringify(result), encoding: "utf8" });
+    if (r.status !== 0) console.error(`results.ts tuning failed: ${r.stderr}`);
   }
+  await adapter.close();
 } else {
   die(usage);
 }
