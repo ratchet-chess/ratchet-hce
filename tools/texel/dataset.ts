@@ -69,7 +69,7 @@ export interface Header {
   counts: Record<string, number>;
 }
 
-const RECORD = 48;
+export const RECORD = 48;
 
 /** the lines of a text file, gunzipped when its name ends in .gz */
 async function* lines(path: string): AsyncGenerator<string> {
@@ -215,31 +215,46 @@ export function writeDataset(path: string, header: Omit<Header, "count" | "forma
   writeFileSync(path, buf);
 }
 
-export function readDataset(path: string): { header: Header; positions: Position[] } {
+/** a dataset's header and its records as raw bytes, `count` records of RECORD bytes, copied into shared memory so workers can read them */
+export function readDatasetRaw(path: string): { header: Header; records: Uint8Array } {
   const buf = readFileSync(path);
   if (buf.toString("latin1", 0, 4) !== "TXDS") throw new Error(`${path} is not a Texel dataset`);
   const len = buf.readUInt32LE(4);
   const header = JSON.parse(buf.toString("utf8", 8, 8 + len)) as Header;
-  let o = Math.ceil((8 + len) / 8) * 8;
-  const positions: Position[] = [];
-  for (let n = 0; n < header.count; n++, o += RECORD) {
-    const board = new Uint8Array(64);
-    for (let i = 0; i < 32; i++) {
-      board[2 * i] = buf[o + i] & 15;
-      board[2 * i + 1] = buf[o + i] >> 4;
-    }
-    positions.push({
-      board,
-      side: buf[o + 32],
-      castling: buf[o + 33],
-      ep: buf[o + 34] === 255 ? -1 : buf[o + 34],
-      valid: (buf[o + 35] & 1) === 1,
-      halfmove: buf[o + 36],
-      fullmove: buf.readUInt16LE(o + 38),
-      result: buf.readFloatLE(o + 40),
-      score: buf.readFloatLE(o + 44),
-    });
+  const start = Math.ceil((8 + len) / 8) * 8;
+  const records = new Uint8Array(new SharedArrayBuffer(header.count * RECORD));
+  records.set(buf.subarray(start, start + header.count * RECORD));
+  return { header, records };
+}
+
+/** record `n` of `records`, decoded into `out` (its board reused) */
+export function decodeRecord(records: Uint8Array, n: number, out: Position): Position {
+  const o = n * RECORD;
+  const v = new DataView(records.buffer, records.byteOffset);
+  for (let i = 0; i < 32; i++) {
+    out.board[2 * i] = records[o + i] & 15;
+    out.board[2 * i + 1] = records[o + i] >> 4;
   }
+  out.side = records[o + 32];
+  out.castling = records[o + 33];
+  out.ep = records[o + 34] === 255 ? -1 : records[o + 34];
+  out.valid = (records[o + 35] & 1) === 1;
+  out.halfmove = records[o + 36];
+  out.fullmove = v.getUint16(o + 38, true);
+  out.result = v.getFloat32(o + 40, true);
+  out.score = v.getFloat32(o + 44, true);
+  return out;
+}
+
+/** an empty position to decode into */
+export function blankPosition(): Position {
+  return { board: new Uint8Array(64), side: 0, castling: 0, ep: -1, halfmove: 0, fullmove: 1, result: NaN, score: NaN, valid: false };
+}
+
+export function readDataset(path: string): { header: Header; positions: Position[] } {
+  const { header, records } = readDatasetRaw(path);
+  const positions: Position[] = [];
+  for (let n = 0; n < header.count; n++) positions.push(decodeRecord(records, n, blankPosition()));
   return { header, positions };
 }
 

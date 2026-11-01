@@ -152,6 +152,14 @@ export class Engine {
     }
   }
 
+  /** loads a position from its fields, as setPosition does from a FEN: a piece code per square, en passant -1 for none */
+  setBoard(board: Uint8Array, side: number, castling: number, ep: number, halfmove: number, fullmove: number): void {
+    const w = this.wasm;
+    w.clear();
+    for (let s = 0; s < 64; s++) if (board[s]) w.put(s, board[s]);
+    w.setState(side, castling, ep, halfmove, fullmove);
+  }
+
   legalMoves(): number[] {
     const n = this.wasm.legalMoves();
     const out: number[] = [];

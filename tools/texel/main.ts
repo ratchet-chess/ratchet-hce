@@ -11,6 +11,8 @@
  *                                                           tmp/texel/datasets/<set>.bin
  *   bun tools/texel/main.ts resolve <dataset.bin>           <set>.resolved.bin, by the neutral resolver
  *   bun tools/texel/main.ts info <dataset.bin>              a dataset's header and label counts
+ *   bun tools/texel/main.ts eval <map.json> <dataset.bin> [--workers <n>] [--limit <n>]
+ *                                                           scores every position at the map's defaults, timed
  *
  * values.json maps element names, as `map` prints them, to values.
  *
@@ -24,8 +26,9 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { Engine } from "../../host/wasm.ts";
-import { type Position, type SetEntry, mergeAndSplit, readDataset, readSet, resolveAll, sha256, writeDataset } from "./dataset.ts";
+import { type Position, type SetEntry, mergeAndSplit, readDataset, readDatasetRaw, readSet, resolveAll, sha256, writeDataset } from "./dataset.ts";
 import { loadMap } from "./map.ts";
+import { WasmAdapter } from "./wasm.ts";
 import { buildTuning, writeVariant } from "./write.ts";
 
 const REPO = new URL("../../", import.meta.url).pathname;
@@ -35,7 +38,7 @@ const DOWNLOADS = "/ws/downloads";
 const [step, ...rest] = process.argv.slice(2);
 const opt = (name: string) => (rest.includes(name) ? rest[rest.indexOf(name) + 1] : undefined);
 const positional = rest[0] && !rest[0].startsWith("--") ? rest[0] : undefined;
-const usage = "usage: bun tools/texel/main.ts map|build <map.json> | write <map.json> --name <name> [--values <values.json>] | dataset --set <name> [--valid <permille>] [--limit <n>] | resolve <dataset.bin> | info <dataset.bin>";
+const usage = "usage: bun tools/texel/main.ts map|build <map.json> | write <map.json> --name <name> [--values <values.json>] | dataset --set <name> [--valid <permille>] [--limit <n>] | resolve <dataset.bin> | info <dataset.bin> | eval <map.json> <dataset.bin> [--workers <n>] [--limit <n>]";
 const die = (msg: string): never => {
   console.error(msg);
   process.exit(2);
@@ -111,6 +114,19 @@ if (step === "map" || step === "build" || step === "write") {
   console.log(JSON.stringify(header, null, 2));
   console.log(`results: ${[...results].sort((a, b) => a[0] - b[0]).map(([r, n]) => `${Number.isNaN(r) ? "none" : r}: ${n}`).join(", ")}`);
   console.log(`scores: ${positions.filter((p) => !Number.isNaN(p.score)).length}; validation: ${positions.filter((p) => p.valid).length}`);
+} else if (step === "eval") {
+  const m = loadMap(positional ?? die(usage));
+  const { header, records } = readDatasetRaw(rest[1] ?? die(usage));
+  const count = Math.min(header.count, Number(opt("--limit") ?? header.count));
+  const adapter = await WasmAdapter.open(buildTuning(m), m, opt("--workers") ? Number(opt("--workers")) : undefined);
+  await adapter.load(records, count);
+  const t = performance.now();
+  const scores = await adapter.eval();
+  const ms = performance.now() - t;
+  await adapter.close();
+  const usable = scores.filter((s) => !Number.isNaN(s));
+  const mean = usable.reduce((a, s) => a + Math.abs(s), 0) / usable.length;
+  console.log(`${count} positions, ${count - usable.length} unusable, mean |score| ${mean.toFixed(1)} cp, ${Math.round(ms)} ms, ${Math.round((count / ms) * 1000)} positions/s`);
 } else {
   die(usage);
 }
