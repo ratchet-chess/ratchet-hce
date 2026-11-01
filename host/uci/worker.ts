@@ -13,7 +13,8 @@ export type WorkerCommand =
   | { cmd: "go"; limits: GoLimits }
   | { cmd: "newgame" }
   | { cmd: "hash"; mb: number }
-  | { cmd: "tune"; id: number; value: number };
+  | { cmd: "tune"; id: number; value: number }
+  | { cmd: "eval" };
 
 const port = parentPort!;
 const stop: Int32Array = workerData.stop;
@@ -118,6 +119,9 @@ port.on("message", (c: WorkerCommand) => {
       break;
     case "tune":
       engine.tune(c.id, c.value);
+      break;
+    case "eval":
+      port.postMessage(`eval cp ${engine.evaluate()}`);
       break;
   }
 });

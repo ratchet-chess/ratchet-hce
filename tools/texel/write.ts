@@ -5,7 +5,8 @@
  * - a tuning build: each mapped scalar becomes a `let`, and each source file that
  *   holds a slot gets a generated setter, so the build exports
  *   tuneSet(element id, value) and the tuner sets any element at run time. Built
- *   under tmp/texel/builds/, never committed.
+ *   under tmp/texel/builds/, never committed, with tunables.json beside it: the
+ *   free elements as UCI spin options (host/uci/main.ts --tunables).
  * - a tuned variant: each slot's literal takes its element's value, rounded to the
  *   storage type and clamped to its bounds, in engines/<release>-<name>/.
  *
@@ -96,7 +97,13 @@ function store(e: Element, s: { symbol: string; index: number; transform: string
 export function buildTuning(m: LoadedMap): string {
   const dir = join(REPO, "tmp", "texel", "builds", `${m.map.subject}-${m.hash}`);
   const wasm = join(dir, `${m.map.subject}.wasm`);
-  if (existsSync(wasm)) return wasm;
+  // the elements as UCI spin options, for host/uci/main.ts --tunables
+  const tunables = m.elements.filter((e) => !e.fixed).map((e) => ({ name: e.name, id: e.id, value: e.default, min: Math.max(e.min, -(2 ** 31)), max: Math.min(e.max, 2 ** 31 - 1) }));
+  const writeTunables = () => writeFileSync(join(dir, "tunables.json"), `${JSON.stringify(tunables, null, 1)}\n`);
+  if (existsSync(wasm)) {
+    if (!existsSync(join(dir, "tunables.json"))) writeTunables();
+    return wasm;
+  }
   rmSync(dir, { recursive: true, force: true });
   const src = join(dir, "src");
   const files = releaseFiles(m);
@@ -133,5 +140,6 @@ export function buildTuning(m: LoadedMap): string {
   const flags = ["-O3", "--converge", "--noAssert", "--uncheckedBehavior", "always", "--runtime", "stub"];
   const r = spawnSync("bunx", ["--bun", "asc", join(src, "index.ts"), "-o", wasm, ...flags], { cwd: REPO, encoding: "utf8" });
   if (r.status !== 0) throw new Error(`asc failed for ${dirname(wasm)}:\n${r.stdout}${r.stderr}`);
+  writeTunables();
   return wasm;
 }

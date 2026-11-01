@@ -11,6 +11,9 @@
  *                                                           tmp/texel/datasets/<set>.bin
  *   bun tools/texel/main.ts resolve <dataset.bin>           <set>.resolved.bin, by the neutral resolver
  *   bun tools/texel/main.ts info <dataset.bin>              a dataset's header and label counts
+ * eval, trace and tune take --adapter wasm (default; --workers <n>) or uci
+ * (--processes <n>, default 8; the map's uci section, uci.ts).
+ *
  *   bun tools/texel/main.ts eval <map.json> <dataset.bin> [--workers <n>] [--limit <n>]
  *                                                           scores every position at the map's defaults, timed
  *   bun tools/texel/main.ts trace <map.json> <dataset.bin> [--workers <n>] [--limit <n>] [--delta <factor>] [--tol <cp>]
@@ -32,7 +35,7 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { basename, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { Engine } from "../../host/wasm.ts";
 import { type Position, type SetEntry, blankPosition, decodeRecord, mergeAndSplit, readDataset, readDatasetRaw, readSet, resolveAll, sha256, writeDataset } from "./dataset.ts";
 import type { Adapter } from "./adapter.ts";
@@ -40,6 +43,7 @@ import type { LoadedMap } from "./map.ts";
 import { loadMap } from "./map.ts";
 import { type Labels, adam, adapterTarget, fitK, localSearch, loss, traceTarget, tunable } from "./optimize.ts";
 import { type Trace, linearEval, probe, readTrace, writeTrace } from "./trace.ts";
+import { UciAdapter } from "./uci.ts";
 import { WasmAdapter } from "./wasm.ts";
 import { buildTuning, storable, writeVariant } from "./write.ts";
 
@@ -56,13 +60,31 @@ const die = (msg: string): never => {
   process.exit(2);
 };
 
+/**
+ * The adapter --adapter names (wasm, the default, or uci), with the first `count`
+ * records loaded. A uci adapter starts --processes engines from the map's uci
+ * section; for a Ratchet release, {build} and {tunables} are its tuning build.
+ */
+async function openAdapter(m: LoadedMap, records: Uint8Array, count: number): Promise<Adapter> {
+  const kind = opt("--adapter") ?? "wasm";
+  let a: Adapter;
+  if (kind === "uci") {
+    const wasm = m.map.release ? buildTuning(m) : "";
+    a = await UciAdapter.open(m, Number(opt("--processes") ?? 8), wasm ? { build: wasm, tunables: join(dirname(wasm), "tunables.json") } : {});
+  } else if (kind === "wasm") {
+    a = await WasmAdapter.open(buildTuning(m), m, opt("--workers") ? Number(opt("--workers")) : undefined);
+  } else return die("--adapter wasm or uci");
+  await a.load(records, count);
+  return a;
+}
+
 /** the trace of `m` over the first `count` positions of a dataset, read when present, else probed through `adapter` */
 async function ensureTrace(m: LoadedMap, dsPath: string, name: string, count: number, limited: boolean, adapter: Adapter, deltaFactor: number, tol: number): Promise<Trace> {
   // a trace depends on the build (m.hash), the dataset, and the code that probes and scores
   const code = createHash("sha256");
-  for (const f of ["trace.ts", "adapter.ts", "wasm.ts", "wasm-worker.ts", "dataset.ts"]) code.update(readFileSync(join(REPO, "tools", "texel", f)));
+  for (const f of ["trace.ts", "adapter.ts", "wasm.ts", "wasm-worker.ts", "uci.ts", "dataset.ts"]) code.update(readFileSync(join(REPO, "tools", "texel", f)));
   const dir = join(REPO, "tmp", "texel", "traces");
-  const out = join(dir, `${m.map.subject}-${m.hash}-${code.digest("hex").slice(0, 8)}-${name}${limited ? `-${count}` : ""}-d${deltaFactor}-t${tol}.trace`);
+  const out = join(dir, `${m.map.subject}-${m.hash}-${code.digest("hex").slice(0, 8)}-${opt("--adapter") ?? "wasm"}-${name}${limited ? `-${count}` : ""}-d${deltaFactor}-t${tol}.trace`);
   if (existsSync(out)) {
     const t = readTrace(out);
     console.log(`${out}: reused, ${t.header.usable} usable positions, ${t.header.nnz} coefficients`);
@@ -149,8 +171,7 @@ if (step === "map" || step === "build" || step === "write") {
   const m = loadMap(positional ?? die(usage));
   const { header, records } = readDatasetRaw(rest[1] ?? die(usage));
   const count = Math.min(header.count, Number(opt("--limit") ?? header.count));
-  const adapter = await WasmAdapter.open(buildTuning(m), m, opt("--workers") ? Number(opt("--workers")) : undefined);
-  await adapter.load(records, count);
+  const adapter = await openAdapter(m, records, count);
   const t = performance.now();
   const scores = await adapter.eval();
   const ms = performance.now() - t;
@@ -166,8 +187,7 @@ if (step === "map" || step === "build" || step === "write") {
   const count = Math.min(header.count, limit ?? header.count);
   const deltaFactor = Number(opt("--delta") ?? 4);
   const tol = Number(opt("--tol") ?? 2);
-  const adapter = await WasmAdapter.open(buildTuning(m), m, opt("--workers") ? Number(opt("--workers")) : undefined);
-  await adapter.load(records, count);
+  const adapter = await openAdapter(m, records, count);
   if (step === "trace") {
     await ensureTrace(m, dsPath, header.name, count, limit !== undefined, adapter, deltaFactor, tol);
   } else {

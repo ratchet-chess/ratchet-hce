@@ -2,9 +2,17 @@
  * UCI front end. Reads commands from stdin and forwards engine work to the search
  * worker, so isready and stop are answered while a search runs.
  *
- *   bun host/uci/main.ts --release <name> [--nodestime N] [--level N]   (or node, deno run -A)
+ *   bun host/uci/main.ts --release <name> [--nodestime N] [--level N] [--tunables <path>]   (or node, deno run -A)
  *
- * --release names the release to play: build/<name>.wasm, from engines/<name>/.
+ * --release names the release to play: build/<name>.wasm, from engines/<name>/,
+ * or a path to a .wasm file, such as a Texel tuning build.
+ *
+ * --tunables <path> names a tuning build's options file, tunables.json beside its
+ * wasm (tools/texel/write.ts): each element becomes a spin option, which sets it
+ * through the build's tuneSet.
+ *
+ * `eval` (not UCI; Stockfish has one) prints `eval cp <n>`: the release's static
+ * eval of the current position for the side to move, as the host reports it.
  *
  * --level N sets the level of every game, for a release whose original has
  * levels and no clock, such as Sargon (1978): one level per match, as its
@@ -44,13 +52,11 @@ worker.on("error", (e: Error) => {
 
 const send = (c: WorkerCommand) => worker.postMessage(c);
 
-/**
- * The constants a tuning build exposes as UCI options, from the build's
- * tune.json. A release build has no such file, so it offers none.
- */
+/** the elements a tuning build exposes as UCI options, from --tunables; a release build offers none */
 interface Tunable { name: string; id: number; value: number; min: number; max: number }
-const tuneFile = new URL("../../build/tune.json", import.meta.url);
-const tunables: Tunable[] = existsSync(tuneFile) ? JSON.parse(readFileSync(tuneFile, "utf8")) : [];
+const tuneFile = args.includes("--tunables") ? args[args.indexOf("--tunables") + 1] : "";
+if (tuneFile && !existsSync(tuneFile)) throw new Error(`no tunables file ${tuneFile}`);
+const tunables: Tunable[] = tuneFile ? JSON.parse(readFileSync(tuneFile, "utf8")) : [];
 const out = (s: string) => process.stdout.write(s + "\n");
 
 function parsePosition(tokens: string[]): WorkerCommand {
@@ -121,6 +127,9 @@ for await (const raw of rl) {
     case "go":
       Atomics.store(stop, 0, 0);
       send({ cmd: "go", limits: parseGo(tokens.slice(1)) });
+      break;
+    case "eval":
+      send({ cmd: "eval" });
       break;
     case "stop":
       Atomics.store(stop, 0, 1);
