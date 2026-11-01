@@ -23,6 +23,7 @@ do not say where, ask the user.
 | **node signature** | a build's total node count over a fixed position set | bench, node count |
 | **`SPEED`** | a candidate's search speed over a base's, which scales its node budget in a match | speed ratio |
 | **conversion suite** | `tools/mate-suite.sh`: KQK and KRK starts to mate | mate test |
+| **variant** | a copy of a release that keeps its mechanisms and opens its constants or its speed | what-if branch, fork |
 
 ## Releases
 
@@ -33,6 +34,14 @@ do not say where, ask the user.
 - **A change to the core keeps the node signature of every release built on it.** Otherwise its commit names each release that changes, and why.
 - **Label every reading of an ambiguous source,** and every guard that is Ratchet's own.
 - **Name the original's routine** that each function of a release stands for, in its comment.
+
+## Variants
+
+- **A variant is a directory on main,** `engines/<release>-<name>/`, copied from its release. The release stays untouched.
+- **A variant opens one thing:** its constants (a tuned variant) or its speed (a speed variant). It adds no mechanism.
+- **A variant has no fidelity bar.** It passes the gates its release passes.
+- **A speed variant plays its release's moves with its release's node counts,** checked against the release's reference.
+- **A tuned variant is rated at its release's depths or levels,** so the rating gap measures only its constants.
 
 ## Building a release
 
