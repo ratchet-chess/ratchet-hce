@@ -13,6 +13,8 @@
  *   bun tools/texel/main.ts info <dataset.bin>              a dataset's header and label counts
  *   bun tools/texel/main.ts eval <map.json> <dataset.bin> [--workers <n>] [--limit <n>]
  *                                                           scores every position at the map's defaults, timed
+ *   bun tools/texel/main.ts trace <map.json> <dataset.bin> [--workers <n>] [--limit <n>] [--delta <factor>] [--tol <cp>]
+ *                                                           the probed trace, tmp/texel/traces/; reused when present
  *
  * values.json maps element names, as `map` prints them, to values.
  *
@@ -28,6 +30,7 @@ import { basename, join } from "node:path";
 import { Engine } from "../../host/wasm.ts";
 import { type Position, type SetEntry, mergeAndSplit, readDataset, readDatasetRaw, readSet, resolveAll, sha256, writeDataset } from "./dataset.ts";
 import { loadMap } from "./map.ts";
+import { probe, readTrace, writeTrace } from "./trace.ts";
 import { WasmAdapter } from "./wasm.ts";
 import { buildTuning, writeVariant } from "./write.ts";
 
@@ -38,7 +41,7 @@ const DOWNLOADS = "/ws/downloads";
 const [step, ...rest] = process.argv.slice(2);
 const opt = (name: string) => (rest.includes(name) ? rest[rest.indexOf(name) + 1] : undefined);
 const positional = rest[0] && !rest[0].startsWith("--") ? rest[0] : undefined;
-const usage = "usage: bun tools/texel/main.ts map|build <map.json> | write <map.json> --name <name> [--values <values.json>] | dataset --set <name> [--valid <permille>] [--limit <n>] | resolve <dataset.bin> | info <dataset.bin> | eval <map.json> <dataset.bin> [--workers <n>] [--limit <n>]";
+const usage = "usage: bun tools/texel/main.ts map|build <map.json> | write <map.json> --name <name> [--values <values.json>] | dataset --set <name> [--valid <permille>] [--limit <n>] | resolve <dataset.bin> | info <dataset.bin> | eval|trace <map.json> <dataset.bin> [--workers <n>] [--limit <n>] [--delta <factor>] [--tol <cp>]";
 const die = (msg: string): never => {
   console.error(msg);
   process.exit(2);
@@ -127,6 +130,28 @@ if (step === "map" || step === "build" || step === "write") {
   const usable = scores.filter((s) => !Number.isNaN(s));
   const mean = usable.reduce((a, s) => a + Math.abs(s), 0) / usable.length;
   console.log(`${count} positions, ${count - usable.length} unusable, mean |score| ${mean.toFixed(1)} cp, ${Math.round(ms)} ms, ${Math.round((count / ms) * 1000)} positions/s`);
+} else if (step === "trace") {
+  const m = loadMap(positional ?? die(usage));
+  const dsPath = rest[1] ?? die(usage);
+  const { header, records } = readDatasetRaw(dsPath);
+  const limit = opt("--limit") ? Number(opt("--limit")) : undefined;
+  const count = Math.min(header.count, limit ?? header.count);
+  const deltaFactor = Number(opt("--delta") ?? 4);
+  const tol = Number(opt("--tol") ?? 2);
+  const dir = join(REPO, "tmp", "texel", "traces");
+  const out = join(dir, `${m.map.subject}-${m.hash}-${header.name}${limit ? `-${count}` : ""}-d${deltaFactor}-t${tol}.trace`);
+  if (existsSync(out)) {
+    const t = readTrace(out);
+    console.log(`${out}: reused, ${t.header.usable} usable positions, ${t.header.nnz} coefficients`);
+  } else {
+    const adapter = await WasmAdapter.open(buildTuning(m), m, opt("--workers") ? Number(opt("--workers")) : undefined);
+    await adapter.load(records, count);
+    const t = await probe(adapter, m, { name: header.name, sha256: sha256(dsPath), count }, { deltaFactor, tol }, (l) => console.log(l));
+    await adapter.close();
+    mkdirSync(dir, { recursive: true });
+    writeTrace(out, t);
+    console.log(`${out}: ${t.header.usable} usable positions, ${t.header.nnz} coefficients`);
+  }
 } else {
   die(usage);
 }

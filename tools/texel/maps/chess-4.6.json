@@ -27,31 +27,40 @@
       "name": "FMAXMT",
       "sources": [
         { "file": "eval.ts", "symbol": "FMAXMT" }
-      ]
+      ],
+      "step": 64,
+      "min": 0
     },
     {
       "name": "FTRADE",
       "sources": [
         { "file": "eval.ts", "symbol": "FTRADE" }
-      ]
+      ],
+      "step": 4,
+      "min": 0
     },
     {
       "name": "FTRDSL",
       "sources": [
         { "file": "eval.ts", "symbol": "FTRDSL" }
-      ]
+      ],
+      "step": 64
     },
     {
       "name": "FTRPOK",
       "sources": [
         { "file": "eval.ts", "symbol": "FTRPOK" }
-      ]
+      ],
+      "step": 1,
+      "min": 0
     },
     {
       "name": "FTRPWN",
       "sources": [
         { "file": "eval.ts", "symbol": "FTRPWN" }
-      ]
+      ],
+      "step": 1,
+      "min": 1
     },
     {
       "name": "FMTEGE",
@@ -88,7 +97,8 @@
       "name": "FKSQBN",
       "sources": [
         { "file": "eval.ts", "symbol": "FKSQBN" }
-      ]
+      ],
+      "step": 1
     },
     {
       "name": "FKSANQ",
@@ -118,7 +128,9 @@
       "name": "FKSMNF",
       "sources": [
         { "file": "eval.ts", "symbol": "FKSMNF" }
-      ]
+      ],
+      "step": 1,
+      "min": 0
     },
     {
       "name": "FKSFRD",
@@ -136,7 +148,8 @@
       "name": "FKSMAT",
       "sources": [
         { "file": "eval.ts", "symbol": "FKSMAT" }
-      ]
+      ],
+      "step": 1
     },
     {
       "name": "FKSOPF",
