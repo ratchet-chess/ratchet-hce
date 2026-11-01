@@ -44,8 +44,27 @@ function fromSan(san: string, board: Uint8Array, side: number, legal: string[]):
   return found[0];
 }
 
+/** the SAN of the legal UCI move `uci`, with `board` the piece code per square; no check or mate suffix */
+export function toSan(uci: string, board: Uint8Array, legal: string[]): string {
+  const f = square(uci);
+  const t = square(uci.slice(2));
+  const type = board[f] & 7;
+  if (type === 6 && Math.abs(t - f) === 2) return t > f ? "O-O" : "O-O-O";
+  const capture = board[t] !== 0 || (type === 1 && f % 8 !== t % 8);
+  const promotion = uci[4] ? `=${uci[4].toUpperCase()}` : "";
+  if (type === 1) return `${capture ? `${uci[0]}x` : ""}${uci.slice(2, 4)}${promotion}`;
+  const rivals = legal.filter((u) => u !== uci && u.slice(2, 4) === uci.slice(2, 4) && (board[square(u)] & 7) === type);
+  let from = "";
+  if (rivals.length) {
+    if (rivals.every((u) => u[0] !== uci[0])) from = uci[0];
+    else if (rivals.every((u) => u[1] !== uci[1])) from = uci[1];
+    else from = uci.slice(0, 2);
+  }
+  return `${PIECES[type]}${from}${capture ? "x" : ""}${uci.slice(2, 4)}`;
+}
+
 /** applies a legal UCI move to `board`, with castling, en passant and promotion */
-function apply(board: Uint8Array, uci: string, side: number): void {
+export function applyUci(board: Uint8Array, uci: string, side: number): void {
   const f = square(uci);
   const t = square(uci.slice(2));
   const p = board[f];
@@ -90,7 +109,7 @@ export function parseGames(texts: string[], engine: Replayer): Game[] {
       const san = word.replace(/^\d+\.+/, "");
       engine.setPosition(fen, game.moves);
       const uci = fromSan(san, board, side, engine.legalUci());
-      apply(board, uci, side);
+      applyUci(board, uci, side);
       game.moves.push(uci);
       game.comments.push("");
       side ^= 1;

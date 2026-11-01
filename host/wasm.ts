@@ -152,6 +152,11 @@ export class Engine {
     return this.wasm.goClock !== undefined;
   }
 
+  /** whether the release keeps a game of its own, played through gameStart, gamePlayer and gameMove */
+  get ownsGame(): boolean {
+    return this.wasm.gameStart !== undefined;
+  }
+
   /**
    * One move of a game, timed by the release from `limits` and `clock`: the side
    * to move's time and increment, moves to go, a fixed time, or a depth.
