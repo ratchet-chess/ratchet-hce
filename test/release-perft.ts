@@ -27,6 +27,9 @@ const RELEASES: { name: string; allows: (move: number, core: Engine) => boolean 
     name: "chess-4.6",
     allows: (m, core) => !(m & FLAG_CASTLE) || ((m >>> 6) & 7) !== 2 || !core.attacked(((m >>> 6) & 63) - 1, ((m >>> 6) & 63) < 8 ? 1 : 0),
   },
+  // Fruit 2.1 generates every move; its perftRelease returns -1 where its board_is_ok
+  // or its staged generators disagree
+  { name: "fruit-2.1", allows: () => true },
 ];
 
 // A variant, engines/<release>-<name>/, keeps its release's generator, so it takes its release's entry.
