@@ -64,6 +64,7 @@
     },
     {
       "name": "FMTEGE",
+      "fixed": true,
       "sources": [
         { "file": "eval.ts", "symbol": "FMTEGE" },
         { "file": "search.ts", "symbol": "FMTEGE" }
@@ -71,18 +72,21 @@
     },
     {
       "name": "FKCORN",
+      "fixed": true,
       "sources": [
         { "file": "eval.ts", "symbol": "FKCORN" }
       ]
     },
     {
       "name": "FKKNMT",
+      "fixed": true,
       "sources": [
         { "file": "eval.ts", "symbol": "FKKNMT" }
       ]
     },
     {
       "name": "FCHKOP",
+      "fixed": true,
       "sources": [
         { "file": "eval.ts", "symbol": "FCHKOP" }
       ]
