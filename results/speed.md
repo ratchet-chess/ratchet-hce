@@ -13,4 +13,5 @@ on one host, one search at a time, with nothing else running.
 
 | release | searches | depth | release knodes/s | original knodes/s | original over release | protocol | commit | date |
 |---|---|---|---|---|---|---|---|---|
+| fruit-2.1 | 192 | 8 | 2419 | 2942 | 1.22x | 192 reference positions to depth 8, one fresh search each; release under Bun, original as built in the anchor tree; local runner on local | d7f5a6f | 2026-11-02 |
 | phalanx-xii | 192 | 8 | 1703 | 2123 | 1.25x | 192 reference positions to depth 8, one fresh search each; release under Bun, original as built in the anchor tree; local runner on local | 9342f2a | 2026-10-30 |
