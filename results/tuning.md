@@ -16,6 +16,8 @@ writes the row.
 
 | subject | K | train before | train after | valid before | valid after | valid after (linear) | tuned | changed | protocol | commit | date |
 |---|---|---|---|---|---|---|---|---|---|---|---|
+| chess-4.6 | 1.051 | 0.15556 | 0.15197 | 0.15467 | 0.15101 | 0.15145 | 60 | 58 | chess-4.6-selfplay-d5.resolved; adam α 0.1, at most 2000 epochs, patience 100; trace Δ ×4, tol 2 cp; touched ≥ 100 | 556a237 | 2026-11-02 |
+| chess-4.6 | 1.156 | 0.12999 | 0.13016 | 0.13123 | 0.13104 | 0.12595 | 60 | 58 | schaigorodsky-before-1978.resolved; adam α 0.1, at most 2000 epochs, patience 100; trace Δ ×4, tol 2 cp; touched ≥ 100 | 556a237 | 2026-11-02 |
 | chess-4.6 | 1.331 | 0.05186 | 0.04839 | 0.05713 | 0.05308 | 0.05392 | 62 | 61 | zurichess-quiet.resolved, first 20000; adam α 0.1, at most 2000 epochs, patience 100; trace Δ ×4, tol 2 cp; touched ≥ 100 | 1410157 | 2026-11-01 |
 | chess-4.6 | 1.399 | 0.05043 | 0.04911 | 0.05946 | 0.05797 |  | 65 | 44 | zurichess-quiet.resolved, first 5000; local over the adapter, at most 1 passes | 1410157 | 2026-11-01 |
 | chess-4.6 | 1.332 | 0.05165 | 0.04832 | 0.05165 | 0.04831 | 0.04828 | 60 | 59 | zurichess-quiet.resolved; adam α 0.1, at most 2000 epochs, patience 100; trace Δ ×4, tol 2 cp; touched ≥ 100 | 4c547a8 | 2026-11-02 |
