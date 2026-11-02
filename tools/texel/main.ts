@@ -19,13 +19,18 @@
  *
  *   bun tools/texel/main.ts eval <map.json> <dataset.bin> [--workers <n>] [--limit <n>]
  *                                                           scores every position at the map's defaults, timed
- *   bun tools/texel/main.ts trace <map.json> <dataset.bin> [--workers <n>] [--limit <n>] [--delta <factor>] [--tol <cp>]
+ *   bun tools/texel/main.ts trace <map.json> <dataset.bin> [--workers <n>] [--sample <permille>] [--limit <n>] [--delta <factor>] [--tol <cp>]
  *                                                           the probed trace, tmp/texel/traces/; reused when present
  *   bun tools/texel/main.ts tune <map.json> <dataset.bin> --optimizer adam|local [--over trace|adapter]
- *       [--workers <n>] [--limit <n>] [--delta <factor>] [--tol <cp>] [--min-touch <n>]
- *       [--alpha <a>] [--epochs <n>] [--patience <n>] [--passes <n>]
+ *       [--workers <n>] [--sample <permille>] [--limit <n>] [--delta <factor>] [--tol <cp>] [--min-touch <n>]
+ *       [--alpha <a>] [--epochs <n>] [--patience <n>] [--passes <n>] [--from <values.json>]
  *                                                           a run: K, the optimizer, the rounded values verified
- *                                                           through the adapter; tmp/texel/runs/ and results/tuning.md
+ *                                                           through the adapter; tmp/texel/runs/ and results/tuning.md.
+ *                                                           local saves its values after every pass, so a stopped
+ *                                                           run keeps them, and --from resumes from them
+ *
+ * --sample keeps an even share of a dataset's positions, chosen by a hash of each
+ * record; --limit then takes the first n of those.
  *
  * values.json maps element names, as `map` prints them, to values.
  *
@@ -40,7 +45,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { Engine } from "../../host/wasm.ts";
-import { type Position, type SetEntry, blankPosition, decodeRecord, mergeAndSplit, readDataset, readDatasetRaw, readSet, resolveAll, sha256, writeDataset } from "./dataset.ts";
+import { type Position, RECORD, type SetEntry, blankPosition, decodeRecord, mergeAndSplit, readDataset, readDatasetRaw, readSet, resolveAll, sampleRecords, sha256, writeDataset } from "./dataset.ts";
 import type { Adapter } from "./adapter.ts";
 import type { LoadedMap } from "./map.ts";
 import { loadMap } from "./map.ts";
@@ -81,13 +86,13 @@ async function openAdapter(m: LoadedMap, records: Uint8Array, count: number): Pr
   return a;
 }
 
-/** the trace of `m` over the first `count` positions of a dataset, read when present, else probed through `adapter` */
-async function ensureTrace(m: LoadedMap, dsPath: string, name: string, count: number, limited: boolean, adapter: Adapter, deltaFactor: number, tol: number): Promise<Trace> {
+/** the trace of `m` over the positions of a dataset the adapter holds, read when present, else probed through `adapter`; `subset` names a sample or limit */
+async function ensureTrace(m: LoadedMap, dsPath: string, name: string, count: number, subset: string, adapter: Adapter, deltaFactor: number, tol: number): Promise<Trace> {
   // a trace depends on the build (m.hash), the dataset, and the code that probes and scores
   const code = createHash("sha256");
   for (const f of ["trace.ts", "adapter.ts", "wasm.ts", "wasm-worker.ts", "uci.ts", "dataset.ts"]) code.update(readFileSync(join(REPO, "tools", "texel", f)));
   const dir = join(REPO, "tmp", "texel", "traces");
-  const out = join(dir, `${m.map.subject}-${m.hash}-${code.digest("hex").slice(0, 8)}-${opt("--adapter") ?? "wasm"}-${name}${limited ? `-${count}` : ""}-d${deltaFactor}-t${tol}.trace`);
+  const out = join(dir, `${m.map.subject}-${m.hash}-${code.digest("hex").slice(0, 8)}-${opt("--adapter") ?? "wasm"}-${name}${subset}-d${deltaFactor}-t${tol}.trace`);
   if (existsSync(out)) {
     const t = readTrace(out);
     console.log(`${out}: reused, ${t.header.usable} usable positions, ${t.header.nnz} coefficients`);
@@ -197,20 +202,25 @@ if (step === "map" || step === "build" || step === "write") {
 } else if (step === "trace" || step === "tune") {
   const m = loadMap(positional ?? die(usage));
   const dsPath = rest[1] ?? die(usage);
-  const { header, records } = readDatasetRaw(dsPath);
+  const raw = readDatasetRaw(dsPath);
+  const header = raw.header;
+  const sample = opt("--sample") ? Number(opt("--sample")) : undefined;
+  const records = sample === undefined ? raw.records : sampleRecords(raw.records, sample);
   const limit = opt("--limit") ? Number(opt("--limit")) : undefined;
-  const count = Math.min(header.count, limit ?? header.count);
+  const count = Math.min(records.length / RECORD, limit ?? Infinity);
+  const subset = `${sample !== undefined ? `-s${sample}` : ""}${limit !== undefined ? `-${count}` : ""}`;
+  if (sample !== undefined) console.log(`sample ${sample}‰: ${records.length / RECORD} of ${header.count} positions`);
   const deltaFactor = Number(opt("--delta") ?? 4);
   const tol = Number(opt("--tol") ?? 2);
   const adapter = await openAdapter(m, records, count);
   if (step === "trace") {
-    await ensureTrace(m, dsPath, header.name, count, limit !== undefined, adapter, deltaFactor, tol);
+    await ensureTrace(m, dsPath, header.name, count, subset, adapter, deltaFactor, tol);
   } else {
     const optimizer = opt("--optimizer") ?? die(usage);
     const over = opt("--over") ?? "trace";
     if (!["adam", "local"].includes(optimizer) || !["trace", "adapter"].includes(over) || (optimizer === "adam" && over !== "trace")) die("--optimizer adam (over the trace) or local (over the trace or the adapter)");
     const minTouch = Number(opt("--min-touch") ?? 100);
-    const trace = over === "trace" ? await ensureTrace(m, dsPath, header.name, count, limit !== undefined, adapter, deltaFactor, tol) : undefined;
+    const trace = over === "trace" ? await ensureTrace(m, dsPath, header.name, count, subset, adapter, deltaFactor, tol) : undefined;
     const base = trace ? trace.base : await adapter.eval();
     const labels: Labels = { result: new Float64Array(count), valid: new Uint8Array(count) };
     const p = blankPosition();
@@ -226,6 +236,19 @@ if (step === "map" || step === "build" || step === "write") {
     const ids = tunable(m, trace, minTouch);
     const held = m.elements.filter((e) => !e.fixed && !ids.includes(e.id)).map((e) => e.name);
     console.log(`${ids.length} elements tuned${held.length ? `; held for fewer than ${minTouch} positions touched: ${held.join(" ")}` : ""}`);
+    const runs = join(REPO, "tmp", "texel", "runs");
+    mkdirSync(runs, { recursive: true });
+    const id = `${m.map.subject}-${new Date().toISOString().replace(/[:.]/g, "-")}`;
+    // the values as the subject stores them, only those off their defaults
+    const valuesOf = (theta: Float64Array) => {
+      const values: Record<string, number> = {};
+      for (const i of ids) {
+        const e = m.elements[i];
+        const v = storable(e, theta[i]);
+        if (v !== e.default) values[e.name] = v;
+      }
+      return values;
+    };
     let theta: Float64Array;
     let protocol: string;
     if (optimizer === "adam") {
@@ -238,21 +261,29 @@ if (step === "map" || step === "build" || step === "write") {
       protocol = `adam α ${alpha}, at most ${epochs} epochs, patience ${patience}`;
     } else {
       const passes = Number(opt("--passes") ?? 20);
+      const from = opt("--from");
+      let start: Float64Array | undefined;
+      if (from) {
+        start = Float64Array.from(m.elements.map((e) => e.default));
+        for (const [name, v] of Object.entries(JSON.parse(readFileSync(from, "utf8")) as Record<string, number>)) {
+          const e = m.elements.find((x) => x.name === name) ?? die(`${from}: ${name} is not in the map`);
+          if (!ids.includes(e.id)) die(`${from}: ${name} is not tuned in this run`);
+          start[e.id] = v;
+        }
+      }
+      const saved = join(runs, `${id}.pass.values.json`);
+      console.log(`values after each pass: ${saved}`);
       const target = trace ? traceTarget(trace, m, labels, K) : adapterTarget(adapter, m, labels, K);
-      theta = await localSearch(target, m, ids, { maxPasses: passes }, (l) => console.log(l));
-      protocol = `local over the ${over}, at most ${passes} passes`;
+      theta = await localSearch(target, m, ids, { maxPasses: passes, start, onPass: (t) => writeFileSync(saved, `${JSON.stringify(valuesOf(t), null, 2)}\n`) }, (l) => console.log(l));
+      protocol = `local over the ${over}, at most ${passes} passes${from ? `, from ${basename(from)}` : ""}`;
     }
     // the values as the subject stores them, verified through the adapter
-    const values: Record<string, number> = {};
+    const values = valuesOf(theta);
     const rounded = Float64Array.from(m.elements.map((e) => e.default));
-    for (const id of ids) {
-      const e = m.elements[id];
-      rounded[id] = storable(e, theta[id]);
-      if (rounded[id] !== e.default) values[e.name] = rounded[id];
-    }
+    for (const i of ids) rounded[i] = storable(m.elements[i], theta[i]);
     const linear = trace ? linearEval(trace, rounded) : undefined;
     await adapter.reset();
-    for (const id of ids) await adapter.set(id, rounded[id]);
+    for (const i of ids) await adapter.set(i, rounded[i]);
     const truth = await adapter.eval();
     const result = {
       subject: m.map.subject,
@@ -269,13 +300,10 @@ if (step === "map" || step === "build" || step === "write") {
       linearValid1: linear ? loss(linear, labels, K, true) : null,
       tuned: ids.length,
       changed: Object.keys(values).length,
-      protocol: `${header.name}${limit !== undefined ? `, first ${count}` : ""}; ${protocol}${trace ? `; trace Δ ×${deltaFactor}, tol ${tol} cp; touched ≥ ${minTouch}` : ""}`,
+      protocol: `${header.name}${sample !== undefined ? `, sample ${sample}‰` : ""}${limit !== undefined ? `, first ${count}` : ""}; ${protocol}${trace ? `; trace Δ ×${deltaFactor}, tol ${tol} cp; touched ≥ ${minTouch}` : ""}`,
       values,
     };
     console.log(`after (true, rounded): train ${result.train1.toFixed(6)}, valid ${result.valid1.toFixed(6)}${linear ? `; linear: train ${result.linearTrain1!.toFixed(6)}, valid ${result.linearValid1!.toFixed(6)}` : ""}; ${result.changed} values changed`);
-    const runs = join(REPO, "tmp", "texel", "runs");
-    mkdirSync(runs, { recursive: true });
-    const id = `${m.map.subject}-${new Date().toISOString().replace(/[:.]/g, "-")}`;
     writeFileSync(join(runs, `${id}.json`), `${JSON.stringify(result, null, 2)}\n`);
     writeFileSync(join(runs, `${id}.values.json`), `${JSON.stringify(values, null, 2)}\n`);
     console.log(`${join(runs, id)}.json; values for write: ${join(runs, id)}.values.json`);

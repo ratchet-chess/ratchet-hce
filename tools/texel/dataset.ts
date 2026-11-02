@@ -255,6 +255,19 @@ export function readDatasetRaw(path: string): { header: Header; records: Uint8Ar
   return { header, records };
 }
 
+/** the records whose FNV-1a hash falls below `permille` of 1000: an even share whatever the file's order, in shared memory like readDatasetRaw's */
+export function sampleRecords(records: Uint8Array, permille: number): Uint8Array {
+  const keep: number[] = [];
+  for (let n = 0; n < records.length / RECORD; n++) {
+    let h = 0x811c9dc5;
+    for (let i = n * RECORD; i < (n + 1) * RECORD; i++) h = Math.imul(h ^ records[i], 16777619);
+    if ((h >>> 0) % 1000 < permille) keep.push(n);
+  }
+  const out = new Uint8Array(new SharedArrayBuffer(keep.length * RECORD));
+  keep.forEach((n, k) => out.set(records.subarray(n * RECORD, (n + 1) * RECORD), k * RECORD));
+  return out;
+}
+
 /** record `n` of `records`, decoded into `out` (its board reused) */
 export function decodeRecord(records: Uint8Array, n: number, out: Position): Position {
   const o = n * RECORD;

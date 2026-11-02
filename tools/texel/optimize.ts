@@ -13,7 +13,7 @@
  *   `patience` epochs without a better one.
  * - local: Österlund's local search (2014): for each free element in turn, one
  *   step up, kept if the loss drops, else one step down, kept if it drops; passes
- *   repeat until one changes nothing. Over a trace, a try updates only the positions
+ *   repeat until one changes nothing, or up to a cap. A run may start from saved values. Over a trace, a try updates only the positions
  *   the element touches. Through an adapter, a try is one eval of every position.
  */
 import type { Adapter } from "./adapter.ts";
@@ -229,10 +229,11 @@ export async function localSearch(
   target: LocalTarget,
   m: LoadedMap,
   ids: number[],
-  opts: { maxPasses: number },
+  opts: { maxPasses: number; start?: Float64Array; onPass?: (theta: Float64Array) => void },
   log: (line: string) => void,
 ): Promise<Float64Array> {
-  const theta = Float64Array.from(m.elements.map((e) => e.default));
+  const theta = Float64Array.from(opts.start ?? m.elements.map((e) => e.default));
+  for (const id of ids) if (theta[id] !== m.elements[id].default) await target.keep(id, theta[id]);
   let best = (await target.losses()).train;
   for (let pass = 1; pass <= opts.maxPasses; pass++) {
     let changed = 0;
@@ -253,6 +254,7 @@ export async function localSearch(
     }
     const { train, valid } = await target.losses();
     log(`pass ${pass}: ${changed} changed, train ${train.toFixed(6)}, valid ${valid.toFixed(6)}`);
+    opts.onPass?.(theta);
     if (!changed) break;
   }
   return theta;
