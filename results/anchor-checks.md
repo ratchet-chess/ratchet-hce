@@ -5,10 +5,10 @@ anchors against each other, and `tools/fit-rating.ts --check` fits each against 
 drops the one that disagrees most, until the rest agree. An anchor that agrees can rate a release;
 one that is dropped should not.
 
-The checks below were played in the retired chess-bench image. The anchor tree that replaced it
-plays the same moves with the same node counts for every deterministic anchor (go depth 5 over 16
-book lines). For Blunders 0.1.0, Lynx, Magog and Stash 9 and 11, which are not deterministic, the
-node counts could not compare the two builds.
+Checks A to F were played in the retired chess-bench image, and G in the anchor tree that
+replaced it. That tree plays the same moves with the same node counts for every deterministic
+anchor (go depth 5 over 16 book lines). For Blunders 0.1.0, Lynx, Magog and Stash 9 and 11, which
+are not deterministic, the node counts could not compare the two builds.
 
 Protocol: 53+0.44 here, Hash 128, `books/8moves_v3.pgn`, draw adjudication, no resign.
 
@@ -20,6 +20,7 @@ Protocol: 53+0.44 here, Hash 128, `books/8moves_v3.pgn`, draw adjudication, no r
 | D | 2026-10-24 | rustic, stash-11, stash-13 | 300 | consistent |
 | E | 2026-10-24 | stash-11, stash-13, stash-15.3 | 300 | consistent |
 | F | 2026-10-25 | stash-15.3, crucible, cinnamon, sofcheck, stash-19 | 1000 | consistent; Cinnamon segfaulted in 3 of its 400 games |
+| G | 2026-11-01 | stash-19, floyd, blunder, stash-21, velvet | 1000 | consistent; Stash 21 lost 3 of its 400 games on time |
 
 | anchor | CCRL Blitz | fitted here (95%) | check: verdict |
 |---|---|---|---|
@@ -41,4 +42,8 @@ Protocol: 53+0.44 here, Hash 128, `books/8moves_v3.pgn`, draw adjudication, no r
 | crucible-1.0.0 | 2285 | 2280 ± 36 | F: agrees |
 | cinnamon-2.4 | 2327 | 2358 ± 36 | F: agrees |
 | sofcheck-0.9-beta | 2384 | 2379 ± 36 | F: agrees |
-| stash-19.0 | 2474 | 2450 ± 38 | F: agrees |
+| stash-19.0 | 2474 | 2450 ± 38; 2437 ± 43 | F: agrees; G: agrees |
+| floyd-0.9 | 2583 | 2599 ± 36 | G: agrees |
+| blunder-8.5.5 | 2663 | 2655 ± 36 | G: agrees |
+| stash-21.0 | 2714 | 2720 ± 37 | G: agrees |
+| velvet-1.2.0 | 2764 | 2781 ± 39 | G: agrees |
