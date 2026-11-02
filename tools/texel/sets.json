@@ -7,5 +7,18 @@
     "archive": "tuner.7z",
     "member": "quiet-labeled.epd",
     "format": "epd-c9"
+  },
+  {
+    "name": "schaigorodsky-before-1978",
+    "url": "https://ndownloader.figshare.com/files/6971717",
+    "sha256": "86732c0a23421da5985f5ba40d9db9bf2be1f6e2456b88629c35740ae71be54d",
+    "license": "CC BY 4.0 (Schaigorodsky, Chess Database, Figshare, doi:10.6084/m9.figshare.4276523.v1)",
+    "archive": "6971717",
+    "member": "all.pgn",
+    "format": "pgn",
+    "options": {
+      "before": 1978,
+      "gamePermille": 250
+    }
   }
 ]
