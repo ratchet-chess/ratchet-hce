@@ -20,13 +20,13 @@
  * 1/2 and 1.
  */
 import { createHash } from "node:crypto";
-import { createReadStream, readFileSync, writeFileSync } from "node:fs";
+import { closeSync, createReadStream, openSync, readFileSync, readSync, writeFileSync } from "node:fs";
 import { createInterface } from "node:readline";
 import { createGunzip } from "node:zlib";
 import { formatFen, parseFen } from "../../host/fen.ts";
 import type { Engine } from "../../host/wasm.ts";
 import { moveToUci } from "../../host/wasm.ts";
-import { parseGames, splitGames } from "../pgn.ts";
+import { parseGames } from "../pgn.ts";
 
 export interface Position {
   board: Uint8Array;
@@ -97,7 +97,9 @@ function position(fen: string, result: number, score: number): Position {
  * - pgn: positions sampled from games, labeled with the game's result. Options:
  *   skip (plies from the start, 8), perGame (at most, 10); positions in check are
  *   left out, and the chosen plies are those with the lowest hash, so a sample is
- *   the same on every run.
+ *   the same on every run. before: only games whose Date tag gives a year below
+ *   it (an undated game is left out). gamePermille: only games whose text's hash,
+ *   modulo 1000, is below it, a sample that is the same on every run.
  */
 export async function* readSet(path: string, format: Format, options: Record<string, number | string>, core: Engine): AsyncGenerator<Position> {
   if (format === "pgn") {
@@ -131,10 +133,17 @@ export async function* readSet(path: string, format: Format, options: Record<str
 async function* readPgn(path: string, options: Record<string, number | string>, core: Engine): AsyncGenerator<Position> {
   const skip = Number(options.skip ?? 8);
   const perGame = Number(options.perGame ?? 10);
+  const before = options.before === undefined ? undefined : Number(options.before);
+  const gamePermille = Number(options.gamePermille ?? 1000);
   const replayer = { setPosition: (f: string, m: string[]) => core.setPosition(f, m), legalUci: () => core.legalMoves().map(moveToUci) };
-  for (const text of splitGames(readFileSync(path, "utf8"))) {
+  for await (const text of pgnGames(path)) {
     const result = RESULTS[/^\[Result "([^"]*)"\]/m.exec(text)?.[1] ?? ""];
     if (result === undefined) continue;
+    if (before !== undefined) {
+      const year = /^\[Date "(\d{4})/m.exec(text)?.[1];
+      if (year === undefined || Number(year) >= before) continue;
+    }
+    if (gamePermille < 1000 && fnv(text) % 1000 >= gamePermille) continue;
     let game;
     try {
       [game] = parseGames([text], replayer);
@@ -153,6 +162,25 @@ async function* readPgn(path: string, options: Record<string, number | string>, 
     plies.sort((a, b) => a.key - b.key);
     for (const p of plies.slice(0, perGame)) yield position(p.fen, result, NaN);
   }
+}
+
+/**
+ * The games of a PGN file, read line by line, so a file larger than a string can
+ * hold is read too. A game starts at a tag line after a blank line, as splitGames
+ * splits a whole text.
+ */
+async function* pgnGames(path: string): AsyncGenerator<string> {
+  let game: string[] = [];
+  let blank = false;
+  for await (const line of lines(path)) {
+    if (line.startsWith("[") && blank && game.some((l) => !l.startsWith("[") && l.trim())) {
+      yield game.join("\n");
+      game = [];
+    }
+    blank = !line.trim();
+    game.push(line);
+  }
+  if (game.some((l) => l.trim())) yield game.join("\n");
 }
 
 /** FNV-1a over a string, as an unsigned 32-bit number */
@@ -287,7 +315,15 @@ export function resolveAll(positions: Position[], validPermille: number, core: E
   return { positions: merged, counts: { input: positions.length, inCheckBefore: checkBefore, resolvedChanged: changed, inCheckAfter: checkAfter, mergedAway, output: merged.length } };
 }
 
-/** the sha256 of a file, hex */
+/** the sha256 of a file, hex, read in chunks so a file of any size is hashed */
 export function sha256(path: string): string {
-  return createHash("sha256").update(readFileSync(path)).digest("hex");
+  const hash = createHash("sha256");
+  const buf = Buffer.alloc(1 << 24);
+  const fd = openSync(path, "r");
+  try {
+    for (let n; (n = readSync(fd, buf, 0, buf.length, null)) > 0; ) hash.update(buf.subarray(0, n));
+  } finally {
+    closeSync(fd);
+  }
+  return hash.digest("hex");
 }

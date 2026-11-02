@@ -9,6 +9,9 @@
  *                                                           the tuned variant engines/<release>-<name>/
  *   bun tools/texel/main.ts dataset --set <name> [--valid <permille>] [--limit <n>]
  *                                                           tmp/texel/datasets/<set>.bin
+ *   bun tools/texel/main.ts dataset --pgn <file> --name <name> [--opt <key>=<value> ...] [--valid <permille>] [--limit <n>]
+ *                                                           the same from games Ratchet played itself, such
+ *                                                           as self-play (pgn reader options, dataset.ts)
  *   bun tools/texel/main.ts resolve <dataset.bin>           <set>.resolved.bin, by the neutral resolver
  *   bun tools/texel/main.ts info <dataset.bin>              a dataset's header and label counts
  * eval, trace and tune take --adapter wasm (default; --workers <n>) or uci
@@ -35,7 +38,7 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import { Engine } from "../../host/wasm.ts";
 import { type Position, type SetEntry, blankPosition, decodeRecord, mergeAndSplit, readDataset, readDatasetRaw, readSet, resolveAll, sha256, writeDataset } from "./dataset.ts";
 import type { Adapter } from "./adapter.ts";
@@ -54,7 +57,7 @@ const DOWNLOADS = "/ws/downloads";
 const [step, ...rest] = process.argv.slice(2);
 const opt = (name: string) => (rest.includes(name) ? rest[rest.indexOf(name) + 1] : undefined);
 const positional = rest[0] && !rest[0].startsWith("--") ? rest[0] : undefined;
-const usage = "usage: bun tools/texel/main.ts map|build <map.json> | write <map.json> --name <name> [--values <values.json>] | dataset --set <name> [--valid <permille>] [--limit <n>] | resolve <dataset.bin> | info <dataset.bin> | eval|trace <map.json> <dataset.bin> [--workers <n>] [--limit <n>] [--delta <factor>] [--tol <cp>] | tune <map.json> <dataset.bin> --optimizer adam|local [...] (see the header)";
+const usage = "usage: bun tools/texel/main.ts map|build <map.json> | write <map.json> --name <name> [--values <values.json>] | dataset --set <name> | --pgn <file> --name <name> [--opt <key>=<value> ...] [--valid <permille>] [--limit <n>] | resolve <dataset.bin> | info <dataset.bin> | eval|trace <map.json> <dataset.bin> [--workers <n>] [--limit <n>] [--delta <factor>] [--tol <cp>] | tune <map.json> <dataset.bin> --optimizer adam|local [...] (see the header)";
 const die = (msg: string): never => {
   console.error(msg);
   process.exit(2);
@@ -115,15 +118,27 @@ if (step === "map" || step === "build" || step === "write") {
     console.log(writeVariant(m, name, values));
   }
 } else if (step === "dataset") {
-  const sets = JSON.parse(readFileSync(join(REPO, "tools", "texel", "sets.json"), "utf8")) as SetEntry[];
-  const name = opt("--set") ?? die(usage);
-  const set = sets.find((s) => s.name === name) ?? die(`${name} is not in tools/texel/sets.json, the allow-list`);
-  const archive = join(DOWNLOADS, set.archive);
-  if (!existsSync(archive)) die(`${archive} is missing: bun tools/ws.ts fetch ${set.url} ${set.sha256}`);
-  const seen = sha256(archive);
-  if (seen !== set.sha256) die(`${archive} has sha256 ${seen}, not the pinned ${set.sha256}`);
-  let file = archive;
+  let set: SetEntry;
+  let file: string;
+  const pgn = opt("--pgn");
+  if (pgn) {
+    // A set Ratchet made itself, such as a release's self-play games: it has no
+    // outside terms, so it is not on the allow-list.
+    file = resolve(pgn);
+    const options = Object.fromEntries(rest.flatMap((a, i) => (a === "--opt" ? [rest[i + 1].split("=")] : [])).map(([k, v]) => [k, Number.isNaN(Number(v)) ? v : Number(v)]));
+    set = { name: opt("--name") ?? die(usage), url: `file:${relative(REPO, file)}`, sha256: sha256(file), license: "Ratchet's own games", archive: basename(file), format: "pgn", options };
+  } else {
+    const sets = JSON.parse(readFileSync(join(REPO, "tools", "texel", "sets.json"), "utf8")) as SetEntry[];
+    const name = opt("--set") ?? die(usage);
+    set = sets.find((s) => s.name === name) ?? die(`${name} is not in tools/texel/sets.json, the allow-list`);
+    const archive = join(DOWNLOADS, set.archive);
+    if (!existsSync(archive)) die(`${archive} is missing: bun tools/ws.ts fetch ${set.url} ${set.sha256}`);
+    const seen = sha256(archive);
+    if (seen !== set.sha256) die(`${archive} has sha256 ${seen}, not the pinned ${set.sha256}`);
+    file = archive;
+  }
   if (set.member) {
+    const archive = file;
     const dir = join(DOWNLOADS, set.name);
     file = join(dir, set.member);
     if (!existsSync(file)) {
