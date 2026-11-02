@@ -18,5 +18,6 @@ writes the row.
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | chess-4.6 | 1.331 | 0.05186 | 0.04839 | 0.05713 | 0.05308 | 0.05392 | 62 | 61 | zurichess-quiet.resolved, first 20000; adam α 0.1, at most 2000 epochs, patience 100; trace Δ ×4, tol 2 cp; touched ≥ 100 | 1410157 | 2026-11-01 |
 | chess-4.6 | 1.399 | 0.05043 | 0.04911 | 0.05946 | 0.05797 |  | 65 | 44 | zurichess-quiet.resolved, first 5000; local over the adapter, at most 1 passes | 1410157 | 2026-11-01 |
+| chess-4.6 | 1.332 | 0.05165 | 0.04897 | 0.05165 | 0.04899 | 0.04800 | 64 | 63 | zurichess-quiet.resolved; adam α 0.1, at most 2000 epochs, patience 100; trace Δ ×4, tol 2 cp; touched ≥ 100 | c3800a9 | 2026-11-02 |
 | phalanx-xii | 1.427 | 0.06025 | 0.05658 | 0.06043 | 0.05831 | 0.05798 | 482 | 472 | zurichess-quiet.resolved, first 100000; adam α 0.1, at most 2000 epochs, patience 100; trace Δ ×4, tol 2 cp; touched ≥ 100 | 1410157 | 2026-11-01 |
 | phalanx-xii | 1.427 | 0.06025 | 0.05863 | 0.06043 | 0.05957 | 0.05942 | 482 | 467 | zurichess-quiet.resolved, first 100000; local over the trace, at most 5 passes; trace Δ ×4, tol 2 cp; touched ≥ 100 | 1410157 | 2026-11-01 |
