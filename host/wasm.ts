@@ -121,16 +121,25 @@ export class Engine {
   static async load(name: string): Promise<Engine> {
     const bytes = readFileSync(name.endsWith(".wasm") ? name : new URL(`../build/${name}.wasm`, import.meta.url));
     let engine: Engine | undefined;
+    let memory: WebAssembly.Memory | undefined;
+    // an AssemblyScript string: UTF-16 at `ptr`, its byte length in the word before it
+    const text = (ptr: number) => {
+      if (!ptr || !memory) return "";
+      const bytes = new DataView(memory.buffer).getUint32(ptr - 4, true);
+      return String.fromCharCode(...new Uint16Array(memory.buffer, ptr, bytes >>> 1));
+    };
     const { instance } = await WebAssembly.instantiate(bytes, {
       env: {
-        abort(_msg: number, _file: number, line: number, col: number) {
-          throw new Error(`${name}.wasm abort at ${line}:${col}`);
+        abort(msg: number, _file: number, line: number, col: number) {
+          const why = text(msg);
+          throw new Error(`${name}.wasm abort${why ? `: ${why}` : ""} at ${line}:${col}`);
         },
         poll: () => engine!.poll(),
         onIteration: (depth: number, score: number, nodes: number) => engine!.onIteration(depth, score, nodes),
         clock: (nodes: number) => engine!.clock(nodes),
       },
     });
+    memory = instance.exports.memory as WebAssembly.Memory | undefined;
     engine = new Engine(instance.exports as unknown as Exports & Partial<Search> & Partial<Game> & Partial<ReleasePerft> & Partial<Clocked>);
     if (engine.wasm.init) engine.wasm.init();
     else engine.wasm.initCore();
