@@ -14,6 +14,10 @@ key, and a run under another protocol adds its own.
 
 | player | rating | ± | games | score | anchors | protocol | commit | date |
 |---|---|---|---|---|---|---|---|---|
+| chess-4.6-zurichess@4 | 1350 | 85 | 100 | 30.0% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 03d6f52 | 2026-11-02 |
+| chess-4.6-zurichess@5 | 1459 | 82 | 100 | 40.5% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 03d6f52 | 2026-11-02 |
+| chess-4.6-zurichess@6 | 1700 | 86 | 100 | 64.0% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 03d6f52 | 2026-11-02 |
+| chess-4.6-zurichess@7 | 1926 | 102 | 100 | 81.5% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 03d6f52 | 2026-11-02 |
 | chess-4.6@4 | 1289 | 89 | 100 | 24.5% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 3fa0961 | 2026-11-01 |
 | chess-4.6@5 | 1559 | 82 | 100 | 50.5% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 3fa0961 | 2026-11-01 |
 | chess-4.6@6 | 1594 | 83 | 100 | 54.0% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 3fa0961 | 2026-11-01 |
