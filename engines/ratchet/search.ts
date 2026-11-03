@@ -4,8 +4,9 @@
  * to move, in the engine's unit; a mate in n plies is MATE - n.
  *
  * Every node starts with a TT probe; non-PV nodes cut on a TT bound of enough
- * depth. The static eval is the raw eval plus the pawn correction history
- * (correction.ts); the TT stores the raw one. Before the move loop: reverse futility, razoring, null move and IIR.
+ * depth. The static eval is the raw eval plus the correction history
+ * (correction.ts); the TT stores the raw one. Before the move loop: reverse
+ * futility, razoring, null move and IIR.
  * In it: late move pruning, futility on the reduced depth, history pruning and
  * SEE pruning, then a check extension on the move and late move reductions.
  * Each form's origin is named where it is applied.

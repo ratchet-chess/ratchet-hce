@@ -1,40 +1,51 @@
 /**
- * Static-eval correction history by pawn structure, Stash 302136d: per side to
- * move and pawn key, a depth-weighted moving average of how far the search's
- * score fell from the static eval, kept in 1/256 of the engine's unit. The search
- * adds it to the raw eval; the TT keeps the raw one, so a probe corrects it again
- * with the table as it stands.
+ * Static-eval correction history, Stash 302136d (pawns) and dcc25ed (non-pawn
+ * pieces): three tables, by pawn key and by each color's non-pawn key, each per
+ * side to move. An entry is a depth-weighted moving average of how far the
+ * search's score fell from the static eval, kept in 1/256 of the engine's unit.
+ * The search adds the three entries to the raw eval; the TT keeps the raw one, so
+ * a probe corrects it again with the tables as they stand.
  *
- * The table lasts between moves of a game and is emptied by newGame; a fresh
- * go() empties it too, so a node signature starts clean.
+ * The tables last between moves of a game and are emptied by newGame; a fresh
+ * go() empties them too, so a node signature starts clean.
  */
 import { CORR_MAX, CORR_WEIGHT_MAX } from "./params";
-import { pawnKey } from "./state";
+import { nonPawnKey, pawnKey } from "./state";
 
 const SIZE = 16384;
 const GRAIN = 256;
 const WEIGHT_SCALE = 256;
 
-/** side * SIZE + the pawn key's low bits */
-const pawnCorr = new StaticArray<i32>(2 * SIZE);
+/** (table * 2 + side to move) * SIZE + the key's low bits; table 0 by pawns, 1 and 2 by White's and Black's non-pawn pieces */
+const corr = new StaticArray<i32>(3 * 2 * SIZE);
 
 export function clearCorrection(): void {
-  for (let i = 0; i < pawnCorr.length; i++) unchecked((pawnCorr[i] = 0));
+  for (let i = 0; i < corr.length; i++) unchecked((corr[i] = 0));
 }
 
-@inline function slot(stm: i32): i32 {
-  return stm * SIZE + <i32>(pawnKey & <u64>(SIZE - 1));
+@inline function slot(table: i32, stm: i32, key: u64): i32 {
+  return (table * 2 + stm) * SIZE + <i32>(key & <u64>(SIZE - 1));
 }
 
-/** the correction for the side to move, in the engine's unit (Stash get_correction) */
+/** the summed correction for the side to move, in the engine's unit (Stash correction_hist_score, once per table) */
 @inline export function correction(stm: i32): i32 {
-  return unchecked(pawnCorr[slot(stm)]) / GRAIN;
+  return (
+    unchecked(corr[slot(0, stm, pawnKey)]) / GRAIN +
+    unchecked(corr[slot(1, stm, unchecked(nonPawnKey[0]))]) / GRAIN +
+    unchecked(corr[slot(2, stm, unchecked(nonPawnKey[1]))]) / GRAIN
+  );
 }
 
-/** moves the side to move's entry toward `diff`, the score less the static eval, weighted by depth (Stash add_correction_history) */
+/** moves one entry toward `diff`, weighted by depth, within CORR_MAX (Stash correction_hist_update) */
+@inline function update(i: i32, w: i32, diff: i32): void {
+  const v = (unchecked(corr[i]) * (WEIGHT_SCALE - w) + diff * GRAIN * w) / WEIGHT_SCALE;
+  unchecked((corr[i] = max(-CORR_MAX * GRAIN, min(CORR_MAX * GRAIN, v))));
+}
+
+/** moves the side to move's entry in every table toward `diff`, the score less the static eval */
 export function updateCorrection(stm: i32, depth: i32, diff: i32): void {
-  const i = slot(stm);
   const w = min(CORR_WEIGHT_MAX, 1 + depth);
-  const v = (unchecked(pawnCorr[i]) * (WEIGHT_SCALE - w) + diff * GRAIN * w) / WEIGHT_SCALE;
-  unchecked((pawnCorr[i] = max(-CORR_MAX * GRAIN, min(CORR_MAX * GRAIN, v))));
+  update(slot(0, stm, pawnKey), w, diff);
+  update(slot(1, stm, unchecked(nonPawnKey[0])), w, diff);
+  update(slot(2, stm, unchecked(nonPawnKey[1])), w, diff);
 }

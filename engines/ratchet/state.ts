@@ -3,7 +3,7 @@
  * and the correction keys kept beside them. A move's change to each is read from
  * the board before the core makes it; unmake restores what was saved at the ply.
  */
-import { FLAG_CASTLE, FLAG_EP, MAX_PLY, PAWN, moveFrom, movePromo, moveTo } from "../../core/constants";
+import { FLAG_CASTLE, FLAG_EP, KING, MAX_PLY, PAWN, moveFrom, movePromo, moveTo } from "../../core/constants";
 import { board, make, makeNull, ply, unmake, unmakeNull } from "../../core/position";
 import { Z_PIECE } from "../../core/zobrist";
 import { PSQ, scratchPsq } from "./eval";
@@ -14,7 +14,7 @@ const psqStack = new StaticArray<i32>(MAX_PLY + 1);
 
 /** the pawns of both colors, hashed with the core's piece keys (Stockfish Position::set_state pawnKey) */
 export let pawnKey: u64 = 0;
-/** by color, that color's pieces other than pawns, king included (Stockfish Position::set_state nonPawnKey) */
+/** by color, that color's knights, bishops, rooks and queens (Stash dcc25ed nonpawn_key; Stockfish's nonPawnKey also hashes the king) */
 export const nonPawnKey = new StaticArray<u64>(2);
 /** pawn key, then the two non-pawn keys, saved per ply */
 const keyStack = new StaticArray<u64>(3 * (MAX_PLY + 1));
@@ -42,7 +42,8 @@ export function scratchNonPawnKey(color: i32): u64 {
   let k: u64 = 0;
   for (let s = 0; s < 64; s++) {
     const p = <i32>board[s];
-    if (p && (p & 7) != PAWN && p >> 3 == color) k ^= unchecked(Z_PIECE[(p << 6) + s]);
+    const t = p & 7;
+    if (t != 0 && t != PAWN && t != KING && p >> 3 == color) k ^= unchecked(Z_PIECE[(p << 6) + s]);
   }
   return k;
 }
@@ -51,10 +52,12 @@ export function scratchNonPawnKey(color: i32): u64 {
   return unchecked(PSQ[(p << 6) + s]);
 }
 
-/** adds or removes piece `p` on square `s` in its key */
+/** adds or removes piece `p` on square `s` in its key; a king is in none */
 @inline function toggleKey(p: i32, s: i32): void {
+  const t = p & 7;
+  if (t == KING) return;
   const z = unchecked(Z_PIECE[(p << 6) + s]);
-  if ((p & 7) == PAWN) pawnKey ^= z;
+  if (t == PAWN) pawnKey ^= z;
   else unchecked((nonPawnKey[p >> 3] ^= z));
 }
 
