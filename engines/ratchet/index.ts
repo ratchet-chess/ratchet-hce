@@ -15,7 +15,9 @@ import { UNITS_PER_CP, evaluateScratch, initEval, scratchPsq } from "./eval";
 import { clearCorrection } from "./correction";
 import { clearHistory } from "./history";
 import { MAX_DEPTH, bestScore, completedDepth, hostScore, initSearch, nodesSearched as searchNodes, pvAt, rootPvLen, think } from "./search";
-import { doMove, nonPawnKey, pawnKey, psq, refresh, scratchNonPawnKey, scratchPawnKey, undoMove } from "./state";
+import {
+  doMove, majorKey, minorKey, nonPawnKey, pawnKey, psq, refresh, scratchMajorKey, scratchMinorKey, scratchNonPawnKey, scratchPawnKey, undoMove,
+} from "./state";
 import { noClock, startClock } from "./time";
 import { ttAlloc, ttClear } from "./tt";
 
@@ -111,7 +113,8 @@ const walkMoves = new StaticArray<i32>(64 * MAX_MOVES);
 /** 1 if the incremental sum or a key differs from the board's, else 0 */
 function stateDiffers(): i32 {
   if (psq != scratchPsq() || pawnKey != scratchPawnKey()) return 1;
-  return nonPawnKey[0] != scratchNonPawnKey(0) || nonPawnKey[1] != scratchNonPawnKey(1) ? 1 : 0;
+  if (nonPawnKey[0] != scratchNonPawnKey(0) || nonPawnKey[1] != scratchNonPawnKey(1)) return 1;
+  return minorKey != scratchMinorKey() || majorKey != scratchMajorKey() ? 1 : 0;
 }
 
 function evalWalkRec(depth: i32, at: i32): i32 {

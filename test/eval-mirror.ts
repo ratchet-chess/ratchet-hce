@@ -2,7 +2,7 @@
  * The own engine's eval gate:
  * - mirror: the eval of a position equals the eval of its color mirror (ranks
  *   flipped, colors and the side to move swapped), in the engine's own unit;
- * - incremental: the material and PSQT sum and the pawn and non-pawn keys that
+ * - incremental: the material and PSQT sum and the correction keys that
  *   the search keeps equal their from-scratch values at every node of a walk,
  *   after make and after unmake.
  *

@@ -3,7 +3,7 @@
  * and the correction keys kept beside them. A move's change to each is read from
  * the board before the core makes it; unmake restores what was saved at the ply.
  */
-import { FLAG_CASTLE, FLAG_EP, KING, MAX_PLY, PAWN, moveFrom, movePromo, moveTo } from "../../core/constants";
+import { BISHOP, FLAG_CASTLE, FLAG_EP, KING, KNIGHT, MAX_PLY, PAWN, QUEEN, ROOK, moveFrom, movePromo, moveTo } from "../../core/constants";
 import { board, make, makeNull, ply, unmake, unmakeNull } from "../../core/position";
 import { Z_PIECE } from "../../core/zobrist";
 import { PSQ, scratchPsq } from "./eval";
@@ -16,8 +16,17 @@ const psqStack = new StaticArray<i32>(MAX_PLY + 1);
 export let pawnKey: u64 = 0;
 /** by color, that color's knights, bishops, rooks and queens (Stash dcc25ed nonpawn_key; Stockfish's nonPawnKey also hashes the king) */
 export const nonPawnKey = new StaticArray<u64>(2);
-/** pawn key, then the two non-pawn keys, saved per ply */
-const keyStack = new StaticArray<u64>(3 * (MAX_PLY + 1));
+/** both colors' knights and bishops, and both kings (Stash ba73642 minor_key, the kings added where it reads the key) */
+export let minorKey: u64 = 0;
+/** both colors' rooks and queens, and both kings (Stash ea9fd72 major_key, likewise) */
+export let majorKey: u64 = 0;
+/** the pawn key, the two non-pawn keys, the minor and the major key, saved per ply */
+const KEYS = 5;
+const keyStack = new StaticArray<u64>(KEYS * (MAX_PLY + 1));
+
+/** piece-type bits: knights, bishops and kings; rooks, queens and kings */
+const MINOR_TYPES = (1 << KNIGHT) | (1 << BISHOP) | (1 << KING);
+const MAJOR_TYPES = (1 << ROOK) | (1 << QUEEN) | (1 << KING);
 
 /** sets the sum and the keys from the board, at a search's root */
 export function refresh(): void {
@@ -25,6 +34,28 @@ export function refresh(): void {
   pawnKey = scratchPawnKey();
   unchecked((nonPawnKey[0] = scratchNonPawnKey(0)));
   unchecked((nonPawnKey[1] = scratchNonPawnKey(1)));
+  minorKey = scratchTypesKey(MINOR_TYPES);
+  majorKey = scratchTypesKey(MAJOR_TYPES);
+}
+
+/** the minor key, from the board */
+export function scratchMinorKey(): u64 {
+  return scratchTypesKey(MINOR_TYPES);
+}
+
+/** the major key, from the board */
+export function scratchMajorKey(): u64 {
+  return scratchTypesKey(MAJOR_TYPES);
+}
+
+/** both colors' pieces of the types set in `types`, hashed */
+function scratchTypesKey(types: i32): u64 {
+  let k: u64 = 0;
+  for (let s = 0; s < 64; s++) {
+    const p = <i32>board[s];
+    if (p && (types >> (p & 7)) & 1) k ^= unchecked(Z_PIECE[(p << 6) + s]);
+  }
+  return k;
 }
 
 /** the pawn key, from the board */
@@ -52,27 +83,32 @@ export function scratchNonPawnKey(color: i32): u64 {
   return unchecked(PSQ[(p << 6) + s]);
 }
 
-/** adds or removes piece `p` on square `s` in its key; a king is in none */
+/** adds or removes piece `p` on square `s` in each key that holds it */
 @inline function toggleKey(p: i32, s: i32): void {
   const t = p & 7;
-  if (t == KING) return;
   const z = unchecked(Z_PIECE[(p << 6) + s]);
   if (t == PAWN) pawnKey ^= z;
-  else unchecked((nonPawnKey[p >> 3] ^= z));
+  else if (t != KING) unchecked((nonPawnKey[p >> 3] ^= z));
+  if ((MINOR_TYPES >> t) & 1) minorKey ^= z;
+  if ((MAJOR_TYPES >> t) & 1) majorKey ^= z;
 }
 
 @inline function saveKeys(): void {
-  const i = ply * 3;
+  const i = ply * KEYS;
   unchecked((keyStack[i] = pawnKey));
   unchecked((keyStack[i + 1] = nonPawnKey[0]));
   unchecked((keyStack[i + 2] = nonPawnKey[1]));
+  unchecked((keyStack[i + 3] = minorKey));
+  unchecked((keyStack[i + 4] = majorKey));
 }
 
 @inline function restoreKeys(): void {
-  const i = ply * 3;
+  const i = ply * KEYS;
   pawnKey = unchecked(keyStack[i]);
   unchecked((nonPawnKey[0] = keyStack[i + 1]));
   unchecked((nonPawnKey[1] = keyStack[i + 2]));
+  minorKey = unchecked(keyStack[i + 3]);
+  majorKey = unchecked(keyStack[i + 4]);
 }
 
 export function doMove(m: i32): void {
