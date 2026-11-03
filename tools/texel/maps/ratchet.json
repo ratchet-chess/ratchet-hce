@@ -225,6 +225,228 @@
      "symbol": "KING_EG"
     }
    ]
+  },
+  {
+   "name": "PAWN_BACKWARD_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PAWN_BACKWARD_MG"
+    }
+   ]
+  },
+  {
+   "name": "PAWN_BACKWARD_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PAWN_BACKWARD_EG"
+    }
+   ]
+  },
+  {
+   "name": "PAWN_DOUBLED_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PAWN_DOUBLED_MG"
+    }
+   ]
+  },
+  {
+   "name": "PAWN_DOUBLED_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PAWN_DOUBLED_EG"
+    }
+   ]
+  },
+  {
+   "name": "PAWN_ISOLATED_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PAWN_ISOLATED_MG"
+    }
+   ]
+  },
+  {
+   "name": "PAWN_ISOLATED_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PAWN_ISOLATED_EG"
+    }
+   ]
+  },
+  {
+   "name": "PAWN_PASSED_MG",
+   "size": 8,
+   "layout": "count",
+   "fixed": [
+    0,
+    7
+   ],
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PAWN_PASSED_MG"
+    }
+   ]
+  },
+  {
+   "name": "PAWN_PASSED_EG",
+   "size": 8,
+   "layout": "count",
+   "fixed": [
+    0,
+    7
+   ],
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PAWN_PASSED_EG"
+    }
+   ]
+  },
+  {
+   "name": "PAWN_PHALANX_MG",
+   "size": 8,
+   "layout": "count",
+   "fixed": [
+    0,
+    7
+   ],
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PAWN_PHALANX_MG"
+    }
+   ]
+  },
+  {
+   "name": "PAWN_PHALANX_EG",
+   "size": 8,
+   "layout": "count",
+   "fixed": [
+    0,
+    7
+   ],
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PAWN_PHALANX_EG"
+    }
+   ]
+  },
+  {
+   "name": "PAWN_DEFENDER_MG",
+   "size": 8,
+   "layout": "count",
+   "fixed": [
+    0,
+    6,
+    7
+   ],
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PAWN_DEFENDER_MG"
+    }
+   ]
+  },
+  {
+   "name": "PAWN_DEFENDER_EG",
+   "size": 8,
+   "layout": "count",
+   "fixed": [
+    0,
+    6,
+    7
+   ],
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PAWN_DEFENDER_EG"
+    }
+   ]
+  },
+  {
+   "name": "PASSED_OUR_KING_MG",
+   "size": 24,
+   "layout": "count",
+   "fixed": [
+    3,
+    4,
+    5,
+    10,
+    11,
+    17
+   ],
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PASSED_OUR_KING_MG"
+    }
+   ]
+  },
+  {
+   "name": "PASSED_OUR_KING_EG",
+   "size": 24,
+   "layout": "count",
+   "fixed": [
+    3,
+    4,
+    5,
+    10,
+    11,
+    17
+   ],
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PASSED_OUR_KING_EG"
+    }
+   ]
+  },
+  {
+   "name": "PASSED_THEIR_KING_MG",
+   "size": 24,
+   "layout": "count",
+   "fixed": [
+    3,
+    4,
+    5,
+    10,
+    11,
+    17
+   ],
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PASSED_THEIR_KING_MG"
+    }
+   ]
+  },
+  {
+   "name": "PASSED_THEIR_KING_EG",
+   "size": 24,
+   "layout": "count",
+   "fixed": [
+    3,
+    4,
+    5,
+    10,
+    11,
+    17
+   ],
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PASSED_THEIR_KING_EG"
+    }
+   ]
   }
  ]
 }
