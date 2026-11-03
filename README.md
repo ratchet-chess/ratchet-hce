@@ -78,11 +78,11 @@ Each release keeps its reference in `engines/<release>/fidelity/`.
 
 The match tools play releases with fastchess, each side from a snapshot of its commit. A player is `[ref:]release[@level]` (`tools/player.sh`), such as `phalanx-xii` or `HEAD:sargon-1978@3`:
 
-- `tools/sprt.sh` and `tools/pool.ts`: an SPRT match, on one host or spread over every free host;
+- `tools/pool.ts`: an SPRT match, or a race of several candidates, over the hosts HOSTS names;
 - `tools/calibrate.sh`: a rating on the CCRL Blitz scale, against anchor engines with published ratings;
 - `tools/mate-suite.sh`: the conversion suite, KQK and KRK starts to mate;
 - `tools/depth.ts`: the mean depth of a match's PGNs.
-- `tools/queue.ts`: the CPU manager's queue, which hands every host its units in priority order and drains a host for a priority job. The manager (`tools/queue/manager.ts`) runs in a container on this host, and an agent on each host (`tools/queue/agent.ts`) claims units and runs them. A tool moves onto the queue as it is ported to submit.
+- `tools/queue.ts`: the CPU manager's queue, which hands every host its units in priority order and drains a host for a priority job. The manager (`tools/queue/manager.ts`) runs in a container on this host, and an agent on each host (`tools/queue/agent.ts`) claims units and runs them. `tools/pool.ts` and `tools/calibrate.sh` submit their games there.
 
 Each tool's header comment documents its options. `nix/anchors.sh` builds every anchor, and `tools/anchors.ts` lists them with their CCRL ratings.
 
