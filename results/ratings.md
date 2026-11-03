@@ -34,6 +34,7 @@ key, and a run under another protocol adds its own.
 | gnuchess-1987 | 1836 | 89 | 100 | 58.5% | vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1, stash-15.3 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | fbe9180 | 2026-11-03 |
 | phalanx-xii | 2237 | 41 | 500 | 75.7% | rustic-alpha1, stash-11.0.1, stash-13.0.1, stash-15.3, crucible-1.0.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | fbe9180 | 2026-11-03 |
 | phalanx-xii-zurichess | 2327 | 44 | 500 | 82.4% | rustic-alpha1, stash-11.0.1, stash-13.0.1, stash-15.3, crucible-1.0.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | fbe9180 | 2026-11-03 |
+| ratchet | 2955 | 34 | 500 | 60.0% | stash-21.0, velvet-1.2.0, clovis-iii, stash-25.0, stash-30.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 3724c4d | 2026-11-03 |
 | sargon-1978@1 | 582 | 124 | 100 | 9.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
 | sargon-1978@2 | 785 | 91 | 100 | 21.5% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
 | sargon-1978@3 | 860 | 85 | 100 | 28.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
