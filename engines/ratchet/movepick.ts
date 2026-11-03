@@ -96,6 +96,17 @@ export function initPicker(ply: i32, ttMove: i32, killer: i32, cm: i32, fm: i32,
 }
 
 /** moves the best-scored move of [from, to) to `from` */
+/**
+ * puts a ply's picker back to just after its TT move: the singular search reruns
+ * the node at the same ply, and it starts while the TT move is the only move the
+ * ply's picker has given, before it has generated any
+ */
+export function resumeAfterTT(ply: i32, ttMove: i32, killer: i32, cm: i32, fm: i32, f4: i32): void {
+  initPicker(ply, ttMove, killer, cm, fm, f4);
+  stage[ply] = STAGE_GEN_NOISY;
+  pickedStage = STAGE_TT;
+}
+
 @inline export function selectBest(from: i32, to: i32): void {
   let best = from;
   let bs = unchecked(SCORES[from]);

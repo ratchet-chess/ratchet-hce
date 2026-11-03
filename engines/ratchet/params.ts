@@ -170,6 +170,15 @@ export const NMP_DEPTH_DIV = 6;
 export const NMP_EVAL_DIV = 975;
 export const NMP_EVAL_MAX = 3;
 
+/** singular extensions, Stash f91e750: depth >= 7, TT depth >= depth - 3; singular beta = TT score - 10 d / 16 at its pawn 103, searched at d / 2 + 1 */
+export const SE_DEPTH = 7;
+export const SE_TT_DEPTH = 3;
+export const SE_MARGIN = 39;
+export const SE_MARGIN_DIV = 16;
+/** a double extension at a non-PV node whose singular search fails low by more than 14 at its pawn 103, while the line has at most 10 */
+export const SE_DOUBLE_MARGIN = 54;
+export const SE_DOUBLE_MAX = 10;
+
 /** internal iterative reduction, Berserk 03cebd6: PV or cut node, depth >= 4, no TT move */
 export const IIR_DEPTH = 4;
 

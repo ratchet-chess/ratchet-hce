@@ -19,11 +19,12 @@ import { UNITS_PER_CP, evalWith } from "./eval";
 import { bonusAt, butterfly, captureHist, contHist, gravity, gravityFrom, killers, malusAt } from "./history";
 import {
   MOVES, SCORES, STAGE_GOOD_NOISY, STAGE_QUIET, captureIndex, captureScore, initPicker, isNoisy, nextMove, pickedStage, pieceTo,
-  quietScore, selectBest, victimOf,
+  quietScore, resumeAfterTT, selectBest, victimOf,
 } from "./movepick";
 import {
   ASP_DELTA, ASP_DEPTH, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_COUNT, LMP_DEPTH, LMR_BASE,
-  LMR_DIV, LMR_HISTORY_DIV, LMR_HISTORY_MAX, NMP_BASE, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA, RAZOR_DEPTH,
+  LMR_DIV, LMR_HISTORY_DIV, LMR_HISTORY_MAX, NMP_BASE, SE_DEPTH, SE_DOUBLE_MARGIN, SE_DOUBLE_MAX, SE_MARGIN,
+  SE_MARGIN_DIV, SE_TT_DEPTH, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA, RAZOR_DEPTH,
   RAZOR_MARGIN, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, SEE_DEPTH, SEE_NOISY, SEE_QUIET, SEE_VALUE,
 } from "./params";
 import { seeGe } from "./see";
@@ -56,6 +57,18 @@ const ssCont = new StaticArray<i32>(MAX_PLY + SS + 1);
 const ssStatic = new StaticArray<i32>(MAX_PLY + SS + 1);
 /** the raw static eval, the one the TT stores */
 const ssRaw = new StaticArray<i32>(MAX_PLY + SS + 1);
+/** double extensions on the line to a ply, Stash f91e750 double_extensions */
+const ssDouble = new StaticArray<i32>(MAX_PLY + SS + 1);
+/** the move a ply's singular search leaves out, 0 for none */
+const excludedAt = new StaticArray<i32>(MAX_PLY + 1);
+/** the iteration's depth, which bounds extensions (Stash f91e750) */
+let rootDepth = 0;
+/**
+ * mixed into the key of a node searched with a move left out, so its TT entries
+ * are its own; Ratchet's multiplier, since the TT checks the key's top 16 bits,
+ * which Stash's excluded << 16 leaves alone
+ */
+const EXCLUDED_MIX: u64 = 0x9e3779b97f4a7c15;
 const NULL_MOVE = 1 << 30;
 
 /** the triangular PV: row p holds the line from ply p, to pvLen[p] */
@@ -217,16 +230,19 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   }
 
   const check = inCheck();
-  const key = hash;
+  const excl = excludedAt[p];
+  const key = excl ? hash ^ (<u64>excl * EXCLUDED_MIX) : hash;
   const hit = ttProbe(key);
   let tMove = 0;
   let tScore = 0;
   let tBound = 0;
+  let tDepth = 0;
   let tPv = false;
   if (hit) {
     tMove = fullMove(ttMove);
     tScore = scoreFromTT(ttScore, p);
     tBound = ttBound;
+    tDepth = ttDepth;
     tPv = ttPv;
     // no cut at PV nodes (Stockfish 4739037f), nor late in the fifty-move count (Stockfish bae019b5, Alexandria)
     if (!pvNode && ttDepth >= depth && halfmove < 90 && boundCuts(tBound, tScore, alpha, beta)) {
@@ -256,6 +272,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   }
   ssStatic[p + SS] = staticEval;
   ssRaw[p + SS] = raw;
+  ssDouble[p + SS] = ssDouble[p + SS - 1];
   killers[p + 1] = 0;
 
   if (!pvNode && !check) {
@@ -263,7 +280,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     if (depth <= RFP_DEPTH && eval < MATE_IN_MAX && eval - (RFP_MARGIN * depth - (improving ? RFP_IMPROVING : 0)) >= beta) return eval;
 
     // razoring, Stash f91e750: to qsearch at depth 2 or less, a null-window qsearch below alpha at depth 3
-    if (depth <= RAZOR_DEPTH && staticEval + RAZOR_MARGIN * depth <= alpha) {
+    if (excl == 0 && depth <= RAZOR_DEPTH && staticEval + RAZOR_MARGIN * depth <= alpha) {
       if (depth <= 2) return qsearch(alpha, beta);
       const ra = alpha - RAZOR_MARGIN * depth;
       const v = qsearch(ra, ra + 1);
@@ -272,6 +289,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
 
     // null move, Ethereal v12.75, with Weiss's eval >= static eval guard; Ethereal 94e78e3's TT guard
     if (
+      excl == 0 &&
       depth >= NMP_DEPTH &&
       eval >= beta &&
       eval >= staticEval &&
@@ -297,7 +315,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   const cm = ssCont[p + SS - 1];
   const fm = ssCont[p + SS - 2];
   const f4 = ssCont[p + SS - 4];
-  initPicker(p, tMove, killers[p], cm, fm, f4);
+  const killer = killers[p];
+  initPicker(p, tMove, killer, cm, fm, f4);
   let best = -INF;
   let bestMove = 0;
   let played = 0;
@@ -306,6 +325,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   let skipQuiets = false;
   let m = 0;
   while ((m = nextMove(p, skipQuiets)) != 0) {
+    if (m == excl) continue;
     const noisy = isNoisy(m);
     const pt = pieceTo(m);
     let cmh = 0;
@@ -341,13 +361,46 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       if (depth <= SEE_DEPTH && pickedStage > STAGE_GOOD_NOISY && !seeGe(m, noisy ? -SEE_NOISY * depth * depth : -SEE_QUIET * depth)) continue;
     }
 
+    // extensions, Stash f91e750: none at the root, and none once the line is twice the
+    // iteration's depth or has double-extended for half of it
+    let ext = 0;
+    const mayExtend = !root && p < 2 * rootDepth && 2 * ssDouble[p + SS] < rootDepth;
+    let singular = false;
+    if (mayExtend && depth >= SE_DEPTH && m == tMove && excl == 0 && (tBound & BOUND_LOWER) != 0 && abs(tScore) < MATE_IN_MAX && tDepth >= depth - SE_TT_DEPTH) {
+      // singular extension: the node without its TT move, searched shallow below the TT score
+      singular = true;
+      const sBeta = tScore - (SE_MARGIN * depth) / SE_MARGIN_DIV;
+      excludedAt[p] = m;
+      const sv = search(sBeta - 1, sBeta, depth / 2 + 1, cutNode);
+      excludedAt[p] = 0;
+      if (stopped) return 0;
+      // the singular search reran this ply: put back its picker and its stack entries
+      resumeAfterTT(p, tMove, killer, cm, fm, f4);
+      ssStatic[p + SS] = staticEval;
+      ssRaw[p + SS] = raw;
+      if (sv < sBeta) {
+        // double extension, Stash f91e750 (its triple is left for the NNUE stage)
+        if (!pvNode && sBeta - sv > SE_DOUBLE_MARGIN && ssDouble[p + SS] <= SE_DOUBLE_MAX) {
+          ext = 2;
+          ssDouble[p + SS]++;
+        } else ext = 1;
+      } else if (sBeta >= beta) {
+        // multicut: another move also clears beta
+        return sBeta;
+      } else if (tScore >= beta) {
+        // negative extension
+        ext = -1;
+      }
+    }
+
     ssMove[p + SS] = m;
     ssCont[p + SS] = pt << 10;
     const before = nodeCount;
     doMove(m);
     played++;
-    // the check extension, on the move in the parent
-    const newDepth = depth - 1 + (inCheck() ? 1 : 0);
+    // the check extension, on the move in the parent, under the same limits
+    if (mayExtend && !singular && inCheck()) ext = 1;
+    const newDepth = depth - 1 + ext;
     let v = 0;
     if (played == 1) {
       v = -search(-beta, -alpha, newDepth, pvNode ? false : !cutNode);
@@ -402,7 +455,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     }
   }
 
-  if (played == 0) return check ? -MATE + p : 0;
+  // with its one move left out, a node with no other move fails low (Stash f91e750)
+  if (played == 0) return excl ? alpha : check ? -MATE + p : 0;
   if (best >= beta) updateHistories(bestMove, depth, p, quiets, captures);
   const bound = best >= beta ? BOUND_LOWER : bestMove ? BOUND_EXACT : BOUND_UPPER;
   // correction history, Stash 302136d: not in check, no noisy best move, and the bound says the eval was wrong in that direction
@@ -506,7 +560,9 @@ export function think(maxDepth: i32): i32 {
     ssCont[i] = -1;
     ssStatic[i] = EVAL_NONE;
     ssRaw[i] = EVAL_NONE;
+    ssDouble[i] = 0;
   }
+  for (let i = 0; i < excludedAt.length; i++) excludedAt[i] = 0;
   rootCount = generateMoves(rootMoves, 0, true);
   for (let i = 0; i < rootCount; i++) rootNodes[i] = 0;
   if (rootCount == 0) return 0;
@@ -514,6 +570,7 @@ export function think(maxDepth: i32): i32 {
   let score = 0;
   let previous = 0;
   for (let depth = 1; depth <= maxDepth; depth++) {
+    rootDepth = depth;
     // aspiration, Ethereal aspirationWindow: fail low halves beta down, fail high searches one ply less
     let delta = ASP_DELTA;
     let alpha = -INF;
