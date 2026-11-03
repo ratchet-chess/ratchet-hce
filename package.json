@@ -11,7 +11,9 @@
     "bench": "bun bench/perft.ts",
     "bench:node": "node bench/perft.ts",
     "bench:deno": "deno run --allow-read bench/perft.ts",
-    "bench:all": "bun bench/perft.ts && node bench/perft.ts && deno run --allow-read bench/perft.ts"
+    "bench:all": "bun bench/perft.ts && node bench/perft.ts && deno run --allow-read bench/perft.ts",
+    "bench:search": "bun bench/search.ts",
+    "bench:search:all": "bun bench/search.ts && node bench/search.ts && deno run --allow-read bench/search.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

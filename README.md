@@ -38,7 +38,7 @@ is a release here.
 - `host/`: the TypeScript host: the WASM wrapper, FEN, and the UCI front end, which passes each `go`'s limits and a clock to the release.
 - `bin/`: the UCI launcher.
 - `test/`: the gates: perft, incremental state, and each release's own move generator; and the 0x88 board the perft gate checks the core against.
-- `bench/`: the perft benchmark.
+- `bench/`: the perft benchmark, and the search benchmark over the releases' shared position set.
 - `tools/`: fidelity checks, matches, ratings, the conversion suite, and readers of match PGNs and time logs.
 - `flake.nix` and `nix/`: the containers. The runner plays matches on the workers; the local runner plays them on the host and builds the anchor tree (`nix/anchors.sh`); the workspace is for work on originals. `tools/ws.ts` builds, loads and runs them. `nix/anchor-tree` and `nix/syzygy` pin the anchor tree and the Syzygy tables in the Nix store.
 - `vendor/fastchess/`: the match runner, as a submodule.
@@ -59,6 +59,7 @@ bun run typecheck
 bun run test                 # the perft, incremental-state and release-generator gates (`bun test` is Bun's own test runner)
 bun test/perft.ts --full     # every perft depth in the suite
 bun run bench:all            # perft throughput under Bun, Node and Deno
+bun run bench:search:all     # each engine's node signature and search speed under Bun, Node and Deno
 ```
 
 `bin/ratchet` is the UCI engine for a GUI or a match runner: `bin/ratchet [bun|node|deno] --release <name>`.
