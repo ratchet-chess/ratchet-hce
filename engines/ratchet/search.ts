@@ -16,7 +16,7 @@ import { generateMoves } from "../../core/movegen";
 import { bb, halfmove, hash, inCheck, isRepetition, ply, side } from "../../core/position";
 import { correction, updateCorrection } from "./correction";
 import { UNITS_PER_CP, evalWith } from "./eval";
-import { bonusAt, butterfly, captureHist, contHist, gravity, killers, malusAt } from "./history";
+import { bonusAt, butterfly, captureHist, contHist, gravity, gravityFrom, killers, malusAt } from "./history";
 import {
   MOVES, SCORES, STAGE_GOOD_NOISY, STAGE_QUIET, captureIndex, captureScore, initPicker, isNoisy, nextMove, pickedStage, pieceTo,
   quietScore, selectBest, victimOf,
@@ -146,16 +146,25 @@ export function hostScore(s: i32): i32 {
   if ((nodeCount & 1023) == 0 && completed >= 1 && mustStop(<f64>nodeCount)) stopped = true;
 }
 
-/** moves a quiet's butterfly and 1-, 2- and 4-ply continuation history by `bonus` (Stash 660df34 adds the 4-ply) */
+/**
+ * moves a quiet's butterfly and 1-, 2- and 4-ply continuation history by `bonus`
+ * (Stash 660df34 adds the 4-ply); each continuation entry decays against the
+ * average of the three, a missing one counted as 0 (Stash 93a6d5f)
+ */
 function rewardQuiet(m: i32, bonus: i32, p: i32): void {
   const pt = pieceTo(m);
   const cm = ssCont[p + SS - 1];
   const fm = ssCont[p + SS - 2];
   const f4 = ssCont[p + SS - 4];
   gravity(butterfly, (side << 12) | (m & 4095), bonus);
-  if (cm >= 0) gravity(contHist, cm + pt, bonus);
-  if (fm >= 0) gravity(contHist, fm + pt, bonus);
-  if (f4 >= 0) gravity(contHist, f4 + pt, bonus);
+  let base = 0;
+  if (cm >= 0) base += <i32>contHist[cm + pt];
+  if (fm >= 0) base += <i32>contHist[fm + pt];
+  if (f4 >= 0) base += <i32>contHist[f4 + pt];
+  base /= 3;
+  if (cm >= 0) gravityFrom(contHist, cm + pt, base, bonus);
+  if (fm >= 0) gravityFrom(contHist, fm + pt, base, bonus);
+  if (f4 >= 0) gravityFrom(contHist, f4 + pt, base, bonus);
 }
 
 /**

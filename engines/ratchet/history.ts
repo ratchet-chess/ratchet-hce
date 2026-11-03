@@ -1,9 +1,10 @@
 /**
  * Move-ordering memory: one killer per ply (Weiss 0d00a00), butterfly history by
- * side, from and to, 1- and 2-ply continuation history by the previous moves'
- * piece and square, and capture history by piece, square and victim. Every
- * history entry moves by gravity, entry += bonus - entry * |bonus| / 16384
- * (Ethereal update_history), so it stays within +-16384.
+ * side, from and to, 1-, 2- and 4-ply continuation history by the previous moves'
+ * piece and square, and capture history by piece, square and victim. A history
+ * entry moves by gravity, entry += bonus - entry * |bonus| / 16384 (Ethereal
+ * update_history), so it stays within +-16384; a continuation entry decays
+ * against its move's average entry instead (gravityFrom).
  *
  * The tables last between moves of a game and are emptied by newGame (Stockfish
  * 946fa476); a fresh go() empties them too, so a node signature starts clean.
@@ -42,4 +43,10 @@ export function clearHistory(): void {
 @inline export function gravity(table: StaticArray<i16>, i: i32, bonus: i32): void {
   const e = <i32>unchecked(table[i]);
   unchecked((table[i] = <i16>(e + bonus - (e * abs(bonus)) / HIST_MAX)));
+}
+
+/** gravity against `base` instead of the entry itself, clamped to +-HIST_MAX (Stash 93a6d5f update_piece_hist_entry) */
+@inline export function gravityFrom(table: StaticArray<i16>, i: i32, base: i32, bonus: i32): void {
+  const e = <i32>unchecked(table[i]) + bonus - (base * abs(bonus)) / HIST_MAX;
+  unchecked((table[i] = <i16>max(-HIST_MAX, min(HIST_MAX, e))));
 }
