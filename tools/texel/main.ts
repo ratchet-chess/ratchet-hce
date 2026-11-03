@@ -15,6 +15,9 @@
  *                                                           the same from games Ratchet played itself, such
  *                                                           as self-play (pgn reader options, dataset.ts)
  *   bun tools/texel/main.ts resolve <dataset.bin>           <set>.resolved.bin, by the neutral resolver
+ *   bun tools/texel/main.ts join <a.bin> <b.bin>... --name <name>
+ *                                                           one dataset from several of one resolver and
+ *                                                           validation share, repeats merged as in dataset
  *   bun tools/texel/main.ts info <dataset.bin>              a dataset's header and label counts
  * eval, trace and tune take this host's cores, so each runs under a batch hold of
  * the CPU manager's queue (tools/queue.ts hold, decision batch-hold): it starts
@@ -75,7 +78,7 @@ if (["eval", "trace", "tune"].includes(step) && !process.env.QUEUE_HOLD) {
 }
 const opt = (name: string) => (rest.includes(name) ? rest[rest.indexOf(name) + 1] : undefined);
 const positional = rest[0] && !rest[0].startsWith("--") ? rest[0] : undefined;
-const usage = "usage: bun tools/texel/main.ts map|build <map.json> | write <map.json> --name <name> | --in-place [--values <values.json>] | dataset --set <name> | --pgn <file> --name <name> [--opt <key>=<value> ...] [--valid <permille>] [--limit <n>] | resolve <dataset.bin> | info <dataset.bin> | eval|trace <map.json> <dataset.bin> [--workers <n>] [--limit <n>] [--delta <factor>] [--tol <cp>] | tune <map.json> <dataset.bin> --optimizer adam|local [...] (see the header)";
+const usage = "usage: bun tools/texel/main.ts map|build <map.json> | write <map.json> --name <name> | --in-place [--values <values.json>] | dataset --set <name> | --pgn <file> --name <name> [--opt <key>=<value> ...] [--valid <permille>] [--limit <n>] | resolve <dataset.bin> | join <a.bin> <b.bin>... --name <name> | info <dataset.bin> | eval|trace <map.json> <dataset.bin> [--workers <n>] [--limit <n>] [--delta <factor>] [--tol <cp>] | tune <map.json> <dataset.bin> --optimizer adam|local [...] (see the header)";
 const die = (msg: string): never => {
   console.error(msg);
   process.exit(2);
@@ -193,6 +196,29 @@ if (step === "map" || step === "build" || step === "write") {
   const out = path.replace(/\.bin$/, ".resolved.bin");
   writeDataset(out, { ...header, name: `${header.name}.resolved`, resolver: "neutral", counts: { ...header.counts, ...Object.fromEntries(Object.entries(counts).map(([k, v]) => [`resolve.${k}`, v])) } }, resolved);
   console.log(`${out}: ${JSON.stringify(counts)}`);
+} else if (step === "join") {
+  const name = opt("--name") ?? die(usage);
+  const paths = rest.filter((a, i) => !a.startsWith("--") && rest[i - 1] !== "--name");
+  if (paths.length < 2) die(usage);
+  const parts = paths.map((path) => ({ path, ...readDataset(path) }));
+  const { resolver, validPermille } = parts[0].header;
+  for (const p of parts) {
+    if (p.header.resolver !== resolver || p.header.validPermille !== validPermille) die(`${p.path}: its resolver or validation share differs from ${parts[0].path}'s`);
+  }
+  const { positions, merged } = mergeAndSplit(parts.flatMap((p) => p.positions), validPermille);
+  const digest = createHash("sha256");
+  for (const p of parts) digest.update(p.header.source.sha256);
+  const out = join(DATASETS, `${name}.bin`);
+  mkdirSync(DATASETS, { recursive: true });
+  writeDataset(out, {
+    name,
+    source: { set: name, url: "join", sha256: digest.digest("hex"), license: parts.map((p) => `${p.header.source.set}: ${p.header.source.license}`).join("; "), reader: parts[0].header.source.reader },
+    parts: parts.map((p) => ({ name: p.header.name, source: p.header.source, count: p.header.count })),
+    validPermille,
+    resolver,
+    counts: { input: parts.reduce((a, p) => a + p.positions.length, 0), mergedAway: merged, output: positions.length, validation: positions.filter((p) => p.valid).length },
+  }, positions);
+  console.log(`${out}: ${parts.map((p) => `${p.header.name} ${p.positions.length}`).join(" + ")}, ${merged} merged away, ${positions.length} kept`);
 } else if (step === "info") {
   const { header, positions } = readDataset(positional ?? die(usage));
   const results = new Map<number, number>();

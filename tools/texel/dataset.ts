@@ -67,6 +67,8 @@ export interface Header {
   validPermille: number;
   resolver: "none" | "neutral";
   counts: Record<string, number>;
+  /** a joined dataset's inputs, each with its own source */
+  parts?: { name: string; source: Header["source"]; count: number }[];
 }
 
 export const RECORD = 48;
