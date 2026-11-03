@@ -551,7 +551,7 @@ export function think(maxDepth: i32): i32 {
     for (let i = 0; i < rootCount; i++) if (rootMoves[i] == best) share = rootNodes[i] / max<f64>(1, <f64>nodeCount);
     const uncertain = depth > 1 && best != previous;
     previous = best;
-    if (!mayContinue(<f64>nodeCount, share, uncertain)) break;
+    if (!mayContinue(<f64>nodeCount, share, uncertain, best, v)) break;
   }
   return rootPvLen ? rootPv[0] : rootMoves[0];
 }

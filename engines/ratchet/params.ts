@@ -237,5 +237,10 @@ export const TM_OVERHEAD = 10.0;
 /** node share of the best move, Weiss 1401211: stop past soft * (0.52 + 3.73 * (1 - share)) */
 export const TM_NODE_BASE = 0.52;
 export const TM_NODE_MUL = 3.73;
+/** the soft limit's scale by how many iterations in a row the best move held, 0 to 4 (Stash f91e750 BestmoveStabilityScale) */
+export const TM_STABILITY: StaticArray<f64> = [2.5, 1.2, 0.9, 0.8, 0.75];
+/** score drop, Stash f91e750 timeman_scale_score_diff: the soft limit times TM_SCORE_BASE ^ (fall / range), the fall clamped to +-range; 100 at its pawn 103 */
+export const TM_SCORE_BASE = 2.0;
+export const TM_SCORE_RANGE = 388;
 /** the soft limit with one legal move, Weiss d7d1334's cap */
 export const TM_ONE_MOVE = 500.0;
