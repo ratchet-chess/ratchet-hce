@@ -1,45 +1,107 @@
 /**
  * The search's make and unmake: the core's, with the packed material and PSQT sum
- * kept beside them. A move's change to the sum is read from the board before the
- * core makes it; unmake restores the sum saved at the ply.
+ * and the correction keys kept beside them. A move's change to each is read from
+ * the board before the core makes it; unmake restores what was saved at the ply.
  */
-import { FLAG_CASTLE, FLAG_EP, MAX_PLY, moveFrom, movePromo, moveTo } from "../../core/constants";
+import { FLAG_CASTLE, FLAG_EP, MAX_PLY, PAWN, moveFrom, movePromo, moveTo } from "../../core/constants";
 import { board, make, makeNull, ply, unmake, unmakeNull } from "../../core/position";
+import { Z_PIECE } from "../../core/zobrist";
 import { PSQ, scratchPsq } from "./eval";
 
 /** the board's packed material and PSQT sum, White's view */
 export let psq: i32 = 0;
 const psqStack = new StaticArray<i32>(MAX_PLY + 1);
 
-/** sets the sum from the board, at a search's root */
+/** the pawns of both colors, hashed with the core's piece keys (Stockfish Position::set_state pawnKey) */
+export let pawnKey: u64 = 0;
+/** by color, that color's pieces other than pawns, king included (Stockfish Position::set_state nonPawnKey) */
+export const nonPawnKey = new StaticArray<u64>(2);
+/** pawn key, then the two non-pawn keys, saved per ply */
+const keyStack = new StaticArray<u64>(3 * (MAX_PLY + 1));
+
+/** sets the sum and the keys from the board, at a search's root */
 export function refresh(): void {
   psq = scratchPsq();
+  pawnKey = scratchPawnKey();
+  unchecked((nonPawnKey[0] = scratchNonPawnKey(0)));
+  unchecked((nonPawnKey[1] = scratchNonPawnKey(1)));
+}
+
+/** the pawn key, from the board */
+export function scratchPawnKey(): u64 {
+  let k: u64 = 0;
+  for (let s = 0; s < 64; s++) {
+    const p = <i32>board[s];
+    if ((p & 7) == PAWN) k ^= unchecked(Z_PIECE[(p << 6) + s]);
+  }
+  return k;
+}
+
+/** a color's non-pawn key, from the board */
+export function scratchNonPawnKey(color: i32): u64 {
+  let k: u64 = 0;
+  for (let s = 0; s < 64; s++) {
+    const p = <i32>board[s];
+    if (p && (p & 7) != PAWN && p >> 3 == color) k ^= unchecked(Z_PIECE[(p << 6) + s]);
+  }
+  return k;
 }
 
 @inline function at(p: i32, s: i32): i32 {
   return unchecked(PSQ[(p << 6) + s]);
 }
 
+/** adds or removes piece `p` on square `s` in its key */
+@inline function toggleKey(p: i32, s: i32): void {
+  const z = unchecked(Z_PIECE[(p << 6) + s]);
+  if ((p & 7) == PAWN) pawnKey ^= z;
+  else unchecked((nonPawnKey[p >> 3] ^= z));
+}
+
+@inline function saveKeys(): void {
+  const i = ply * 3;
+  unchecked((keyStack[i] = pawnKey));
+  unchecked((keyStack[i + 1] = nonPawnKey[0]));
+  unchecked((keyStack[i + 2] = nonPawnKey[1]));
+}
+
+@inline function restoreKeys(): void {
+  const i = ply * 3;
+  pawnKey = unchecked(keyStack[i]);
+  unchecked((nonPawnKey[0] = keyStack[i + 1]));
+  unchecked((nonPawnKey[1] = keyStack[i + 2]));
+}
+
 export function doMove(m: i32): void {
   unchecked((psqStack[ply] = psq));
+  saveKeys();
   const from = moveFrom(m);
   const to = moveTo(m);
   const piece = <i32>board[from];
   const captured = <i32>board[to];
-  let d = at(piece, to) - at(piece, from);
-  if (captured) d -= at(captured, to);
+  const promo = movePromo(m);
+  const arrives = promo ? (piece & 8) | promo : piece;
+  let d = at(arrives, to) - at(piece, from);
+  toggleKey(piece, from);
+  toggleKey(arrives, to);
+  if (captured) {
+    d -= at(captured, to);
+    toggleKey(captured, to);
+  }
   if (m & FLAG_EP) {
     const cs = to ^ 8;
-    d -= at(<i32>board[cs], cs);
+    const victim = <i32>board[cs];
+    d -= at(victim, cs);
+    toggleKey(victim, cs);
   } else if (m & FLAG_CASTLE) {
     // the core's castling: the rook from the corner to the square the king crossed
     const rf = to > from ? from + 3 : from - 4;
     const rt = to > from ? from + 1 : from - 1;
     const rook = <i32>board[rf];
     d += at(rook, rt) - at(rook, rf);
+    toggleKey(rook, rf);
+    toggleKey(rook, rt);
   }
-  const promo = movePromo(m);
-  if (promo) d += at((piece & 8) | promo, to) - at(piece, to);
   psq += d;
   make(m);
 }
@@ -47,8 +109,10 @@ export function doMove(m: i32): void {
 export function undoMove(m: i32): void {
   unmake(m);
   psq = unchecked(psqStack[ply]);
+  restoreKeys();
 }
 
+/** a null move changes no piece, so the keys stand */
 export function doNull(): void {
   unchecked((psqStack[ply] = psq));
   makeNull();

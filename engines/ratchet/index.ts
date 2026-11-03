@@ -14,7 +14,7 @@ import { generateMoves } from "../../core/movegen";
 import { UNITS_PER_CP, evaluateScratch, initEval, scratchPsq } from "./eval";
 import { clearHistory } from "./history";
 import { MAX_DEPTH, bestScore, completedDepth, hostScore, initSearch, nodesSearched as searchNodes, pvAt, rootPvLen, think } from "./search";
-import { doMove, psq, refresh, undoMove } from "./state";
+import { doMove, nonPawnKey, pawnKey, psq, refresh, scratchNonPawnKey, scratchPawnKey, undoMove } from "./state";
 import { noClock, startClock } from "./time";
 import { ttAlloc, ttClear } from "./tt";
 
@@ -104,8 +104,14 @@ export function unitsPerCp(): i32 {
 
 const walkMoves = new StaticArray<i32>(64 * MAX_MOVES);
 
+/** 1 if the incremental sum or a key differs from the board's, else 0 */
+function stateDiffers(): i32 {
+  if (psq != scratchPsq() || pawnKey != scratchPawnKey()) return 1;
+  return nonPawnKey[0] != scratchNonPawnKey(0) || nonPawnKey[1] != scratchNonPawnKey(1) ? 1 : 0;
+}
+
 function evalWalkRec(depth: i32, at: i32): i32 {
-  let bad = psq == scratchPsq() ? 0 : 1;
+  let bad = stateDiffers();
   if (depth == 0) return bad;
   const end = generateMoves(walkMoves, at, true);
   for (let i = at; i < end; i++) {
@@ -113,12 +119,12 @@ function evalWalkRec(depth: i32, at: i32): i32 {
     doMove(m);
     bad += evalWalkRec(depth - 1, end);
     undoMove(m);
-    if (psq != scratchPsq()) bad++;
+    bad += stateDiffers();
   }
   return bad;
 }
 
-/** walks the tree to `depth` checking the incremental material and PSQT sum after every make and unmake; returns mismatches */
+/** walks the tree to `depth` checking the incremental material and PSQT sum and the correction keys after every make and unmake; returns mismatches */
 export function evalWalk(depth: i32): i32 {
   refresh();
   return evalWalkRec(depth, 0);

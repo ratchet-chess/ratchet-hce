@@ -2,8 +2,9 @@
  * The own engine's eval gate:
  * - mirror: the eval of a position equals the eval of its color mirror (ranks
  *   flipped, colors and the side to move swapped), in the engine's own unit;
- * - incremental: the material and PSQT sum that the search keeps equals a
- *   from-scratch sum at every node of a walk, after make and after unmake.
+ * - incremental: the material and PSQT sum and the pawn and non-pawn keys that
+ *   the search keeps equal their from-scratch values at every node of a walk,
+ *   after make and after unmake.
  *
  * Positions: the search bench's set and the perft suite, each with every
  * position one legal move away.
@@ -62,4 +63,4 @@ for (const c of PERFT_SUITE) {
 }
 
 if (bad || walkBad) process.exit(1);
-console.log(`${ENGINE}: eval mirrors over ${checked} positions; the incremental sum matches at every node`);
+console.log(`${ENGINE}: eval mirrors over ${checked} positions; the incremental sum and keys match at every node`);
