@@ -170,6 +170,11 @@ export const NMP_DEPTH_DIV = 6;
 export const NMP_EVAL_DIV = 975;
 export const NMP_EVAL_MAX = 3;
 
+/** ProbCut, Stash f91e750: depth >= 6, beta + 152 at its pawn 103, a capture's reduced search at depth - 4 */
+export const PC_DEPTH = 6;
+export const PC_MARGIN = 590;
+export const PC_REDUCTION = 4;
+
 /** singular extensions, Stash f91e750: depth >= 7, TT depth >= depth - 3; singular beta = TT score - 10 d / 16 at its pawn 103, searched at d / 2 + 1 */
 export const SE_DEPTH = 7;
 export const SE_TT_DEPTH = 3;

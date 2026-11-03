@@ -12,7 +12,7 @@
  * Each form's origin is named where it is applied.
  */
 import { KING, MAX_MOVES, MAX_PLY, PAWN, movePromo } from "../../core/constants";
-import { generateMoves } from "../../core/movegen";
+import { generateCaptures, generateMoves } from "../../core/movegen";
 import { bb, halfmove, hash, inCheck, isRepetition, ply, side } from "../../core/position";
 import { correction, updateCorrection } from "./correction";
 import { UNITS_PER_CP, evalWith } from "./eval";
@@ -23,7 +23,7 @@ import {
 } from "./movepick";
 import {
   ASP_DELTA, ASP_DEPTH, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_COUNT, LMP_DEPTH, LMR_BASE,
-  LMR_DIV, LMR_HISTORY_DIV, LMR_HISTORY_MAX, NMP_BASE, SE_DEPTH, SE_DOUBLE_MARGIN, SE_DOUBLE_MAX, SE_MARGIN,
+  LMR_DIV, LMR_HISTORY_DIV, LMR_HISTORY_MAX, NMP_BASE, PC_DEPTH, PC_MARGIN, PC_REDUCTION, SE_DEPTH, SE_DOUBLE_MARGIN, SE_DOUBLE_MAX, SE_MARGIN,
   SE_MARGIN_DIV, SE_TT_DEPTH, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA, RAZOR_DEPTH,
   RAZOR_MARGIN, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, SEE_DEPTH, SEE_NOISY, SEE_QUIET, SEE_VALUE,
 } from "./params";
@@ -306,6 +306,32 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       undoNull();
       if (stopped) return 0;
       if (v >= beta) return v >= MATE_IN_MAX ? beta : v;
+    }
+  }
+
+  // ProbCut, Stash f91e750: a capture that passes SEE by the margin, and whose qsearch and
+  // reduced search both clear beta + PC_MARGIN, cuts the node; PV nodes too, as in Stash
+  const pcBeta = beta + PC_MARGIN;
+  if (!root && !check && depth >= PC_DEPTH && abs(beta) < MATE_IN_MAX && !(hit && tDepth >= depth - PC_REDUCTION && tScore < pcBeta)) {
+    const bar = pcBeta - staticEval;
+    const base = p * MAX_MOVES;
+    const e = generateCaptures(MOVES, base);
+    for (let i = base; i < e; i++) SCORES[i] = MOVES[i] == tMove ? 1 << 30 : captureScore(MOVES[i]);
+    for (let i = base; i < e; i++) {
+      selectBest(i, e);
+      const m = MOVES[i];
+      if (m == excl || !seeGe(m, bar)) continue;
+      ssMove[p + SS] = m;
+      ssCont[p + SS] = pieceTo(m) << 10;
+      doMove(m);
+      let v = -qsearch(-pcBeta, -pcBeta + 1);
+      if (v >= pcBeta) v = -search(-pcBeta, -pcBeta + 1, depth - PC_REDUCTION, !cutNode);
+      undoMove(m);
+      if (stopped) return 0;
+      if (v >= pcBeta) {
+        ttStore(key, m, scoreToTT(v, p), raw, depth - PC_REDUCTION + 1, BOUND_LOWER, pvNode || tPv);
+        return v;
+      }
     }
   }
 
