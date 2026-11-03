@@ -91,7 +91,7 @@ The steps run in this order. Each step's output is the next step's input.
 - **Correctness comes before speed.** A speed number counts only after `bun test/perft.ts --full` passes. Run it for any change to move generation or `make`/`unmake`.
 - **Measure search speed on every runtime.** Benchmarks run under Bun, Node and Deno, because runtime rankings differ by workload and release. Matches, tests and tools run on Bun only.
 - **Repeat a benchmark before you trust a delta.** Run-to-run noise is several percent. A change below that noise is not a result.
-- **Run one benchmark per machine at a time.** A benchmark beside a match, or on a loaded machine, measures the load.
+- **Run one benchmark per machine at a time,** under `bun tools/queue.ts hold --kind exclusive -- <command>`. A benchmark beside a match, or on a loaded machine, measures the load.
 - **Write no hand-picked unit tests.** The gates, the fidelity checks and the matches judge a change.
 - **Keep hot paths allocation-free.** Use typed arrays, packed moves, and preallocated per-ply buffers. Never use BigInt.
 - **Keep hot functions monomorphic.** Each release owns its recursion. The host calls it once per search, never once per node.
