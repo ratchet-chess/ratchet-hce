@@ -8,7 +8,8 @@
  *   under tmp/texel/builds/, never committed, with tunables.json beside it: the
  *   free elements as UCI spin options (host/uci/main.ts --tunables).
  * - a tuned variant: each slot's literal takes its element's value, rounded to the
- *   storage type and clamped to its bounds, in engines/<release>-<name>/.
+ *   storage type and clamped to its bounds, in engines/<release>-<name>/; or, for
+ *   the own engine, the same literals in its own files (writeInPlace).
  *
  * A copy's relative imports that leave the release's directory are recomputed for
  * the copy's place, so it compiles anywhere.
@@ -80,6 +81,39 @@ export function writeVariant(m: LoadedMap, name: string, values: Record<string, 
   emit(m, files, dir);
   writeFileSync(join(dir, "variant.json"), `${JSON.stringify({ release: m.map.release, map: relative(REPO, m.path), values: changed }, null, 2)}\n`);
   return dir;
+}
+
+/**
+ * Writes `values` into the subject's own files, for the own engine, whose tuned
+ * values are committed in place (AGENTS.md § Own engine). Refuses a release: one
+ * with a fidelity reference stays untouched. Returns the files changed.
+ */
+export function writeInPlace(m: LoadedMap, values: Record<string, number>): string[] {
+  if (!m.releaseDir) throw new Error(`${m.path}: the writer needs a release`);
+  if (existsSync(join(m.releaseDir, "fidelity"))) throw new Error(`${m.releaseDir} is a release: write a variant instead`);
+  const byName = new Map(m.elements.map((e) => [e.name, e]));
+  for (const n of Object.keys(values)) if (!byName.has(n)) throw new Error(`${m.path}: no element ${n}`);
+  const files = releaseFiles(m);
+  const edits = new Map<string, Edit[]>();
+  for (const e of m.elements) {
+    if (!(e.name in values)) continue;
+    if (e.fixed) throw new Error(`${e.name} is fixed in ${m.path}`);
+    const v = storable(e, values[e.name]);
+    for (const s of e.slots) {
+      const decl = m.declarations.get(s.file)!.get(s.symbol)!;
+      const list = edits.get(s.file) ?? [];
+      list.push(valueEdit(files.get(s.file)!, decl, s.index < 0 ? 0 : s.index, stored(v, s.transform)));
+      edits.set(s.file, list);
+    }
+  }
+  const changed: string[] = [];
+  for (const [f, list] of edits) {
+    const text = applyEdits(files.get(f)!, list);
+    if (text === files.get(f)) continue;
+    writeFileSync(join(m.releaseDir, f), text);
+    changed.push(join(relative(REPO, m.releaseDir), f));
+  }
+  return changed;
 }
 
 /** the AssemblyScript statement that stores element value `v` in slot `s` */

@@ -4,7 +4,8 @@
  * worker k scores positions k, k + N, k + 2N, ..., which spreads uneven search
  * costs. The map's eval form picks the score: `static` is the build's evaluate(),
  * `search` the score of go(depth), both as the host reports them (centipawns for
- * the side to move).
+ * the side to move). A static score keeps the fraction of a centipawn that an
+ * engine with a finer unit has.
  */
 import { availableParallelism } from "node:os";
 import { Worker } from "node:worker_threads";

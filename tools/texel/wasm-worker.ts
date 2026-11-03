@@ -42,7 +42,7 @@ parentPort!.on("message", (msg: WorkerRequest) => {
       decodeRecord(records, n, p);
       engine.setBoard(p.board, p.side, p.castling, p.ep, p.halfmove, p.fullmove);
       let s: number;
-      if (form === "static") s = engine.evaluate();
+      if (form === "static") s = engine.evaluateCp();
       else {
         engine.go(depth);
         s = engine.score();

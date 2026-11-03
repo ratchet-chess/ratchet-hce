@@ -7,6 +7,8 @@
  *   bun tools/texel/main.ts build <map.json>                the tuning build; prints its wasm
  *   bun tools/texel/main.ts write <map.json> --name <name> [--values <values.json>]
  *                                                           the tuned variant engines/<release>-<name>/
+ *   bun tools/texel/main.ts write <map.json> --in-place --values <values.json>
+ *                                                           the own engine's values, written into its own files
  *   bun tools/texel/main.ts dataset --set <name> [--valid <permille>] [--limit <n>]
  *                                                           tmp/texel/datasets/<set>.bin
  *   bun tools/texel/main.ts dataset --pgn <file> --name <name> [--opt <key>=<value> ...] [--valid <permille>] [--limit <n>]
@@ -53,7 +55,7 @@ import { type Labels, adam, adapterTarget, fitK, localSearch, loss, traceTarget,
 import { type Trace, linearEval, probe, readTrace, writeTrace } from "./trace.ts";
 import { UciAdapter } from "./uci.ts";
 import { WasmAdapter } from "./wasm.ts";
-import { buildTuning, storable, writeVariant } from "./write.ts";
+import { buildTuning, storable, writeInPlace, writeVariant } from "./write.ts";
 
 const REPO = new URL("../../", import.meta.url).pathname;
 const DATASETS = join(REPO, "tmp", "texel", "datasets");
@@ -62,7 +64,7 @@ const DOWNLOADS = "/ws/downloads";
 const [step, ...rest] = process.argv.slice(2);
 const opt = (name: string) => (rest.includes(name) ? rest[rest.indexOf(name) + 1] : undefined);
 const positional = rest[0] && !rest[0].startsWith("--") ? rest[0] : undefined;
-const usage = "usage: bun tools/texel/main.ts map|build <map.json> | write <map.json> --name <name> [--values <values.json>] | dataset --set <name> | --pgn <file> --name <name> [--opt <key>=<value> ...] [--valid <permille>] [--limit <n>] | resolve <dataset.bin> | info <dataset.bin> | eval|trace <map.json> <dataset.bin> [--workers <n>] [--limit <n>] [--delta <factor>] [--tol <cp>] | tune <map.json> <dataset.bin> --optimizer adam|local [...] (see the header)";
+const usage = "usage: bun tools/texel/main.ts map|build <map.json> | write <map.json> --name <name> | --in-place [--values <values.json>] | dataset --set <name> | --pgn <file> --name <name> [--opt <key>=<value> ...] [--valid <permille>] [--limit <n>] | resolve <dataset.bin> | info <dataset.bin> | eval|trace <map.json> <dataset.bin> [--workers <n>] [--limit <n>] [--delta <factor>] [--tol <cp>] | tune <map.json> <dataset.bin> --optimizer adam|local [...] (see the header)";
 const die = (msg: string): never => {
   console.error(msg);
   process.exit(2);
@@ -117,10 +119,10 @@ if (step === "map" || step === "build" || step === "write") {
   } else if (step === "build") {
     console.log(buildTuning(m));
   } else {
-    const name = opt("--name") ?? die(usage);
     const valuesPath = opt("--values");
     const values = valuesPath ? (JSON.parse(readFileSync(valuesPath, "utf8")) as Record<string, number>) : {};
-    console.log(writeVariant(m, name, values));
+    if (rest.includes("--in-place")) console.log(writeInPlace(m, values).join("\n"));
+    else console.log(writeVariant(m, opt("--name") ?? die(usage), values));
   }
 } else if (step === "dataset") {
   let set: SetEntry;

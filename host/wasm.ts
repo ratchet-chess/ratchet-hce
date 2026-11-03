@@ -56,6 +56,8 @@ interface Search {
   version?(): number;
   /** the own engine's static eval in its own unit, finer than the centipawn */
   evaluateUnits?(): number;
+  /** the own engine's units per centipawn */
+  unitsPerCp?(): number;
   /** the own engine's incremental-eval mismatches, walking the tree to a depth */
   evalWalk?(depth: number): number;
 }
@@ -256,6 +258,12 @@ export class Engine {
   evaluateUnits(): number {
     if (!this.search.evaluateUnits) throw new Error("this build has no eval in its own unit");
     return this.search.evaluateUnits();
+  }
+
+  /** the static eval in centipawns, with the fraction an engine with a finer unit keeps */
+  evaluateCp(): number {
+    const w = this.search;
+    return w.evaluateUnits && w.unitsPerCp ? w.evaluateUnits() / w.unitsPerCp() : w.evaluate();
   }
 
   /** incremental-eval mismatches found walking the current position's tree to `depth`; the own engine only */

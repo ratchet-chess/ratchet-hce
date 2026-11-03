@@ -11,7 +11,7 @@ export { initCore, clear, put, setState, playMove, legalMoves, rootMove, perft, 
 import { MAX_MOVES } from "../../core/constants";
 import { initCore, legalMoves } from "../../core/index";
 import { generateMoves } from "../../core/movegen";
-import { evaluateScratch, initEval, scratchPsq } from "./eval";
+import { UNITS_PER_CP, evaluateScratch, initEval, scratchPsq } from "./eval";
 import { clearHistory } from "./history";
 import { MAX_DEPTH, bestScore, completedDepth, hostScore, initSearch, nodesSearched as searchNodes, pvAt, rootPvLen, think } from "./search";
 import { doMove, psq, refresh, undoMove } from "./state";
@@ -91,9 +91,13 @@ export function evaluate(): i32 {
   return hostScore(evaluateScratch());
 }
 
-/** the static eval in the engine's unit, for the eval gate */
+/** the static eval in the engine's unit, for the eval gate and the tuner */
 export function evaluateUnits(): i32 {
   return evaluateScratch();
+}
+
+export function unitsPerCp(): i32 {
+  return UNITS_PER_CP;
 }
 
 // ------------------------------------------------------------------ eval gate
