@@ -103,6 +103,7 @@ The steps run in this order. Each step's output is the next step's input.
 - **Unpushed history may be rewritten; pushed history never is.**
 - **A tested tree is the committed tree.** Commit the tree as tested, not a rebuild of it.
 - **Build experiments on scratch branches.** Delete a branch once its result is committed or saved as a patch.
+- **Each session works in its own git worktree, on its own branch.** The main checkout stays on main, because sessions share it. A new worktree needs the main checkout's gitignored `tools/local.env`, `tools/hosts` and `books/`.
 - **Rebuild the wasm after switching branches,** before reading a node signature or a fidelity result.
 - **The CPU manager's queue state is in the folder that `QUEUE_STATE` in `tools/local.env` names, not in `tmp/`.** It outlives a checkout and a session.
 - **Match state, instrumented copies and other run state go in the repo's gitignored `tmp/`.** Research notes, scripts and patches go off-tree, in the store that `ARTIFACTS` in `tools/local.env` names. Its README has the layout, and records cite it as `<artifacts>`.
