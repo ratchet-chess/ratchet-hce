@@ -3,24 +3,23 @@
 How each anchor's published CCRL Blitz rating holds here: `tools/calibrate.sh check` plays a set of
 anchors against each other, and `tools/fit-rating.ts --check` fits each against the others and
 drops the one that disagrees most, until the rest agree. An anchor that agrees can rate a release;
-one that is dropped should not.
+one that is dropped should not. A check run with `CHECK=<letter>` writes its rows here, through
+`tools/results.ts check`.
 
 Checks A to F were played in the retired chess-bench image, and G in the anchor tree that
 replaced it. That tree plays the same moves with the same node counts for every deterministic
 anchor (go depth 5 over 16 book lines). For Blunders 0.1.0, Lynx, Magog and Stash 9 and 11, which
 are not deterministic, the node counts could not compare the two builds.
 
-Protocol: 53+0.44 here, Hash 128, `books/8moves_v3.pgn`, draw adjudication, no resign.
-
-| check | date | anchors | games | result |
-|---|---|---|---|---|
-| A | 2026-10-23 | missingpawn, iota, megalodon, dragontooth | 600 | consistent once Dragontooth is dropped; most of its gap is one pair, 88.5% against Iota |
-| B | 2026-10-23 | dragontooth, sargon-1978-1.01b, blunders, stash-9, seblague | 1000 | consistent once Sargon, then SebLague, are dropped |
-| C | 2026-10-23 | stash-9, vividmind, lynx, magog, rustic | 1000 | no consistent set; the ends fit high and the middle low |
-| D | 2026-10-24 | rustic, stash-11, stash-13 | 300 | consistent |
-| E | 2026-10-24 | stash-11, stash-13, stash-15.3 | 300 | consistent |
-| F | 2026-10-25 | stash-15.3, crucible, cinnamon, sofcheck, stash-19 | 1000 | consistent; Cinnamon segfaulted in 3 of its 400 games |
-| G | 2026-11-01 | stash-19, floyd, blunder, stash-21, velvet | 1000 | consistent; Stash 21 lost 3 of its 400 games on time |
+| check | date | anchors | games | result | protocol |
+|---|---|---|---|---|---|
+| A | 2026-10-23 | missingpawn, iota, megalodon, dragontooth | 600 | consistent once Dragontooth is dropped; most of its gap is one pair, 88.5% against Iota | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
+| B | 2026-10-23 | dragontooth, sargon-1978-1.01b, blunders, stash-9, seblague | 1000 | consistent once Sargon, then SebLague, are dropped | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
+| C | 2026-10-23 | stash-9, vividmind, lynx, magog, rustic | 1000 | no consistent set; the ends fit high and the middle low | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
+| D | 2026-10-24 | rustic, stash-11, stash-13 | 300 | consistent | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
+| E | 2026-10-24 | stash-11, stash-13, stash-15.3 | 300 | consistent | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
+| F | 2026-10-25 | stash-15.3, crucible, cinnamon, sofcheck, stash-19 | 1000 | consistent; Cinnamon segfaulted in 3 of its 400 games | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
+| G | 2026-11-01 | stash-19, floyd, blunder, stash-21, velvet | 1000 | consistent; Stash 21 lost 3 of its 400 games on time | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 
 | anchor | CCRL Blitz | fitted here (95%) | check: verdict |
 |---|---|---|---|
