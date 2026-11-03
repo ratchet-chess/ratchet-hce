@@ -20,6 +20,7 @@ are not deterministic, the node counts could not compare the two builds.
 | E | 2026-10-24 | stash-11, stash-13, stash-15.3 | 300 | consistent | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 | F | 2026-10-25 | stash-15.3, crucible, cinnamon, sofcheck, stash-19 | 1000 | consistent; Cinnamon segfaulted in 3 of its 400 games | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 | G | 2026-11-01 | stash-19, floyd, blunder, stash-21, velvet | 1000 | consistent; Stash 21 lost 3 of its 400 games on time | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
+| H | 2026-11-03 | stash-21.0, velvet-1.2.0, clovis-iii, zurichess-neuchatel, stash-25.0 | 1000 | consistent; stash-21.0 lost 3 of its 400 games on time | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 
 | anchor | CCRL Blitz | fitted here (95%) | check: verdict |
 |---|---|---|---|
@@ -30,8 +31,8 @@ are not deterministic, the node counts could not compare the two builds.
 | sargon-1978-1.01b | 1167 | 963 ± 45 | B: dropped |
 | blunders-0.1.0 | 1267 | 1305 ± 54 | B: agrees |
 | stash-9.0.1 | 1271 | 1227 ± 51; 1330 ± 37 | B: agrees; C: disagrees |
-| seblague-0.1 | 1373 | 1249 ± 41 | B: dropped |
 | vividmind-1.1.0 | 1358 | 1346 ± 37 | C: agrees |
+| seblague-0.1 | 1373 | 1249 ± 41 | B: dropped |
 | lynx-0.10.0 | 1422 | 1368 ± 36 | C: disagrees |
 | magog-1.0 | 1499 | 1450 ± 36 | C: disagrees |
 | rustic-alpha1 | 1551 | 1628 ± 42; 1509 ± 67 | C: disagrees; D: agrees |
@@ -44,5 +45,8 @@ are not deterministic, the node counts could not compare the two builds.
 | stash-19.0 | 2474 | 2450 ± 38; 2437 ± 43 | F: agrees; G: agrees |
 | floyd-0.9 | 2583 | 2599 ± 36 | G: agrees |
 | blunder-8.5.5 | 2663 | 2655 ± 36 | G: agrees |
-| stash-21.0 | 2714 | 2720 ± 37 | G: agrees |
-| velvet-1.2.0 | 2764 | 2781 ± 39 | G: agrees |
+| stash-21.0 | 2714 | 2720 ± 37; 2713 ± 38 | G: agrees; H: agrees |
+| velvet-1.2.0 | 2764 | 2781 ± 39; 2767 ± 36 | G: agrees; H: agrees |
+| clovis-iii | 2828 | 2852 ± 35 | H: agrees |
+| zurichess-neuchatel | 2919 | 2891 ± 36 | H: agrees |
+| stash-25.0 | 2933 | 2934 ± 37 | H: agrees |
