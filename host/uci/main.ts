@@ -39,10 +39,13 @@ if (!Number.isInteger(level)) throw new Error("--level needs a whole number");
 const stop = new Int32Array(new SharedArrayBuffer(4));
 const worker = new Worker(new URL("./worker.ts", import.meta.url), { workerData: { stop, nodesTime, release, level } });
 let markReady: () => void;
+/** the `id name` the worker sends before it is ready: the own engine's carries its version */
+let idName = "Ratchet";
 const ready = new Promise<void>((r) => (markReady = r));
 
 worker.on("message", (line: string) => {
   if (line === "ready") markReady();
+  else if (line.startsWith("name ")) idName = line.slice(5);
   else process.stdout.write(line + "\n");
 });
 worker.on("error", (e: Error) => {
@@ -99,7 +102,8 @@ for await (const raw of rl) {
   const tokens = raw.trim().split(/\s+/);
   switch (tokens[0]) {
     case "uci":
-      out("id name Ratchet");
+      await ready;
+      out(`id name ${idName}`);
       out("id author the Ratchet contributors");
       out("option name Hash type spin default 16 min 1 max 1024");
       out("option name Threads type spin default 1 min 1 max 1");

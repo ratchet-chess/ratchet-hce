@@ -52,6 +52,12 @@ interface Search {
   evaluate(): number;
   /** present only in a tuning build */
   tuneSet?(id: number, value: number): void;
+  /** the own engine's version, major << 16 | minor << 8 | patch; a release has none */
+  version?(): number;
+  /** the own engine's static eval in its own unit, finer than the centipawn */
+  evaluateUnits?(): number;
+  /** the own engine's incremental-eval mismatches, walking the tree to a depth */
+  evalWalk?(depth: number): number;
 }
 
 /** A game played inside a release that keeps its own game state, as its original did; optional. */
@@ -244,6 +250,24 @@ export class Engine {
 
   evaluate(): number {
     return this.search.evaluate();
+  }
+
+  /** the static eval in the engine's own unit; the own engine only */
+  evaluateUnits(): number {
+    if (!this.search.evaluateUnits) throw new Error("this build has no eval in its own unit");
+    return this.search.evaluateUnits();
+  }
+
+  /** incremental-eval mismatches found walking the current position's tree to `depth`; the own engine only */
+  evalWalk(depth: number): number {
+    if (!this.search.evalWalk) throw new Error("this build keeps no incremental eval to walk");
+    return this.search.evalWalk(depth);
+  }
+
+  /** the own engine's version as "major.minor.patch"; undefined for a release */
+  get version(): string | undefined {
+    const v = this.wasm.version?.();
+    return v === undefined ? undefined : `${v >> 16}.${(v >> 8) & 255}.${v & 255}`;
   }
 
   /** sets tuning-build constant `id` to `value`; a release build has none */

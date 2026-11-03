@@ -127,4 +127,5 @@ port.on("message", (c: WorkerCommand) => {
 });
 
 engine.setPosition(START_FEN, []);
+port.postMessage(`name Ratchet${engine.version ? ` ${engine.version}` : ""}`);
 port.postMessage("ready");

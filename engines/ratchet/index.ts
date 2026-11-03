@@ -1,0 +1,121 @@
+/**
+ * Ratchet, the own engine: the WASM exports the host calls. The position is the
+ * core's own, set by the host through the core's exports; the engine adds its
+ * search, its eval and its version.
+ *
+ * - go() is a fresh search to a depth: every table empty, as a node signature
+ *   needs.
+ * - goClock() is one `go` of a game: the TT and the histories last until newGame.
+ */
+export { initCore, clear, put, setState, playMove, legalMoves, rootMove, perft, checkedWalk } from "../../core/index";
+import { MAX_MOVES } from "../../core/constants";
+import { initCore, legalMoves } from "../../core/index";
+import { generateMoves } from "../../core/movegen";
+import { evaluateScratch, initEval, scratchPsq } from "./eval";
+import { clearHistory } from "./history";
+import { MAX_DEPTH, bestScore, completedDepth, hostScore, initSearch, nodesSearched as searchNodes, pvAt, rootPvLen, think } from "./search";
+import { doMove, psq, refresh, undoMove } from "./state";
+import { noClock, startClock } from "./time";
+import { ttAlloc, ttClear } from "./tt";
+
+/** the version `id name` reports: major << 16 | minor << 8 | patch; a version is a rated commit */
+const VERSION = (0 << 16) | (1 << 8) | 0;
+
+const HASH_MB = 16;
+
+export function init(): void {
+  initCore();
+  initEval();
+  initSearch();
+  ttAlloc(HASH_MB);
+  clearHistory();
+}
+
+export function version(): i32 {
+  return VERSION;
+}
+
+/** the best move from a fresh search to `depth`, or 0 when the position has no legal move */
+export function go(depth: i32): i32 {
+  ttClear();
+  clearHistory();
+  noClock();
+  refresh();
+  return think(min(depth, MAX_DEPTH));
+}
+
+/**
+ * One `go` of a game under the host's limits (a limit not given is negative): the
+ * side to move's clock and increment, moves to go, a fixed move time, a depth.
+ * With no limit the search runs until the host's stop. Returns the best move, or 0.
+ */
+export function goClock(timeMs: f64, incMs: f64, movesToGo: i32, moveTimeMs: f64, depth: i32): i32 {
+  refresh();
+  startClock(timeMs, incMs, movesToGo, moveTimeMs, legalMoves());
+  return think(depth > 0 ? min(depth, MAX_DEPTH) : MAX_DEPTH);
+}
+
+
+export function setHash(mb: i32): void {
+  ttAlloc(mb);
+}
+
+export function newGame(): void {
+  ttClear();
+  clearHistory();
+}
+
+export function nodesSearched(): f64 {
+  return searchNodes();
+}
+
+/** the last finished iteration's score for the side to move, in centipawns or as a mate score */
+export function searchScore(): i32 {
+  return hostScore(bestScore);
+}
+
+export function searchDepth(): i32 {
+  return completedDepth();
+}
+
+export function pvLength(): i32 {
+  return rootPvLen;
+}
+
+export function pvMove(i: i32): i32 {
+  return pvAt(i);
+}
+
+/** the static eval of the core's position for the side to move, in centipawns, from params.ts */
+export function evaluate(): i32 {
+  return hostScore(evaluateScratch());
+}
+
+/** the static eval in the engine's unit, for the eval gate */
+export function evaluateUnits(): i32 {
+  return evaluateScratch();
+}
+
+// ------------------------------------------------------------------ eval gate
+
+const walkMoves = new StaticArray<i32>(64 * MAX_MOVES);
+
+function evalWalkRec(depth: i32, at: i32): i32 {
+  let bad = psq == scratchPsq() ? 0 : 1;
+  if (depth == 0) return bad;
+  const end = generateMoves(walkMoves, at, true);
+  for (let i = at; i < end; i++) {
+    const m = walkMoves[i];
+    doMove(m);
+    bad += evalWalkRec(depth - 1, end);
+    undoMove(m);
+    if (psq != scratchPsq()) bad++;
+  }
+  return bad;
+}
+
+/** walks the tree to `depth` checking the incremental material and PSQT sum after every make and unmake; returns mismatches */
+export function evalWalk(depth: i32): i32 {
+  refresh();
+  return evalWalkRec(depth, 0);
+}

@@ -23,6 +23,7 @@ const DEPTH: Record<string, number> = {
   "gnuchess-1987": 5,
   "phalanx-xii": 6,
   "fruit-2.1": 7,
+  ratchet: 12,
 };
 
 const args = process.argv.slice(2);
