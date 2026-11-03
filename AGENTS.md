@@ -48,7 +48,7 @@ do not say where, ask the user.
 
 - **The own engine is written in Ratchet's own code.** Ideas come from anywhere; code is not ported.
 - **Cite the origin of each function's form** in its comment: the engine, paper or page it follows.
-- **Its version is a constant that `id name` reports.** A version is a rated commit, not a frozen copy.
+- **Its version is a constant that `id name` reports.** An admitted change bumps the patch version. A stage's end bumps the minor version, and that commit is rated. A version is a commit, not a frozen copy.
 - **It has no fidelity bar.** It passes the gates a release on the core passes, and the conversion suite.
 - **A change that keeps the node signature is a speed change.** Measure it on every runtime; it needs no match.
 - **Any other change is admitted by SPRT against its parent.** Start with cheap tests, and go longer or deeper only when a result needs it.
