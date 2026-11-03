@@ -82,6 +82,7 @@ The match tools play releases with fastchess, each side from a snapshot of its c
 - `tools/calibrate.sh`: a rating on the CCRL Blitz scale, against anchor engines with published ratings;
 - `tools/mate-suite.sh`: the conversion suite, KQK and KRK starts to mate;
 - `tools/depth.ts`: the mean depth of a match's PGNs.
+- `tools/queue.ts`: the CPU manager's queue, which hands every host its units in priority order and drains a host for a priority job. The manager (`tools/queue/manager.ts`) runs in a container on this host, and an agent on each host (`tools/queue/agent.ts`) claims units and runs them. A tool moves onto the queue as it is ported to submit.
 
 Each tool's header comment documents its options. `nix/anchors.sh` builds every anchor, and `tools/anchors.ts` lists them with their CCRL ratings.
 

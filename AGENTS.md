@@ -104,6 +104,7 @@ The steps run in this order. Each step's output is the next step's input.
 - **A tested tree is the committed tree.** Commit the tree as tested, not a rebuild of it.
 - **Build experiments on scratch branches.** Delete a branch once its result is committed or saved as a patch.
 - **Rebuild the wasm after switching branches,** before reading a node signature or a fidelity result.
+- **The CPU manager's queue state is in the folder that `QUEUE_STATE` in `tools/local.env` names, not in `tmp/`.** It outlives a checkout and a session.
 - **Match state, instrumented copies and other run state go in the repo's gitignored `tmp/`.** Research notes, scripts and patches go off-tree, in the store that `ARTIFACTS` in `tools/local.env` names. Its README has the layout, and records cite it as `<artifacts>`.
 
 ## Running tools
@@ -112,6 +113,7 @@ The steps run in this order. Each step's output is the next step's input.
 - **Never run or open an original's binary on the host.** The anchor tree holds it only for containers to mount. On the host, open only an original's source text.
 - **A download enters through `tools/ws.ts fetch`,** pinned by its sha256. Containers have no network, except a fetch phase that runs no downloaded code.
 - **Never edit a tool script while a run of it is live.** Stage the change beside it, and swap it in after the run.
+- **A tool that submits to `tools/queue.ts` runs its work through the queue.** The queue orders the hosts, not the tool.
 - **Stop a run by its PID or its process group,** never by a name pattern.
 - **Wait for a run to finish,** rather than polling it in a loop.
 - **A bug found in a tool becomes a tools commit** before the tool is used again. A run that used the bug is repeated, unless the bug cannot change its verdict.
