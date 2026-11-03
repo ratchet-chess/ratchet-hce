@@ -124,7 +124,7 @@ export function hostScore(s: i32): i32 {
 }
 
 @inline function evaluate(): i32 {
-  return evalWith(psq);
+  return evalWith(psq, true);
 }
 
 // ---------------------------------------------------------------- helpers

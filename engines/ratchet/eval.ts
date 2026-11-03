@@ -1,19 +1,23 @@
 /**
- * The own engine's eval: material and piece-square tables, tapered between
- * middlegame and endgame by phase (Fruit 2.0's form; PeSTO's phase weights),
- * the side to move's tempo, insufficient material, and KXK mop-up. Scores are
- * for the side to move, in the engine's unit.
+ * The own engine's eval: material and piece-square tables, the king-pawn terms
+ * (pawns.ts), tapered between middlegame and endgame by phase (Fruit 2.0's form;
+ * PeSTO's phase weights) after the endgame half is scaled (Stash 37), the side
+ * to move's tempo, insufficient material, and KXK mop-up. Scores are for the
+ * side to move, in the engine's unit.
  *
  * The search reads the packed (middlegame, endgame) sum that state.ts keeps
  * incrementally. evaluateScratch() recomputes it from params.ts, so a tuning
  * build that sets a table at run time is scored with its new values.
  */
 import { BISHOP, KING, KNIGHT, PAWN, QUEEN, ROOK } from "../../core/constants";
+import { KING_ATT } from "../../core/tables";
 import { bb, board, side } from "../../core/position";
 import {
   BISHOP_EG, BISHOP_MG, KING_EG, KING_MG, KNIGHT_EG, KNIGHT_MG, MAT_EG, MAT_MG, MOPUP_CLOSE, MOPUP_EDGE, PAWN_EG, PAWN_MG,
-  QUEEN_EG, QUEEN_MG, ROOK_EG, ROOK_MG, TEMPO_EG, TEMPO_MG,
+  QUEEN_EG, QUEEN_MG, ROOK_EG, ROOK_MG, SCALE_BASE, SCALE_OCB, SCALE_OCB_PASSED, SCALE_OCB_PIECES, SCALE_OCB_PIECES_PER, SCALE_PER_PAWN,
+  SCALE_ROOK_WING, TEMPO_EG, TEMPO_MG,
 } from "./params";
+import { initPawns, kingPawn, passedOf } from "./pawns";
 
 /** engine units per centipawn; the host reads centipawns */
 export const UNITS_PER_CP = 4;
@@ -71,8 +75,9 @@ function pieceValue(p: i32, s: i32): i32 {
   return p & 8 ? -v : v;
 }
 
-/** fills PSQ from params.ts */
+/** fills PSQ from params.ts, and the pawn masks */
 export function initEval(): void {
+  initPawns();
   for (let type = PAWN; type <= KING; type++) {
     for (let s = 0; s < 64; s++) {
       PSQ[(type << 6) + s] = pieceValue(type, s);
@@ -98,13 +103,66 @@ export function scratchPsq(): i32 {
   return max(3 - f, f - 4) + max(3 - r, r - 4);
 }
 
+const DARK: u64 = 0xaa55aa55aa55aa55;
+const KINGSIDE: u64 = 0xf0f0f0f0f0f0f0f0;
+const QUEENSIDE: u64 = ~KINGSIDE;
+
+/** a color's non-pawn material at the middlegame values, Stash's stack->material */
+@inline function material(c: i32): i32 {
+  const o = c << 3;
+  return (
+    MAT_MG[KNIGHT] * <i32>popcnt(bb[o | KNIGHT]) +
+    MAT_MG[BISHOP] * <i32>popcnt(bb[o | BISHOP]) +
+    MAT_MG[ROOK] * <i32>popcnt(bb[o | ROOK]) +
+    MAT_MG[QUEEN] * <i32>popcnt(bb[o | QUEEN])
+  );
+}
+
+/**
+ * The endgame half's scale out of 256, for the side it favors, Stash 37
+ * eval_scale_endgame. Stash's endgame-specific scale functions (endgame.c) are
+ * not in Ratchet; their endings take the general factor.
+ */
+function endgameScale(eg: i32): i32 {
+  const strong = eg > 0 ? 0 : 1;
+  const weak = strong ^ 1;
+  const sMat = material(strong);
+  const wMat = material(weak);
+  const sPawns = bb[(strong << 3) | PAWN];
+  const wPawns = bb[(weak << 3) | PAWN];
+  const bishop = MAT_MG[BISHOP];
+  // no pawns, and at most a bishop ahead
+  if (!sPawns && sMat - wMat <= bishop) return sMat <= bishop ? 0 : max(((sMat - wMat) * 8) / bishop, 0);
+  // opposite bishops
+  const wb = bb[BISHOP];
+  const bbish = bb[8 | BISHOP];
+  if (popcnt(wb) == 1 && popcnt(bbish) == 1 && ((wb & DARK) != 0) != ((bbish & DARK) != 0)) {
+    return sMat + wMat > 2 * bishop
+      ? SCALE_OCB_PIECES + SCALE_OCB_PIECES_PER * <i32>popcnt(bb[strong << 3])
+      : SCALE_OCB + SCALE_OCB_PASSED * <i32>popcnt(passedOf[strong]);
+  }
+  // rook against rook, the strong side's pawns on one wing and not two ahead, the weak king beside its pawns
+  const rook = MAT_MG[ROOK];
+  if (
+    sMat == rook &&
+    wMat == rook &&
+    popcnt(sPawns) < 2 + popcnt(wPawns) &&
+    ((sPawns & KINGSIDE) != 0) != ((sPawns & QUEENSIDE) != 0) &&
+    (KING_ATT[<i32>ctz(bb[(weak << 3) | KING])] & wPawns) != 0
+  ) {
+    return SCALE_ROOK_WING;
+  }
+  return min(SCALE_BASE + SCALE_PER_PAWN * <i32>popcnt(sPawns), 256);
+}
+
 /**
  * The eval for the side to move from `psq`, the board's packed material and PSQT
  * sum. Without pawns, rooks or queens and with at most one minor each, it is a
  * draw. Against a bare king, the stronger side is paid for driving it to the edge
- * and bringing its own king close (KXK mop-up).
+ * and bringing its own king close (KXK mop-up). `cached` lets the king-pawn
+ * terms use their table.
  */
-export function evalWith(psq: i32): i32 {
+export function evalWith(psq: i32, cached: bool): i32 {
   const pawns = bb[PAWN] | bb[8 | PAWN];
   const rooks = bb[ROOK] | bb[8 | ROOK];
   const queens = bb[QUEEN] | bb[8 | QUEEN];
@@ -114,8 +172,10 @@ export function evalWith(psq: i32): i32 {
 
   let phase = wMinors + bMinors + 2 * <i32>popcnt(rooks) + 4 * <i32>popcnt(queens);
   if (phase > PHASE_MAX) phase = PHASE_MAX;
-  const s = psq + (side == 0 ? S(TEMPO_MG, TEMPO_EG) : -S(TEMPO_MG, TEMPO_EG));
-  let v = (mgOf(s) * phase + egOf(s) * (PHASE_MAX - phase)) / PHASE_MAX;
+  const s = psq + kingPawn(cached) + (side == 0 ? S(TEMPO_MG, TEMPO_EG) : -S(TEMPO_MG, TEMPO_EG));
+  let eg = egOf(s);
+  eg = (eg * endgameScale(eg)) / 256;
+  let v = (mgOf(s) * phase + eg * (PHASE_MAX - phase)) / PHASE_MAX;
 
   // KXK: one side has its king alone, the other at least one piece
   const wKing = <i32>ctz(bb[KING]);
@@ -136,5 +196,5 @@ export function evalWith(psq: i32): i32 {
 
 /** the eval recomputed from params.ts, for the host, the tuner and the gates */
 export function evaluateScratch(): i32 {
-  return evalWith(scratchPsq());
+  return evalWith(scratchPsq(), false);
 }

@@ -4,7 +4,8 @@
  *   flipped, colors and the side to move swapped), in the engine's own unit;
  * - incremental: the material and PSQT sum and the correction keys that
  *   the search keeps equal their from-scratch values at every node of a walk,
- *   after make and after unmake.
+ *   after make and after unmake, and so does the eval through the king-pawn
+ *   table.
  *
  * Positions: the search bench's set and the perft suite, each with every
  * position one legal move away.

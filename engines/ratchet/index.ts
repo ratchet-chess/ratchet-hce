@@ -11,8 +11,9 @@ export { initCore, clear, put, setState, playMove, legalMoves, rootMove, perft, 
 import { MAX_MOVES } from "../../core/constants";
 import { initCore, legalMoves } from "../../core/index";
 import { generateMoves } from "../../core/movegen";
-import { UNITS_PER_CP, evaluateScratch, initEval, scratchPsq } from "./eval";
+import { UNITS_PER_CP, evalWith, evaluateScratch, initEval, scratchPsq } from "./eval";
 import { clearCorrection } from "./correction";
+import { clearPawns } from "./pawns";
 import { clearHistory } from "./history";
 import { MAX_DEPTH, bestScore, completedDepth, hostScore, initSearch, nodesSearched as searchNodes, pvAt, rootPvLen, think } from "./search";
 import {
@@ -33,6 +34,7 @@ export function init(): void {
   ttAlloc(HASH_MB);
   clearHistory();
   clearCorrection();
+  clearPawns();
 }
 
 export function version(): i32 {
@@ -44,6 +46,7 @@ export function go(depth: i32): i32 {
   ttClear();
   clearHistory();
   clearCorrection();
+  clearPawns();
   noClock();
   refresh();
   return think(min(depth, MAX_DEPTH));
@@ -69,6 +72,7 @@ export function newGame(): void {
   ttClear();
   clearHistory();
   clearCorrection();
+  clearPawns();
 }
 
 export function nodesSearched(): f64 {
@@ -110,9 +114,10 @@ export function unitsPerCp(): i32 {
 
 const walkMoves = new StaticArray<i32>(64 * MAX_MOVES);
 
-/** 1 if the incremental sum or a key differs from the board's, else 0 */
+/** 1 if the incremental sum, a key or the cached king-pawn eval differs from the board's, else 0 */
 function stateDiffers(): i32 {
   if (psq != scratchPsq() || pawnKey != scratchPawnKey()) return 1;
+  if (evalWith(psq, true) != evaluateScratch()) return 1;
   if (nonPawnKey[0] != scratchNonPawnKey(0) || nonPawnKey[1] != scratchNonPawnKey(1)) return 1;
   return minorKey != scratchMinorKey() || majorKey != scratchMajorKey() ? 1 : 0;
 }
@@ -131,7 +136,7 @@ function evalWalkRec(depth: i32, at: i32): i32 {
   return bad;
 }
 
-/** walks the tree to `depth` checking the incremental material and PSQT sum and the correction keys after every make and unmake; returns mismatches */
+/** walks the tree to `depth` checking the incremental sum, the correction keys and the cached eval after every make and unmake; returns mismatches */
 export function evalWalk(depth: i32): i32 {
   refresh();
   return evalWalkRec(depth, 0);
