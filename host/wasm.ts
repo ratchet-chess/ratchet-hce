@@ -3,7 +3,6 @@
  * build:wasm`) or a release's build/<release>.wasm, which re-exports the core
  * beside its search. Loading, position setup and UCI move strings.
  */
-import { readFileSync } from "node:fs";
 import { parseFen } from "./fen.ts";
 
 interface Exports {
@@ -127,7 +126,13 @@ export class Engine {
 
   /** loads build/<name>.wasm: "core", or a release's directory name under engines/; or a path ending in .wasm, such as a tuning build */
   static async load(name: string): Promise<Engine> {
-    const bytes = readFileSync(name.endsWith(".wasm") ? name : new URL(`../build/${name}.wasm`, import.meta.url));
+    // imported here, so that a browser bundle, which loads through fromBytes, needs no node:fs
+    const { readFileSync } = await import("node:fs");
+    return Engine.fromBytes(readFileSync(name.endsWith(".wasm") ? name : new URL(`../build/${name}.wasm`, import.meta.url)), name);
+  }
+
+  /** instantiates a WASM build from its bytes; `name` labels its aborts */
+  static async fromBytes(bytes: BufferSource, name: string): Promise<Engine> {
     let engine: Engine | undefined;
     let memory: WebAssembly.Memory | undefined;
     // an AssemblyScript string: UTF-16 at `ptr`, its byte length in the word before it

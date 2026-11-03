@@ -2,6 +2,7 @@ node_modules/
 *.log
 /tmp/
 /build/
+/web/dist/
 /books/
 # fastchess match state
 /config.json

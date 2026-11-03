@@ -13,11 +13,16 @@
     "bench:deno": "deno run --allow-read bench/perft.ts",
     "bench:all": "bun bench/perft.ts && node bench/perft.ts && deno run --allow-read bench/perft.ts",
     "bench:search": "bun bench/search.ts",
-    "bench:search:all": "bun bench/search.ts && node bench/search.ts && deno run --allow-read bench/search.ts"
+    "bench:search:all": "bun bench/search.ts && node bench/search.ts && deno run --allow-read bench/search.ts",
+    "web:build": "bun web/build.ts",
+    "web": "bun web/serve.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
     "assemblyscript": "^0.28.20",
     "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "chessground": "^9.2.1"
   }
 }
