@@ -21,6 +21,7 @@ are not deterministic, the node counts could not compare the two builds.
 | F | 2026-10-25 | stash-15.3, crucible, cinnamon, sofcheck, stash-19 | 1000 | consistent; Cinnamon segfaulted in 3 of its 400 games | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 | G | 2026-11-01 | stash-19, floyd, blunder, stash-21, velvet | 1000 | consistent; Stash 21 lost 3 of its 400 games on time | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 | H | 2026-11-03 | stash-21.0, velvet-1.2.0, clovis-iii, zurichess-neuchatel, stash-25.0 | 1000 | consistent; stash-21.0 lost 3 of its 400 games on time | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
+| I | 2026-11-03 | zurichess-neuchatel, stash-25.0, polaris-1.8.1, texel-1.07, stash-30.0 | 1000 | consistent once texel-1.07 is dropped | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 
 | anchor | CCRL Blitz | fitted here (95%) | check: verdict |
 |---|---|---|---|
@@ -48,5 +49,8 @@ are not deterministic, the node counts could not compare the two builds.
 | stash-21.0 | 2714 | 2720 ± 37; 2713 ± 38 | G: agrees; H: agrees |
 | velvet-1.2.0 | 2764 | 2781 ± 39; 2767 ± 36 | G: agrees; H: agrees |
 | clovis-iii | 2828 | 2852 ± 35 | H: agrees |
-| zurichess-neuchatel | 2919 | 2891 ± 36 | H: agrees |
-| stash-25.0 | 2933 | 2934 ± 37 | H: agrees |
+| zurichess-neuchatel | 2919 | 2891 ± 36; 2924 ± 43 | H: agrees; I: agrees |
+| stash-25.0 | 2933 | 2934 ± 37; 2922 ± 43 | H: agrees; I: agrees |
+| polaris-1.8.1 | 3049 | 3025 ± 41 | I: agrees |
+| texel-1.07 | 3130 | 3171 ± 38 | I: dropped |
+| stash-30.0 | 3153 | 3191 ± 48 | I: agrees |
