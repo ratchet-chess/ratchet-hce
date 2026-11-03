@@ -146,14 +146,16 @@ export function hostScore(s: i32): i32 {
   if ((nodeCount & 1023) == 0 && completed >= 1 && mustStop(<f64>nodeCount)) stopped = true;
 }
 
-/** rewards a quiet that cut: butterfly and continuation history, and the killer */
+/** moves a quiet's butterfly and 1-, 2- and 4-ply continuation history by `bonus` (Stash 660df34 adds the 4-ply) */
 function rewardQuiet(m: i32, bonus: i32, p: i32): void {
   const pt = pieceTo(m);
   const cm = ssCont[p + SS - 1];
   const fm = ssCont[p + SS - 2];
+  const f4 = ssCont[p + SS - 4];
   gravity(butterfly, (side << 12) | (m & 4095), bonus);
   if (cm >= 0) gravity(contHist, cm + pt, bonus);
   if (fm >= 0) gravity(contHist, fm + pt, bonus);
+  if (f4 >= 0) gravity(contHist, f4 + pt, bonus);
 }
 
 /**
@@ -285,7 +287,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
 
   const cm = ssCont[p + SS - 1];
   const fm = ssCont[p + SS - 2];
-  initPicker(p, tMove, killers[p], cm, fm);
+  const f4 = ssCont[p + SS - 4];
+  initPicker(p, tMove, killers[p], cm, fm, f4);
   let best = -INF;
   let bestMove = 0;
   let played = 0;
@@ -304,6 +307,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       if (cm >= 0) cmh = <i32>contHist[cm + pt];
       if (fm >= 0) fmh = <i32>contHist[fm + pt];
       hist = <i32>butterfly[(side << 12) | (m & 4095)] + cmh + fmh;
+      if (f4 >= 0) hist += <i32>contHist[f4 + pt];
     }
 
     // pruning, once a move has kept the node from a mated score
@@ -447,7 +451,7 @@ function qsearch(alpha: i32, beta: i32): i32 {
   if (check && end == base) return -MATE + p;
   for (let i = base; i < end; i++) {
     const m = MOVES[i];
-    SCORES[i] = m == tMove ? 1 << 30 : isNoisy(m) ? captureScore(m) + (1 << 18) : quietScore(m, -1, -1);
+    SCORES[i] = m == tMove ? 1 << 30 : isNoisy(m) ? captureScore(m) + (1 << 18) : quietScore(m, -1, -1, -1);
   }
   let bestMove = 0;
   for (let i = base; i < end; i++) {

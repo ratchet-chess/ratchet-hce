@@ -37,6 +37,7 @@ const ttOf = new StaticArray<i32>(MAX_PLY);
 const killerOf = new StaticArray<i32>(MAX_PLY);
 const cmOf = new StaticArray<i32>(MAX_PLY);
 const fmOf = new StaticArray<i32>(MAX_PLY);
+const f4Of = new StaticArray<i32>(MAX_PLY);
 
 /** the stage that gave the last move picked */
 export let pickedStage = 0;
@@ -70,23 +71,28 @@ export function captureScore(m: i32): i32 {
   return s;
 }
 
-/** a quiet's order: butterfly plus 1- and 2-ply continuation history; `cm` and `fm` are -1 when there is no such move */
-export function quietScore(m: i32, cm: i32, fm: i32): i32 {
+/**
+ * a quiet's order: butterfly plus 1-, 2- and 4-ply continuation history (Stash
+ * 660df34 adds the 4-ply); `cm`, `fm` and `f4` are -1 when there is no such move
+ */
+export function quietScore(m: i32, cm: i32, fm: i32, f4: i32): i32 {
   const promo = movePromo(m);
   if (promo) return promo == QUEEN ? PROMO_SCORE : -PROMO_SCORE;
   const pt = pieceTo(m);
   let s = <i32>butterfly[(side << 12) | (m & 4095)];
   if (cm >= 0) s += <i32>contHist[cm + pt];
   if (fm >= 0) s += <i32>contHist[fm + pt];
+  if (f4 >= 0) s += <i32>contHist[f4 + pt];
   return s;
 }
 
-export function initPicker(ply: i32, ttMove: i32, killer: i32, cm: i32, fm: i32): void {
+export function initPicker(ply: i32, ttMove: i32, killer: i32, cm: i32, fm: i32, f4: i32): void {
   stage[ply] = ttMove ? STAGE_TT : STAGE_GEN_NOISY;
   ttOf[ply] = ttMove;
   killerOf[ply] = killer != ttMove ? killer : 0;
   cmOf[ply] = cm;
   fmOf[ply] = fm;
+  f4Of[ply] = f4;
 }
 
 /** moves the best-scored move of [from, to) to `from` */
@@ -172,7 +178,8 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
         const e = generateQuiets(MOVES, from);
         const cm = cmOf[ply];
         const fm = fmOf[ply];
-        for (let i = from; i < e; i++) unchecked((SCORES[i] = quietScore(MOVES[i], cm, fm)));
+        const f4 = f4Of[ply];
+        for (let i = from; i < e; i++) unchecked((SCORES[i] = quietScore(MOVES[i], cm, fm, f4)));
         cur[ply] = from;
         end[ply] = e;
         stage[ply] = STAGE_QUIET;
