@@ -13,8 +13,12 @@
  *   `patience` epochs without a better one.
  * - local: Österlund's local search (2014): for each free element in turn, one
  *   step up, kept if the loss drops, else one step down, kept if it drops; passes
- *   repeat until one changes nothing, or up to a cap. A run may start from saved values. Over a trace, a try updates only the positions
- *   the element touches. Through an adapter, a try is one eval of every position.
+ *   repeat until one changes nothing, or up to a cap. A run may start from saved
+ *   values. Over a trace, a try updates only the positions the element touches.
+ *   Through an adapter, a try is one eval of every position.
+ *   Steps grow (`grow` > 1): an element kept moving one way tries its last
+ *   direction first, with its stride doubled up to `grow` steps; when that stride
+ *   fails, it tries one step, as the plain search does.
  */
 import type { Adapter } from "./adapter.ts";
 import type { LoadedMap } from "./map.ts";
@@ -229,18 +233,27 @@ export async function localSearch(
   target: LocalTarget,
   m: LoadedMap,
   ids: number[],
-  opts: { maxPasses: number; start?: Float64Array; onPass?: (theta: Float64Array) => void },
+  opts: { maxPasses: number; grow?: number; start?: Float64Array; onPass?: (theta: Float64Array) => void },
   log: (line: string) => void,
 ): Promise<Float64Array> {
   const theta = Float64Array.from(opts.start ?? m.elements.map((e) => e.default));
   for (const id of ids) if (theta[id] !== m.elements[id].default) await target.keep(id, theta[id]);
+  const grow = opts.grow ?? 1;
+  // per element: the direction of its last kept move (0 none) and its stride in steps
+  const lastDir = new Int8Array(m.elements.length);
+  const stride = new Float64Array(m.elements.length).fill(1);
   let best = (await target.losses()).train;
   for (let pass = 1; pass <= opts.maxPasses; pass++) {
     let changed = 0;
     for (const id of ids) {
       const e = m.elements[id];
-      for (const dir of [1, -1]) {
-        const v = theta[id] + dir * e.step;
+      const tries: [number, number][] = [];
+      if (lastDir[id] !== 0 && stride[id] > 1) tries.push([lastDir[id], stride[id]]);
+      for (const dir of grow > 1 && lastDir[id] === -1 ? [-1, 1] : [1, -1]) tries.push([dir, 1]);
+      let moved = 0;
+      let by = 0;
+      for (const [dir, k] of tries) {
+        const v = theta[id] + dir * k * e.step;
         if (v > e.max || v < e.min) continue;
         const l = await target.tryValue(id, v);
         if (l < best) {
@@ -248,9 +261,13 @@ export async function localSearch(
           theta[id] = v;
           await target.keep(id, v);
           changed++;
+          moved = dir;
+          by = k;
           break;
         }
       }
+      stride[id] = moved !== 0 && moved === lastDir[id] ? Math.min(by * 2, grow) : 1;
+      lastDir[id] = moved;
     }
     const { train, valid } = await target.losses();
     log(`pass ${pass}: ${changed} changed, train ${train.toFixed(6)}, valid ${valid.toFixed(6)}`);

@@ -23,7 +23,7 @@
  *                                                           the probed trace, tmp/texel/traces/; reused when present
  *   bun tools/texel/main.ts tune <map.json> <dataset.bin> --optimizer adam|local [--over trace|adapter]
  *       [--workers <n>] [--sample <permille>] [--limit <n>] [--delta <factor>] [--tol <cp>] [--min-touch <n>]
- *       [--alpha <a>] [--epochs <n>] [--patience <n>] [--passes <n>] [--from <values.json>]
+ *       [--alpha <a>] [--epochs <n>] [--patience <n>] [--passes <n>] [--grow <steps>] [--from <values.json>]
  *                                                           a run: K, the optimizer, the rounded values verified
  *                                                           through the adapter; tmp/texel/runs/ and results/tuning.md.
  *                                                           local saves its values after every pass, so a stopped
@@ -261,6 +261,7 @@ if (step === "map" || step === "build" || step === "write") {
       protocol = `adam α ${alpha}, at most ${epochs} epochs, patience ${patience}`;
     } else {
       const passes = Number(opt("--passes") ?? 20);
+      const grow = Number(opt("--grow") ?? 16);
       const from = opt("--from");
       let start: Float64Array | undefined;
       if (from) {
@@ -274,8 +275,8 @@ if (step === "map" || step === "build" || step === "write") {
       const saved = join(runs, `${id}.pass.values.json`);
       console.log(`values after each pass: ${saved}`);
       const target = trace ? traceTarget(trace, m, labels, K) : adapterTarget(adapter, m, labels, K);
-      theta = await localSearch(target, m, ids, { maxPasses: passes, start, onPass: (t) => writeFileSync(saved, `${JSON.stringify(valuesOf(t), null, 2)}\n`) }, (l) => console.log(l));
-      protocol = `local over the ${over}, at most ${passes} passes${from ? `, from ${basename(from)}` : ""}`;
+      theta = await localSearch(target, m, ids, { maxPasses: passes, grow, start, onPass: (t) => writeFileSync(saved, `${JSON.stringify(valuesOf(t), null, 2)}\n`) }, (l) => console.log(l));
+      protocol = `local over the ${over}, at most ${passes} passes${grow > 1 ? `, steps grow to ×${grow}` : ""}${from ? `, from ${basename(from)}` : ""}`;
     }
     // the values as the subject stores them, verified through the adapter
     const values = valuesOf(theta);
