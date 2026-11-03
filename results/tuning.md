@@ -27,3 +27,4 @@ writes the row.
 | chess-4.6 | 1.332 | 0.05165 | 0.04832 | 0.05165 | 0.04831 | 0.04828 | 60 | 59 | zurichess-quiet.resolved; adam α 0.1, at most 2000 epochs, patience 100; trace Δ ×4, tol 2 cp; touched ≥ 100 | 4c547a8 | 2026-11-02 |
 | phalanx-xii | 1.427 | 0.06025 | 0.05658 | 0.06043 | 0.05831 | 0.05798 | 482 | 472 | zurichess-quiet.resolved, first 100000; adam α 0.1, at most 2000 epochs, patience 100; trace Δ ×4, tol 2 cp; touched ≥ 100 | 1410157 | 2026-11-01 |
 | phalanx-xii | 1.427 | 0.06025 | 0.05863 | 0.06043 | 0.05957 | 0.05942 | 482 | 467 | zurichess-quiet.resolved, first 100000; local over the trace, at most 5 passes; trace Δ ×4, tol 2 cp; touched ≥ 100 | 1410157 | 2026-11-01 |
+| phalanx-xii | 1.423 | 0.06043 | 0.05726 | 0.06055 | 0.05748 | 0.05728 | 537 | 527 | zurichess-quiet.resolved; adam α 0.1, at most 2000 epochs, patience 100; trace Δ ×4, tol 2 cp; touched ≥ 100 | 395f0b0 | 2026-11-03 |
