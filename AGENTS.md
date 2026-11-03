@@ -24,6 +24,7 @@ do not say where, ask the user.
 | **`SPEED`** | a candidate's search speed over a base's, which scales its node budget in a match | speed ratio |
 | **conversion suite** | `tools/mate-suite.sh`: KQK and KRK starts to mate | mate test |
 | **variant** | a copy of a release that keeps its mechanisms and opens its constants or its speed | what-if branch, fork |
+| **own engine** | Ratchet's own program, `engines/ratchet/`: Ratchet's code on the core, with no original | release, variant |
 
 ## Releases
 
@@ -42,6 +43,16 @@ do not say where, ask the user.
 - **A variant has no fidelity bar.** It passes the gates its release passes.
 - **A speed variant plays its release's moves with its release's node counts,** checked against the release's reference.
 - **A tuned variant is rated at its release's depths or levels,** so the rating gap measures only its constants.
+
+## Own engine
+
+- **The own engine is written in Ratchet's own code.** Ideas come from anywhere; code is not ported.
+- **Cite the origin of each function's form** in its comment: the engine, paper or page it follows.
+- **Its version is a constant that `id name` reports.** A version is a rated commit, not a frozen copy.
+- **It has no fidelity bar.** It passes the gates a release on the core passes, and the conversion suite.
+- **A change that keeps the node signature is a speed change.** Measure it on every runtime; it needs no match.
+- **Any other change is admitted by SPRT against its parent.** Start with cheap tests, and go longer or deeper only when a result needs it.
+- **Tuned values are written into the engine itself,** as a commit, not as a variant.
 
 ## Building a release
 
