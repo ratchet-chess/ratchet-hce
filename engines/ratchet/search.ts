@@ -4,7 +4,8 @@
  * to move, in the engine's unit; a mate in n plies is MATE - n.
  *
  * Every node starts with a TT probe; non-PV nodes cut on a TT bound of enough
- * depth. Before the move loop: reverse futility, razoring, null move and IIR.
+ * depth. The static eval is the raw eval plus the pawn correction history
+ * (correction.ts); the TT stores the raw one. Before the move loop: reverse futility, razoring, null move and IIR.
  * In it: late move pruning, futility on the reduced depth, history pruning and
  * SEE pruning, then a check extension on the move and late move reductions.
  * Each form's origin is named where it is applied.
@@ -12,6 +13,7 @@
 import { KING, MAX_MOVES, MAX_PLY, PAWN, movePromo } from "../../core/constants";
 import { generateMoves } from "../../core/movegen";
 import { bb, halfmove, hash, inCheck, isRepetition, ply, side } from "../../core/position";
+import { correction, updateCorrection } from "./correction";
 import { UNITS_PER_CP, evalWith } from "./eval";
 import { bonusAt, butterfly, captureHist, contHist, gravity, killers, malusAt } from "./history";
 import {
@@ -232,7 +234,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   let improving = false;
   if (!check) {
     raw = hit && ttEval != EVAL_NONE ? ttEval : evaluate();
-    staticEval = raw;
+    staticEval = raw + correction(side);
     eval = staticEval;
     if (hit && (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > eval : tScore < eval))) eval = tScore;
     // improving, Alexandria 829daf4: against two plies up, else four, else true
@@ -389,6 +391,13 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   if (played == 0) return check ? -MATE + p : 0;
   if (best >= beta) updateHistories(bestMove, depth, p, quiets, captures);
   const bound = best >= beta ? BOUND_LOWER : bestMove ? BOUND_EXACT : BOUND_UPPER;
+  // correction history, Stash 302136d: not in check, no noisy best move, and the bound says the eval was wrong in that direction
+  if (
+    !check &&
+    !(bestMove && isNoisy(bestMove)) &&
+    !(bound == BOUND_LOWER && best <= staticEval) &&
+    !(bound == BOUND_UPPER && best >= staticEval)
+  ) updateCorrection(side, depth, best - staticEval);
   ttStore(key, bestMove, scoreToTT(best, p), raw, depth, bound, pvNode || tPv);
   return best;
 }
@@ -426,7 +435,7 @@ function qsearch(alpha: i32, beta: i32): i32 {
   let raw = EVAL_NONE;
   if (!check) {
     raw = hit && ttEval != EVAL_NONE ? ttEval : evaluate();
-    best = raw;
+    best = raw + correction(side);
     if (hit && (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > best : tScore < best))) best = tScore;
     if (best >= beta) return best;
     if (best > alpha) alpha = best;

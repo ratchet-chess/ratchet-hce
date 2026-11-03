@@ -12,6 +12,7 @@ import { MAX_MOVES } from "../../core/constants";
 import { initCore, legalMoves } from "../../core/index";
 import { generateMoves } from "../../core/movegen";
 import { UNITS_PER_CP, evaluateScratch, initEval, scratchPsq } from "./eval";
+import { clearCorrection } from "./correction";
 import { clearHistory } from "./history";
 import { MAX_DEPTH, bestScore, completedDepth, hostScore, initSearch, nodesSearched as searchNodes, pvAt, rootPvLen, think } from "./search";
 import { doMove, nonPawnKey, pawnKey, psq, refresh, scratchNonPawnKey, scratchPawnKey, undoMove } from "./state";
@@ -19,7 +20,7 @@ import { noClock, startClock } from "./time";
 import { ttAlloc, ttClear } from "./tt";
 
 /** the version `id name` reports: major << 16 | minor << 8 | patch; a version is a rated commit */
-const VERSION = (0 << 16) | (1 << 8) | 0;
+const VERSION = (0 << 16) | (1 << 8) | 1;
 
 const HASH_MB = 16;
 
@@ -29,6 +30,7 @@ export function init(): void {
   initSearch();
   ttAlloc(HASH_MB);
   clearHistory();
+  clearCorrection();
 }
 
 export function version(): i32 {
@@ -39,6 +41,7 @@ export function version(): i32 {
 export function go(depth: i32): i32 {
   ttClear();
   clearHistory();
+  clearCorrection();
   noClock();
   refresh();
   return think(min(depth, MAX_DEPTH));
@@ -63,6 +66,7 @@ export function setHash(mb: i32): void {
 export function newGame(): void {
   ttClear();
   clearHistory();
+  clearCorrection();
 }
 
 export function nodesSearched(): f64 {

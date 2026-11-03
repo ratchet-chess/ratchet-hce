@@ -18,5 +18,5 @@ invariants that span files.
   flags byte of bound (2 bits), PV (1) and generation (5). Bound 0 is an empty slot. The move keeps
   the core's low 15 bits; a probe restores its flags from the board and checks it is legal. Mate
   scores are stored relative to the node.
-- **Determinism.** `go(depth)` empties the TT and the histories first, so its node signature depends
-  only on the build and the position. `goClock` keeps both between the moves of a game.
+- **Determinism.** `go(depth)` empties the TT, the histories and the correction history first, so its node signature depends
+  only on the build and the position. `goClock` keeps them all between the moves of a game.

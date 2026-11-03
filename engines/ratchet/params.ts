@@ -215,6 +215,10 @@ export const HIST_MALUS_MUL = 532;
 export const HIST_MALUS_SUB = 163;
 export const HIST_MALUS_MAX = 693;
 
+/** pawn correction history, Stash 302136d: each entry within 32 at its pawn 103; an update weighs 1 + depth, at most 16, of 256 */
+export const CORR_MAX = 124;
+export const CORR_WEIGHT_MAX = 16;
+
 // ---------------------------------------------------------------- time
 
 /** Weiss c735b8f InitTimeManagement: sudden death uses 0.022 of the time left, at most 0.2 of the clock */
