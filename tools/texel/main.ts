@@ -16,6 +16,12 @@
  *                                                           as self-play (pgn reader options, dataset.ts)
  *   bun tools/texel/main.ts resolve <dataset.bin>           <set>.resolved.bin, by the neutral resolver
  *   bun tools/texel/main.ts info <dataset.bin>              a dataset's header and label counts
+ * eval, trace and tune take this host's cores, so each runs under a batch hold of
+ * the CPU manager's queue (tools/queue.ts hold, decision batch-hold): it starts
+ * once no wall-clock match plays here, and none starts beside it. A hold waits
+ * behind the jobs queued before it; QUEUE_PRIORITY above 0 puts it ahead, which
+ * needs the user's word or the CPU owner's.
+ *
  * eval, trace and tune take --adapter wasm (default; --workers <n>) or uci
  * (--processes <n>, default 8; the map's uci section, uci.ts).
  *
@@ -62,6 +68,11 @@ const DATASETS = join(REPO, "tmp", "texel", "datasets");
 const DOWNLOADS = "/ws/downloads";
 
 const [step, ...rest] = process.argv.slice(2);
+if (["eval", "trace", "tune"].includes(step) && !process.env.QUEUE_HOLD) {
+  const held = spawnSync("bun", [join(REPO, "tools", "queue.ts"), "hold", "--kind", "batch", "--name", `texel-${step}`,
+    "--priority", process.env.QUEUE_PRIORITY ?? "0", "--", process.execPath, ...process.argv.slice(1)], { stdio: "inherit" });
+  process.exit(held.status ?? 1);
+}
 const opt = (name: string) => (rest.includes(name) ? rest[rest.indexOf(name) + 1] : undefined);
 const positional = rest[0] && !rest[0].startsWith("--") ? rest[0] : undefined;
 const usage = "usage: bun tools/texel/main.ts map|build <map.json> | write <map.json> --name <name> | --in-place [--values <values.json>] | dataset --set <name> | --pgn <file> --name <name> [--opt <key>=<value> ...] [--valid <permille>] [--limit <n>] | resolve <dataset.bin> | info <dataset.bin> | eval|trace <map.json> <dataset.bin> [--workers <n>] [--limit <n>] [--delta <factor>] [--tol <cp>] | tune <map.json> <dataset.bin> --optimizer adam|local [...] (see the header)";
