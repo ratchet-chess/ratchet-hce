@@ -9,12 +9,27 @@
  *   --depth <n>            the depth of every search (default: the engine's entry in DEPTH)
  *   --repeat <n>           timed passes after the warm-up pass (default 3); each pass prints a line
  *   --positions <file>     `name|fen` lines (default bench/positions.txt, the set of the releases' references)
+ *   --wasm <file>          with --engine: bench this build of the engine instead of build/<engine>.wasm
+ *   --against <ref>        compare --engine's build/<engine>.wasm, the candidate, with the same engine
+ *                          built from a git ref, the base, and print the candidate's SPEED for tools/pool.ts
  *
  * The warm-up pass is untimed and also checks that every pass returns the same nodes,
  * so a build that is not deterministic as driven fails instead of reporting a number.
+ *
+ * With --against, the base is built by tools/snapshot.sh into tmp/bench/<sha>/ and reused
+ * after that. Each round benches each build once, in its own fresh process on this runtime,
+ * the order swapped every round, so a drift in the machine's speed falls on both alike.
+ * One process never hosts both builds: under Bun the module instantiated second ran 2-4%
+ * faster than the first with identical bytes (local, 2026-11-03). SPEED is the median over
+ * the rounds of the candidate's knps over the base's; --repeat sets the rounds (default 6).
+ * Under Deno it needs `--allow-read --allow-run --allow-env`.
  */
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { Engine } from "../host/wasm.ts";
+
+const root = join(import.meta.dirname, "..");
 
 /** depth per engine, chosen by hand so one pass takes seconds, not minutes, under Bun on `local` */
 const DEPTH: Record<string, number> = {
@@ -28,13 +43,16 @@ const DEPTH: Record<string, number> = {
 
 const args = process.argv.slice(2);
 const opt = (name: string) => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
-const repeat = Number(opt("--repeat") ?? 3);
+const against = opt("--against");
+const repeat = Number(opt("--repeat") ?? (against ? 6 : 3));
 const positionsPath = opt("--positions") ?? new URL("./positions.txt", import.meta.url).pathname;
 const positions = readFileSync(positionsPath, "utf8")
   .trim()
   .split("\n")
   .map((l) => l.slice(l.indexOf("|") + 1));
 
+const wasmPath = opt("--wasm");
+if (wasmPath && !opt("--engine")) throw new Error("--wasm needs --engine");
 const engines = opt("--engine")
   ? [opt("--engine")!]
   : readdirSync(new URL("../engines/", import.meta.url))
@@ -73,22 +91,87 @@ function pass(engine: Engine, depth: number): { nodes: number; ms: number } {
   return { nodes, ms };
 }
 
+/** the median of `xs`; of an even count, the mean of the middle two */
+function median(xs: number[]): number {
+  const s = [...xs].sort((a, b) => a - b);
+  const h = s.length >> 1;
+  return s.length % 2 ? s[h] : (s[h - 1] + s[h]) / 2;
+}
+
+/** one timed pass, in milliseconds; exits if its nodes differ from the signature */
+function timed(engine: Engine, depth: number, signature: number, label: string): number {
+  const r = pass(engine, depth);
+  if (r.nodes !== signature) {
+    console.log(`${label} depth ${depth}: NODES DIFFER BETWEEN PASSES, ${r.nodes} after ${signature}`);
+    process.exit(1);
+  }
+  return r.ms;
+}
+
+/** the base build of `name` at `ref`, built once into tmp/bench/<sha>/ */
+function baseBuild(name: string, ref: string): { sha: string; wasm: string } {
+  const rev = spawnSync("git", ["rev-parse", "--short", `${ref}^{commit}`], { cwd: root, encoding: "utf8" });
+  if (rev.status !== 0) throw new Error(`not a commit: ${ref}`);
+  const sha = rev.stdout.trim();
+  const dir = join(root, "tmp/bench", sha);
+  const built = spawnSync(join(root, "tools/snapshot.sh"), [dir, sha], { stdio: "inherit" });
+  if (built.status !== 0) throw new Error(`could not build ${sha}`);
+  const wasm = join(dir, "build", `${name}.wasm`);
+  if (!existsSync(wasm)) throw new Error(`${sha} has no engine ${name}`);
+  return { sha, wasm };
+}
+
+/** one warm-up and one timed pass of `wasm` in a fresh process on this runtime */
+function childPass(name: string, wasm: string, depth: number): { signature: number; knps: number } {
+  const script = join(root, "bench/search.ts");
+  const own = ["--engine", name, "--wasm", wasm, "--depth", String(depth), "--repeat", "1", "--positions", positionsPath];
+  const argv = runtime().startsWith("deno") ? ["run", "--allow-read", script, ...own] : [script, ...own];
+  const r = spawnSync(process.execPath, argv, { encoding: "utf8" });
+  const m = /signature (\d+), median (\d+) knps/.exec(r.stdout);
+  if (r.status !== 0 || !m) throw new Error(`bench of ${wasm} failed:\n${r.stdout}${r.stderr}`);
+  return { signature: Number(m[1]), knps: Number(m[2]) };
+}
+
 console.log(`${runtime()}, ${positions.length} positions`);
 
-for (const name of engines) {
-  const engine = await Engine.load(name);
+if (against) {
+  const name = opt("--engine");
+  if (!name) throw new Error("--against needs --engine");
+  const { sha, wasm } = baseBuild(name, against);
   const depth = depthOf(name);
-  const signature = pass(engine, depth).nodes;
-  const times: number[] = [];
+  const sides = [
+    { label: `${sha}:${name}`, wasm, signature: 0, knps: [] as number[] },
+    { label: name, wasm: join(root, "build", `${name}.wasm`), signature: 0, knps: [] as number[] },
+  ];
+  const ratios: number[] = [];
   for (let i = 0; i < repeat; i++) {
-    const r = pass(engine, depth);
-    if (r.nodes !== signature) {
-      console.log(`${name} depth ${depth}: NODES DIFFER BETWEEN PASSES, ${r.nodes} after ${signature}`);
-      process.exit(1);
+    for (const side of i % 2 == 0 ? sides : [...sides].reverse()) {
+      const r = childPass(name, side.wasm, depth);
+      if (side.signature && r.signature !== side.signature) {
+        console.log(`${side.label} depth ${depth}: NODES DIFFER BETWEEN PROCESSES, ${r.signature} after ${side.signature}`);
+        process.exit(1);
+      }
+      side.signature = r.signature;
+      side.knps.push(r.knps);
     }
-    times.push(r.ms);
-    console.log(`${name.padEnd(26)} d${depth}  ${String(signature).padStart(11)} nodes  ${(signature / r.ms).toFixed(0).padStart(6)} knps  (${(r.ms / 1000).toFixed(2)}s)`);
+    const [base, cand] = [sides[0].knps[i], sides[1].knps[i]];
+    ratios.push(cand / base);
+    console.log(`round ${i + 1}  base ${base.toFixed(0).padStart(6)} knps  candidate ${cand.toFixed(0).padStart(6)} knps  ratio ${(cand / base).toFixed(3)}`);
   }
-  const median = [...times].sort((a, b) => a - b)[Math.floor(times.length / 2)];
-  console.log(`${name.padEnd(26)} d${depth}  signature ${signature}, median ${(signature / median).toFixed(0)} knps`);
+  const same = sides[0].signature === sides[1].signature ? "equal" : "different";
+  console.log(`${name} d${depth}  base ${sha} signature ${sides[0].signature}, candidate signature ${sides[1].signature} (${same})`);
+  console.log(`SPEED ${median(ratios).toFixed(3)}, median of ${repeat} rounds, from ${Math.min(...ratios).toFixed(3)} to ${Math.max(...ratios).toFixed(3)}`);
+} else {
+  for (const name of engines) {
+    const engine = await Engine.load(wasmPath ?? name);
+    const depth = depthOf(name);
+    const signature = pass(engine, depth).nodes;
+    const times: number[] = [];
+    for (let i = 0; i < repeat; i++) {
+      const ms = timed(engine, depth, signature, name);
+      times.push(ms);
+      console.log(`${name.padEnd(26)} d${depth}  ${String(signature).padStart(11)} nodes  ${(signature / ms).toFixed(0).padStart(6)} knps  (${(ms / 1000).toFixed(2)}s)`);
+    }
+    console.log(`${name.padEnd(26)} d${depth}  signature ${signature}, median ${(signature / median(times)).toFixed(0)} knps`);
+  }
 }

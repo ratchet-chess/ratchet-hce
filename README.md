@@ -61,6 +61,7 @@ bun run test                 # the perft, incremental-state, release-generator a
 bun test/perft.ts --full     # every perft depth in the suite
 bun run bench:all            # perft throughput under Bun, Node and Deno
 bun run bench:search:all     # each engine's node signature and search speed under Bun, Node and Deno
+bun bench/search.ts --engine ratchet --against <ref>  # the build's SPEED over the same engine built from <ref>, for tools/pool.ts
 bun run web:build && bun run web  # the play page, built from build/ into web/dist/ and served at http://127.0.0.1:8080/
 ```
 
