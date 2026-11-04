@@ -11,6 +11,10 @@ in its check, so a stretched scale counts against a check's lowest and highest a
 anchor here gets more games on its pairs before any drop (`REPLAY=<anchor>`). An anchor with one side has a
 fit that a stretched scale still moves.
 
+Runs up to L scaled each worker's clock by that run's bench, alone on each host; each run's log head records
+them. Later runs use the pinned ratios (`tools/host-speed.ts`). The pool keeps both, since both players of a pair
+scale together.
+
 A fit's interval comes from color-swapped pairs and covers sampling only. **gap's ±** adds CCRL's
 published errors, the anchor's own and its opponents' as the fit weighs them, and an anchor is flagged
 when its gap exceeds it.
