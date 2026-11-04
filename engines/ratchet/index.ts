@@ -23,7 +23,7 @@ import { noClock, startClock } from "./time";
 import { ttAlloc, ttClear } from "./tt";
 
 /** the version `id name` reports: major << 16 | minor << 8 | patch; a version is a rated commit */
-const VERSION = (0 << 16) | (1 << 8) | 4;
+const VERSION = (0 << 16) | (1 << 8) | 5;
 
 const HASH_MB = 16;
 

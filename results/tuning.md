@@ -28,4 +28,5 @@ writes the row.
 | phalanx-xii | 1.427 | 0.06025 | 0.05658 | 0.06043 | 0.05831 | 0.05798 | 482 | 472 | zurichess-quiet.resolved, first 100000; adam α 0.1, at most 2000 epochs, patience 100; trace Δ ×4, tol 2 cp; touched ≥ 100 | 1410157 | 2026-11-01 |
 | phalanx-xii | 1.427 | 0.06025 | 0.05863 | 0.06043 | 0.05957 | 0.05942 | 482 | 467 | zurichess-quiet.resolved, first 100000; local over the trace, at most 5 passes; trace Δ ×4, tol 2 cp; touched ≥ 100 | 1410157 | 2026-11-01 |
 | phalanx-xii | 1.423 | 0.06043 | 0.05726 | 0.06055 | 0.05748 | 0.05728 | 537 | 527 | zurichess-quiet.resolved; adam α 0.1, at most 2000 epochs, patience 100; trace Δ ×4, tol 2 cp; touched ≥ 100 | 395f0b0 | 2026-11-03 |
+| ratchet | 1.436 | 0.06477 | 0.05911 | 0.06503 | 0.05958 | 0.05963 | 860 | 857 | zurichess-own-20261103; adam α 0.1, at most 2000 epochs, patience 100; trace Δ ×4, tol 2 cp; touched ≥ 100 | 7422bf2 | 2026-11-04 |
 | ratchet | 1.506 | 0.06631 | 0.06011 | 0.06662 | 0.06066 | 0.06067 | 748 | 746 | zurichess-quiet.resolved; adam α 0.1, at most 2000 epochs, patience 100; trace Δ ×4, tol 2 cp; touched ≥ 100 | 209f207 | 2026-11-03 |
