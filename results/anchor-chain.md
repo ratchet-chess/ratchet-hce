@@ -22,6 +22,7 @@ when its gap exceeds it.
 | I | anchors-20261103-130852.pgn | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 | J | anchors-20261103-131039.pgn | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 | K | anchors-20261103-203736.pgn | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
+| L | anchors-20261104-040240.pgn | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 
 | anchor | CCRL Blitz | nearest fit (95%) | gap | gap's ± | games | nearest anchors played | verdict |
 |---|---|---|---|---|---|---|---|
@@ -34,10 +35,12 @@ when its gap exceeds it.
 | zurichess-neuchatel | 2919 | 2909 ± 25 | -10 | 28 | 500 | velvet-1.2.0, clovis-iii, stash-25.0, polaris-1.8.1 | agrees |
 | stash-25.0 | 2933 | 2922 ± 23 | -11 | 30 | 500 | clovis-iii, zurichess-neuchatel, polaris-1.8.1, texel-1.07 | agrees |
 | polaris-1.8.1 | 3049 | 3023 ± 24 | -26 | 27 | 500 | zurichess-neuchatel, stash-25.0, texel-1.07, stash-30.0 | agrees |
-| texel-1.07 | 3130 | 3156 ± 28 | +26 | 32 | 300 | stash-25.0, polaris-1.8.1, stash-30.0 | agrees |
-| stash-30.0 | 3153 | 3139 ± 21 | -14 | 27 | 600 | polaris-1.8.1, texel-1.07, laser-1.7, simbelmyne-1.10.0 | agrees |
-| simbelmyne-1.10.0 | 3239 | 3250 ± 28 | +11 | 31 | 300 | stash-30.0, laser-1.7, mantissa-3.7.2 | agrees |
-| laser-1.7 | 3292 | 3316 ± 20 | +24 | 22 | 600 | stash-30.0, mantissa-3.7.2, simbelmyne-1.10.0, weiss-2.0 | flagged |
+| texel-1.07 | 3130 | 3152 ± 23 | +22 | 27 | 400 | stash-25.0, polaris-1.8.1, stash-30.0, priessnitz-2.0 | agrees |
+| stash-30.0 | 3153 | 3146 ± 22 | -7 | 28 | 500 | polaris-1.8.1, texel-1.07, priessnitz-2.0, halogen-10 | agrees |
+| priessnitz-2.0 | 3174 | 3183 ± 22 | +9 | 26 | 400 | stash-30.0, texel-1.07, halogen-10, simbelmyne-1.10.0 | agrees |
+| halogen-10 | 3210 | 3230 ± 24 | +20 | 26 | 400 | stash-30.0, priessnitz-2.0, simbelmyne-1.10.0, laser-1.7 | agrees |
+| simbelmyne-1.10.0 | 3239 | 3231 ± 25 | -8 | 27 | 400 | laser-1.7, mantissa-3.7.2, priessnitz-2.0, halogen-10 | agrees |
+| laser-1.7 | 3292 | 3298 ± 22 | +6 | 23 | 500 | mantissa-3.7.2, simbelmyne-1.10.0, weiss-2.0, halogen-10 | agrees |
 | mantissa-3.7.2 | 3311 | 3317 ± 22 | +6 | 24 | 500 | laser-1.7, weiss-2.0, xiphos-0.6, simbelmyne-1.10.0 | agrees |
 | weiss-2.0 | 3318 | 3304 ± 20 | -14 | 22 | 400 | mantissa-3.7.2, xiphos-0.6, stash-37.0, laser-1.7 | agrees |
 | xiphos-0.6 | 3354 | 3338 ± 23 | -16 | 25 | 300 | mantissa-3.7.2, weiss-2.0, stash-37.0 | agrees |
@@ -45,6 +48,6 @@ when its gap exceeds it.
 
 | measure | value |
 |---|---|
-| games | 5900 |
-| neighbor pairs unplayed | simbelmyne-1.10.0 v texel-1.07 |
-| slope against CCRL | 1.11 +/- 0.05 against CCRL over 17 anchors |
+| games | 6600 |
+| neighbor pairs unplayed | none |
+| slope against CCRL | 1.10 +/- 0.06 against CCRL over 19 anchors |
