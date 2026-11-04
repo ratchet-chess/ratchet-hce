@@ -14,6 +14,7 @@
     "bench:all": "bun bench/perft.ts && node bench/perft.ts && deno run --allow-read bench/perft.ts",
     "bench:search": "bun bench/search.ts",
     "bench:search:all": "bun bench/search.ts && node bench/search.ts && deno run --allow-read bench/search.ts",
+    "bench:eval:all": "bun bench/eval.ts && node bench/eval.ts && deno run --allow-read bench/eval.ts",
     "web:build": "bun web/build.ts",
     "web": "bun web/serve.ts"
   },

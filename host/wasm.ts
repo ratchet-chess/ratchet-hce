@@ -59,6 +59,10 @@ interface Search {
   unitsPerCp?(): number;
   /** the own engine's incremental-eval mismatches, walking the tree to a depth */
   evalWalk?(depth: number): number;
+  /** the own engine's eval bench: a set of positions, and passes of its eval over them in wasm */
+  evalBenchInit?(n: number): void;
+  evalBenchAdd?(): void;
+  evalBenchRun?(reps: number, withEval: number): number;
 }
 
 /** A game played inside a release that keeps its own game state, as its original did; optional. */
@@ -275,6 +279,22 @@ export class Engine {
   evalWalk(depth: number): number {
     if (!this.search.evalWalk) throw new Error("this build keeps no incremental eval to walk");
     return this.search.evalWalk(depth);
+  }
+
+  /** fills the eval bench's set from `fens`; the own engine only */
+  evalBenchSet(fens: string[]): void {
+    if (!this.search.evalBenchInit || !this.search.evalBenchAdd) throw new Error("this build has no eval bench");
+    this.search.evalBenchInit(fens.length);
+    for (const fen of fens) {
+      this.setPosition(fen, []);
+      this.search.evalBenchAdd();
+    }
+  }
+
+  /** `reps` passes over the eval bench's set, with the eval or only restoring each position; returns their checksum. Set a position before searching again. */
+  evalBenchRun(reps: number, withEval: boolean): number {
+    if (!this.search.evalBenchRun) throw new Error("this build has no eval bench");
+    return this.search.evalBenchRun(reps, withEval ? 1 : 0);
   }
 
   /** the own engine's version as "major.minor.patch"; undefined for a release */

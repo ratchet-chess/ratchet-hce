@@ -28,8 +28,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { Engine } from "../host/wasm.ts";
-
-const root = join(import.meta.dirname, "..");
+import { baseBuild, median, root, runtime } from "./common.ts";
 
 /** depth per engine, chosen by hand so one pass takes seconds, not minutes, under Bun on `local` */
 const DEPTH: Record<string, number> = {
@@ -70,13 +69,6 @@ function depthOf(name: string): number {
   return DEPTH[key];
 }
 
-function runtime(): string {
-  const g = globalThis as { Bun?: { version: string }; Deno?: { version: { deno: string } } };
-  if (g.Bun) return `bun ${g.Bun.version}`;
-  if (g.Deno) return `deno ${g.Deno.version.deno}`;
-  return `node ${process.versions.node}`;
-}
-
 /** one pass over every position: total nodes and milliseconds */
 function pass(engine: Engine, depth: number): { nodes: number; ms: number } {
   let nodes = 0;
@@ -91,13 +83,6 @@ function pass(engine: Engine, depth: number): { nodes: number; ms: number } {
   return { nodes, ms };
 }
 
-/** the median of `xs`; of an even count, the mean of the middle two */
-function median(xs: number[]): number {
-  const s = [...xs].sort((a, b) => a - b);
-  const h = s.length >> 1;
-  return s.length % 2 ? s[h] : (s[h - 1] + s[h]) / 2;
-}
-
 /** one timed pass, in milliseconds; exits if its nodes differ from the signature */
 function timed(engine: Engine, depth: number, signature: number, label: string): number {
   const r = pass(engine, depth);
@@ -106,19 +91,6 @@ function timed(engine: Engine, depth: number, signature: number, label: string):
     process.exit(1);
   }
   return r.ms;
-}
-
-/** the base build of `name` at `ref`, built once into tmp/bench/<sha>/ */
-function baseBuild(name: string, ref: string): { sha: string; wasm: string } {
-  const rev = spawnSync("git", ["rev-parse", "--short", `${ref}^{commit}`], { cwd: root, encoding: "utf8" });
-  if (rev.status !== 0) throw new Error(`not a commit: ${ref}`);
-  const sha = rev.stdout.trim();
-  const dir = join(root, "tmp/bench", sha);
-  const built = spawnSync(join(root, "tools/snapshot.sh"), [dir, sha], { stdio: "inherit" });
-  if (built.status !== 0) throw new Error(`could not build ${sha}`);
-  const wasm = join(dir, "build", `${name}.wasm`);
-  if (!existsSync(wasm)) throw new Error(`${sha} has no engine ${name}`);
-  return { sha, wasm };
 }
 
 /** one warm-up and one timed pass of `wasm` in a fresh process on this runtime */

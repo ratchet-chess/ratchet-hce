@@ -39,7 +39,7 @@ is a release here.
 - `bin/`: the UCI launcher.
 - `web/`: a browser page to play a release or the own engine on a chessground board. The engine searches in a Web Worker, and the core referees.
 - `test/`: the gates: perft, incremental state, each release's own move generator, and the own engine's eval mirror; and the 0x88 board the perft gate checks the core against.
-- `bench/`: the perft benchmark, and the search benchmark over the releases' shared position set.
+- `bench/`: the perft benchmark, the search benchmark over the releases' shared position set, and the own engine's eval benchmark.
 - `tools/`: fidelity checks, matches, ratings, the conversion suite, and readers of match PGNs and time logs.
 - `flake.nix` and `nix/`: the containers. The runner plays matches on the workers; the local runner plays them on the host and builds the anchor tree (`nix/anchors.sh`); the workspace is for work on originals. `tools/ws.ts` builds, loads and runs them. `nix/anchor-tree` and `nix/syzygy` pin the anchor tree and the Syzygy tables in the Nix store.
 - `vendor/fastchess/`: the match runner, as a submodule.
@@ -62,6 +62,7 @@ bun test/perft.ts --full     # every perft depth in the suite
 bun run bench:all            # perft throughput under Bun, Node and Deno
 bun run bench:search:all     # each engine's node signature and search speed under Bun, Node and Deno
 bun bench/search.ts --engine ratchet --against <ref>  # the build's SPEED over the same engine built from <ref>, for tools/pool.ts
+bun bench/eval.ts --against <ref>  # the eval alone in ns per call, read in seconds, for a speed edit to the own engine
 bun run web:build && bun run web  # the play page, built from build/ into web/dist/ and served at http://127.0.0.1:8080/
 ```
 

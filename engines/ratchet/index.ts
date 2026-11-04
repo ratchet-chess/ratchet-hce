@@ -11,13 +11,14 @@ export { initCore, clear, put, setState, playMove, legalMoves, rootMove, perft, 
 import { MAX_MOVES } from "../../core/constants";
 import { initCore, legalMoves } from "../../core/index";
 import { generateMoves } from "../../core/movegen";
+import { bb, castling, setState, side } from "../../core/position";
 import { UNITS_PER_CP, evalWith, evaluateScratch, initEval, scratchPsq } from "./eval";
 import { clearCorrection } from "./correction";
 import { clearPawns } from "./pawns";
 import { clearHistory } from "./history";
 import { MAX_DEPTH, bestScore, completedDepth, hostScore, initSearch, nodesSearched as searchNodes, pvAt, rootPvLen, think } from "./search";
 import {
-  doMove, majorKey, minorKey, nonPawnKey, pawnKey, psq, refresh, scratchMajorKey, scratchMinorKey, scratchNonPawnKey, scratchPawnKey, undoMove,
+  doMove, majorKey, minorKey, nonPawnKey, pawnKey, psq, refresh, scratchMajorKey, scratchMinorKey, scratchNonPawnKey, scratchPawnKey, setPawnKey, undoMove,
 } from "./state";
 import { noClock, startClock } from "./time";
 import { ttAlloc, ttClear } from "./tt";
@@ -140,4 +141,50 @@ function evalWalkRec(depth: i32, at: i32): i32 {
 export function evalWalk(depth: i32): i32 {
   refresh();
   return evalWalkRec(depth, 0);
+}
+
+// ------------------------------------------------------------------ eval bench
+
+/** a position in the eval bench's set: bb, then side, castling and the packed sum, then the pawn key */
+const BENCH_WORDS = 18;
+/** allocated by evalBenchInit, so a build that plays never holds the set */
+let benchSet = changetype<StaticArray<u64>>(0);
+let benchCount = 0;
+
+/** empties the eval bench's set, with room for `n` positions */
+export function evalBenchInit(n: i32): void {
+  benchSet = new StaticArray<u64>(n * BENCH_WORDS);
+  benchCount = 0;
+}
+
+/** adds the current position to the set */
+export function evalBenchAdd(): void {
+  refresh();
+  const at = benchCount++ * BENCH_WORDS;
+  for (let i = 0; i < 16; i++) benchSet[at + i] = bb[i];
+  benchSet[at + 16] = <u64>side | (<u64>castling << 1) | (<u64><u32>psq << 32);
+  benchSet[at + 17] = pawnKey;
+}
+
+/**
+ * `reps` passes over the set in wasm, so the eval's time holds no host call and
+ * branches see a changing position. With `withEval` false it only restores each
+ * position: the time to subtract. Returns a checksum of the evals, or of the sums
+ * restored. It leaves the board unfit for play; the host sets a position after it.
+ */
+export function evalBenchRun(reps: i32, withEval: bool): i32 {
+  const set = benchSet;
+  const words = benchCount * BENCH_WORDS;
+  let sum = 0;
+  for (let r = 0; r < reps; r++) {
+    for (let at = 0; at < words; at += BENCH_WORDS) {
+      for (let i = 0; i < 16; i++) unchecked((bb[i] = set[at + i]));
+      const state = unchecked(set[at + 16]);
+      setState(<i32>state & 1, <i32>(state >> 1) & 15, -1, 0, 1);
+      setPawnKey(unchecked(set[at + 17]));
+      const packed = <i32>(state >> 32);
+      sum = sum * 31 + (withEval ? evalWith(packed, true) : packed);
+    }
+  }
+  return sum;
 }

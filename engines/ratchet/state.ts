@@ -38,6 +38,11 @@ export function refresh(): void {
   majorKey = scratchTypesKey(MAJOR_TYPES);
 }
 
+/** sets the pawn key to one saved from this position, for the eval bench */
+export function setPawnKey(key: u64): void {
+  pawnKey = key;
+}
+
 /** the minor key, from the board */
 export function scratchMinorKey(): u64 {
   return scratchTypesKey(MINOR_TYPES);
