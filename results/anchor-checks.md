@@ -11,6 +11,11 @@ replaced it. That tree plays the same moves with the same node counts for every 
 anchor (go depth 5 over 16 book lines). For Blunders 0.1.0, Lynx, Magog and Stash 9 and 11, which
 are not deterministic, the node counts could not compare the two builds.
 
+Check H, refitted from its games with no new play: without the 14 pairs that played on local beside
+another job's node-clock units, and then without the 42 that may have, every anchor still agrees, and
+no fit moves more than 7. Check J, refitted without its 34 time forfeits: the same anchors are dropped
+in the same order, and lozza-8 fits 3196 ± 51.
+
 | check | date | anchors | games | result | protocol |
 |---|---|---|---|---|---|
 | A | 2026-10-23 | missingpawn, iota, megalodon, dragontooth | 600 | consistent once Dragontooth is dropped; most of its gap is one pair, 88.5% against Iota | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
@@ -22,6 +27,7 @@ are not deterministic, the node counts could not compare the two builds.
 | G | 2026-11-01 | stash-19, floyd, blunder, stash-21, velvet | 1000 | consistent; Stash 21 lost 3 of its 400 games on time | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 | H | 2026-11-03 | stash-21.0, velvet-1.2.0, clovis-iii, zurichess-neuchatel, stash-25.0 | 1000 | consistent; stash-21.0 lost 3 of its 400 games on time | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 | I | 2026-11-03 | zurichess-neuchatel, stash-25.0, polaris-1.8.1, texel-1.07, stash-30.0 | 1000 | consistent once texel-1.07 is dropped | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
+| J | 2026-11-04 | stash-30.0, lozza-8, simbelmyne-1.10.0, laser-1.7, mantissa-3.7.2, stash-37.0 | 1498 | consistent once simbelmyne-1.10.0, then stash-37.0, then laser-1.7 are dropped; lozza-8 lost 30 of its 498 games on time; mantissa-3.7.2 lost 4 of its 500 games on time; simbelmyne-1.10.0 lost 69 of its 498 games by an illegal move | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 
 | anchor | CCRL Blitz | fitted here (95%) | check: verdict |
 |---|---|---|---|
@@ -53,4 +59,9 @@ are not deterministic, the node counts could not compare the two builds.
 | stash-25.0 | 2933 | 2934 ± 37; 2922 ± 43 | H: agrees; I: agrees |
 | polaris-1.8.1 | 3049 | 3025 ± 41 | I: agrees |
 | texel-1.07 | 3130 | 3171 ± 38 | I: dropped |
-| stash-30.0 | 3153 | 3191 ± 48 | I: agrees |
+| stash-30.0 | 3153 | 3191 ± 48; 3180 ± 50 | I: agrees; J: agrees |
+| lozza-8 | 3205 | 3184 ± 50 | J: agrees |
+| simbelmyne-1.10.0 | 3239 | 3179 ± 33 | J: dropped |
+| laser-1.7 | 3292 | 3358 ± 43 | J: dropped |
+| mantissa-3.7.2 | 3311 | 3305 ± 51 | J: agrees |
+| stash-37.0 | 3418 | 3468 ± 42 | J: dropped |
