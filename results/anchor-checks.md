@@ -33,6 +33,7 @@ in the same order, and lozza-8 fits 3196 ± 51.
 | H | 2026-11-03 | stash-21.0, velvet-1.2.0, clovis-iii, zurichess-neuchatel, stash-25.0 | 1000 | consistent; stash-21.0 lost 3 of its 400 games on time | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 | I | 2026-11-03 | zurichess-neuchatel, stash-25.0, polaris-1.8.1, texel-1.07, stash-30.0 | 1000 | consistent once texel-1.07 is dropped | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 | J | 2026-11-04 | stash-30.0, lozza-8, simbelmyne-1.10.0, laser-1.7, mantissa-3.7.2, stash-37.0 | 1498 | consistent once simbelmyne-1.10.0, then stash-37.0, then laser-1.7 are dropped; lozza-8 lost 30 of its 498 games on time; mantissa-3.7.2 lost 4 of its 500 games on time; simbelmyne-1.10.0 lost 69 of its 498 games by an illegal move | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
+| K | 2026-11-04 | polaris-1.8.1, stash-30.0, simbelmyne-1.10.0, laser-1.7, mantissa-3.7.2, weiss-2.0, xiphos-0.6, stash-37.0 | 2700 | consistent once polaris-1.8.1, then stash-30.0 are dropped; mantissa-3.7.2 lost 4 of its 700 games on time; slope 1.26 +/- 0.08 against CCRL over 8 anchors | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 
 | anchor | CCRL Blitz | fitted here (95%) | check: verdict |
 |---|---|---|---|
@@ -62,11 +63,13 @@ in the same order, and lozza-8 fits 3196 ± 51.
 | clovis-iii | 2828 | 2852 ± 35 | H: agrees |
 | zurichess-neuchatel | 2919 | 2891 ± 36; 2924 ± 43 | H: agrees; I: agrees |
 | stash-25.0 | 2933 | 2934 ± 37; 2922 ± 43 | H: agrees; I: agrees |
-| polaris-1.8.1 | 3049 | 3025 ± 41 | I: agrees |
+| polaris-1.8.1 | 3049 | 3025 ± 41; 2982 ± 37 | I: agrees; K: dropped |
 | texel-1.07 | 3130 | 3171 ± 38 | I: dropped |
-| stash-30.0 | 3153 | 3191 ± 48; 3180 ± 50 | I: agrees; J: agrees |
+| stash-30.0 | 3153 | 3191 ± 48; 3180 ± 50; 3108 ± 35 | I: agrees; J: agrees; K: dropped |
 | lozza-8 | 3205 | 3184 ± 50 | J: agrees |
-| simbelmyne-1.10.0 | 3239 | 3179 ± 33 | J: dropped |
-| laser-1.7 | 3292 | 3358 ± 43 | J: dropped |
-| mantissa-3.7.2 | 3311 | 3305 ± 51 | J: agrees |
-| stash-37.0 | 3418 | 3468 ± 42 | J: dropped |
+| simbelmyne-1.10.0 | 3239 | 3179 ± 33; 3226 ± 32 | J: dropped; K: agrees |
+| laser-1.7 | 3292 | 3358 ± 43; 3286 ± 31 | J: dropped; K: agrees |
+| mantissa-3.7.2 | 3311 | 3305 ± 51; 3320 ± 31 | J: agrees; K: agrees |
+| weiss-2.0 | 3318 | 3318 ± 31 | K: agrees |
+| xiphos-0.6 | 3354 | 3345 ± 31 | K: agrees |
+| stash-37.0 | 3418 | 3468 ± 42; 3439 ± 33 | J: dropped; K: agrees |
