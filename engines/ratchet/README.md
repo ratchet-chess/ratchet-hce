@@ -10,7 +10,8 @@ invariants that span files.
 - **Seeded margins.** A search constant taken from another engine is that engine's value converted
   by its middlegame pawn. After each eval retune the margins are retuned by SPSA, not reconverted.
 - **Packed eval.** Material and PSQT are one i32 per piece and square, the endgame half in the high
-  16 bits (`eval.ts` `S`). Each half of any sum must stay within i16.
+  16 bits (`eval.ts` `S`). Each half of any sum must stay within i16. King safety's square can leave i16, so
+  its halves stay unpacked (`pieces.ts`), and `eval.ts` bounds the eval.
 - **Incremental state.** `state.ts` keeps the packed sum beside the core's make and unmake. The
   search reads it; `evaluate` and the tuner recompute it from `params.ts`. `test/eval-mirror.ts`
   checks that the two agree at every node and that the eval is color-symmetric.
