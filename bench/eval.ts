@@ -17,7 +17,8 @@
  *
  * The set is sampled from where the search calls its eval, over bench/search.ts's
  * positions, so it weighs positions as that bench does. Each timing subtracts a pass
- * that only restores the positions. Under Deno, --against needs
+ * that only restores the positions. It does not read a table's size, since its set
+ * repeats where a search moves on. Under Deno, --against needs
  * `--allow-read --allow-run --allow-env`.
  */
 import { spawnSync } from "node:child_process";
