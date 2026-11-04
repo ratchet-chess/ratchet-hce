@@ -302,3 +302,256 @@ export const TM_SCORE_BASE = 2.0;
 export const TM_SCORE_RANGE = 388;
 /** the soft limit with one legal move, Weiss d7d1334's cap */
 export const TM_ONE_MOVE = 500.0;
+
+// ---------------------------------------------------------------- pieces and attack maps (pieces.ts)
+
+// Seeds: each term's source engine, converted by its middlegame pawn (Stash 103, Ethereal 82, Weiss 104, Laser 100).
+
+/** mobility by count, Stash 37 */
+export const MOB_KNIGHT_MG: StaticArray<i32> = [
+  -214, -171, -132, -97, -70, -47, -23, 4,
+  23,
+];
+export const MOB_KNIGHT_EG: StaticArray<i32> = [
+  70, -117, 136, 225, 299, 377, 416, 435,
+  419,
+];
+export const MOB_BISHOP_MG: StaticArray<i32> = [
+  -221, -171, -105, -97, -62, -50, -35, -31,
+  -27, -19, -4, 35, 43, 101,
+];
+export const MOB_BISHOP_EG: StaticArray<i32> = [
+  -186, -159, -70, 54, 120, 179, 221, 245,
+  256, 272, 245, 233, 229, 198,
+];
+export const MOB_ROOK_MG: StaticArray<i32> = [
+  -365, -144, -97, -117, -105, -120, -124, -105,
+  -93, -58, -50, -31, -4, 35, 97,
+];
+export const MOB_ROOK_EG: StaticArray<i32> = [
+  -132, 163, 307, 369, 412, 458, 493, 509,
+  544, 579, 602, 625, 637, 645, 621,
+];
+export const MOB_QUEEN_MG: StaticArray<i32> = [
+  -194, 89, 12, -12, 16, 4, -4, 0,
+  4, 4, 8, 19, 23, 31, 31, 35,
+  43, 50, 78, 74, 159, 163, 171, 109,
+  194, -4, 54, 167,
+];
+export const MOB_QUEEN_EG: StaticArray<i32> = [
+  -536, 746, 594, 443, 283, 462, 586, 683,
+  722, 800, 835, 850, 889, 905, 924, 948,
+  948, 936, 901, 905, 800, 781, 742, 660,
+  614, 649, 691, 598,
+];
+/** outposts by [outside file][pawn-defended], Ethereal 12.75 */
+export const OUTPOST_KNIGHT_MG: StaticArray<i32> = [
+  59, 195, 34, 102,
+];
+export const OUTPOST_KNIGHT_EG: StaticArray<i32> = [
+  -156, 0, -117, -15,
+];
+export const OUTPOST_BISHOP_MG: StaticArray<i32> = [
+  78, 244, 44, -20,
+];
+export const OUTPOST_BISHOP_EG: StaticArray<i32> = [
+  -78, -15, -44, -20,
+];
+/** a minor directly behind any pawn, Ethereal 12.75 */
+export const BEHIND_KNIGHT_MG = 15;
+export const BEHIND_KNIGHT_EG = 137;
+export const BEHIND_BISHOP_MG = 20;
+export const BEHIND_BISHOP_EG = 117;
+/** a knight four to seven squares from both kings, Ethereal 12.75 */
+export const FAR_KNIGHT_MG: StaticArray<i32> = [
+  -44, -59, -132, -229,
+];
+export const FAR_KNIGHT_EG: StaticArray<i32> = [
+  -29, -98, -98, -93,
+];
+/** the bishop pair, Ethereal 12.75 */
+export const BISHOP_PAIR_MG = 107;
+export const BISHOP_PAIR_EG = 429;
+/** a bishop that sees both center squares from a long diagonal, Ethereal 12.75 */
+export const BISHOP_LONG_MG = 127;
+export const BISHOP_LONG_EG = 98;
+/** per own pawn on the bishop's color, Laser 1.7 */
+export const BISHOP_PAWNS_MG = -20;
+export const BISHOP_PAWNS_EG = -20;
+/** per rammed own pawn on the bishop's color, Laser 1.7 */
+export const BISHOP_RAMMED_MG = -16;
+export const BISHOP_RAMMED_EG = -32;
+/** a rook on a semi-open and an open file, Ethereal 12.75 */
+export const ROOK_FILE_MG: StaticArray<i32> = [
+  49, 166,
+];
+export const ROOK_FILE_EG: StaticArray<i32> = [
+  44, 39,
+];
+/** a rook on the enemy queen's file, Stash 37 */
+export const ROOK_QUEEN_FILE_MG = 58;
+export const ROOK_QUEEN_FILE_EG = 16;
+/** a rook hemmed in by its own king, with and without castling rights, Stash 37 */
+export const ROOK_TRAPPED_MG = -31;
+export const ROOK_TRAPPED_EG = -74;
+export const ROOK_BURIED_MG = -268;
+export const ROOK_BURIED_EG = -136;
+
+// King safety, Ethereal 12.75: the safety sum's terms, in the units its square reads (pieces.ts KS_DIV_MG).
+/** the pawn shield by [king's file][file][own pawn's distance, 7 for none] */
+export const SHELTER_MG: StaticArray<i32> = [
+  -24, 83, 127, 117, 20, -59, -78, -288,
+  54, 15, -24, 24, -54, -259, 395, -93,
+  185, 24, -166, -83, -44, -127, 54, -78,
+  88, 122, 0, 49, 107, -234, -683, -24,
+  -54, 5, -215, -137, -117, -171, 195, -63,
+  249, 73, -117, -49, 49, 166, 234, -102,
+  195, 10, -151, -117, -151, -98, 20, -78,
+  49, 20, 49, 10, -49, -49, -898, -83,
+  0, -73, 44, -239, -176, -39, -820, -288,
+  0, 83, 44, -54, -5, 127, -907, -156,
+  0, 93, 5, 44, 137, -449, -429, -39,
+  0, 0, -29, -171, -224, -478, -34, -171,
+  0, 59, 83, 83, -24, -176, -493, -88,
+  0, -39, -107, -78, 122, -132, 254, -68,
+  0, 156, 93, -44, -141, -34, -244, -132,
+  0, 78, 83, -88, -151, -54, -1098, -146,
+];
+export const SHELTER_EG: StaticArray<i32> = [
+  -24, -151, -15, 39, 5, 20, -161, 117,
+  -29, -73, -10, -20, 34, 341, 400, 5,
+  -15, -29, 24, -73, -24, 59, 356, -5,
+  54, -88, -68, -102, -166, 44, 239, -24,
+  73, -15, 29, 49, -10, -24, -117, 15,
+  -68, -68, 24, -98, -166, -98, -185, 5,
+  -83, -117, -5, -39, 10, 141, 239, 15,
+  -98, -117, 10, 78, 117, 215, 395, 83,
+  0, -190, -141, 68, 29, 244, -15, 93,
+  0, -88, -54, -24, -117, 356, 20, 54,
+  0, -44, -54, -127, -24, 273, -361, 5,
+  0, 15, -29, 49, 63, 161, -220, -24,
+  0, -15, -73, -73, -68, 24, -254, -5,
+  0, -24, 5, -29, -107, 49, 190, -10,
+  0, -107, -73, -29, 63, 112, -190, 88,
+  0, -278, -156, -34, 117, 117, -239, 24,
+];
+/** the pawn storm by [blocked][file from the edge][enemy pawn's distance, 7 for none] */
+export const STORM_MG: StaticArray<i32> = [
+  -29, 702, -63, -34, -59, -39, -93, -137,
+  -83, 312, -44, 39, 15, 29, -24, -78,
+  10, 73, -83, -63, -5, 34, 39, 34,
+  -5, 73, -151, -107, -73, 63, 15, -98,
+  0, -88, -88, 132, 49, 73, -29, 44,
+  0, -73, -15, 259, 73, 98, -59, -166,
+  0, -166, -73, 44, 29, -10, -24, -15,
+  0, -5, -132, -102, -49, 34, 322, 54,
+];
+export const STORM_EG: StaticArray<i32> = [
+  176, -20, 127, 5, -15, -34, 39, -10,
+  293, 83, 102, 59, 44, -10, 10, 39,
+  234, 146, 98, 49, 29, 15, -34, 39,
+  122, 107, 49, 5, 20, -49, -24, 39,
+  0, -78, -10, -117, -29, -117, 44, 146,
+  0, -205, -73, -83, -24, -137, -83, 24,
+  0, -302, -63, -29, -10, -83, -102, 15,
+  0, -127, -93, 20, -29, -171, -141, 122,
+];
+/** shelter's and storm's share of the safety sum */
+export const SAFETY_SHELTER_MG: StaticArray<i32> = [
+  -10, -5, 0, 20, 29, -5, 10, 0,
+  0, -10, -10, 20, 15, -15, -10, -5,
+];
+export const SAFETY_SHELTER_EG: StaticArray<i32> = [
+  34, 63, 39, 34, 10, 0, 0, -63,
+  0, 63, 44, 24, 5, 0, 0, -44,
+];
+export const SAFETY_STORM_MG: StaticArray<i32> = [
+  -20, -39, 0, 5, 15, -10, -10, 10,
+  0, 5, -5, 0, 0, -5, 5, 5,
+];
+export const SAFETY_STORM_EG: StaticArray<i32> = [
+  -5, 15, 24, -5, 29, 98, 88, -59,
+  0, 0, 20, 0, 24, 5, 0, 0,
+];
+/** per attacker reaching the king's area */
+export const SAFETY_KNIGHT_MG = 234;
+export const SAFETY_KNIGHT_EG = 200;
+export const SAFETY_BISHOP_MG = 117;
+export const SAFETY_BISHOP_EG = 171;
+export const SAFETY_ROOK_MG = 176;
+export const SAFETY_ROOK_EG = 39;
+export const SAFETY_QUEEN_MG = 146;
+export const SAFETY_QUEEN_EG = 29;
+/** per attack on the area; Ethereal's value times 9/12, its rescale of the count to a 9-square area, left out */
+export const SAFETY_ATTACK_MG = 165;
+export const SAFETY_ATTACK_EG = 124;
+/** per weak square of the area */
+export const SAFETY_WEAK_MG = 205;
+export const SAFETY_WEAK_EG = 200;
+/** the attacker has no queen */
+export const SAFETY_NO_QUEEN_MG = -1156;
+export const SAFETY_NO_QUEEN_EG = -1263;
+/** per safe check */
+export const SAFETY_CHECK_QUEEN_MG = 454;
+export const SAFETY_CHECK_QUEEN_EG = 405;
+export const SAFETY_CHECK_ROOK_MG = 439;
+export const SAFETY_CHECK_ROOK_EG = 478;
+export const SAFETY_CHECK_BISHOP_MG = 288;
+export const SAFETY_CHECK_BISHOP_EG = 288;
+export const SAFETY_CHECK_KNIGHT_MG = 546;
+export const SAFETY_CHECK_KNIGHT_EG = 571;
+/** per unsafe check, Stash 37; its S(18, 85) restated for Ethereal's divisors, then converted */
+export const SAFETY_UNSAFE_MG = 147;
+export const SAFETY_UNSAFE_EG = 518;
+/** the sum's offset */
+export const SAFETY_OFFSET_MG = -361;
+export const SAFETY_OFFSET_EG = -127;
+
+// Passed pawns outside the king-pawn table, Ethereal 12.75 and Weiss c735b8f.
+/** by [can advance][safe to advance][rank]; each cell is Ethereal's less its blocked and unsafe cell, since pawns.ts has the rank's base value */
+export const PASSED_ADVANCE_MG: StaticArray<i32> = [
+  0, 0, 0, 0, 0, 0, 0, 0,
+  0, 54, 15, 29, -49, 83, 151, 0,
+  0, 54, -20, 10, 0, 44, 468, 0,
+  0, 54, 15, 34, 0, -10, -185, 0,
+];
+export const PASSED_ADVANCE_EG: StaticArray<i32> = [
+  0, 0, 0, 0, 0, 0, 0, 0,
+  0, 83, 83, 78, 180, 283, 234, 0,
+  0, 161, 54, 127, 224, 390, 380, 0,
+  0, 132, 49, 156, 341, 829, 1205, 0,
+];
+/** no enemy piece or attack on the pawn or its path, Ethereal 12.75 */
+export const PASSED_SAFE_PATH_MG = -239;
+export const PASSED_SAFE_PATH_EG = 278;
+/** an own rook behind the pawn on its file, Weiss c735b8f */
+export const PASSED_ROOK_BEHIND_MG = 81;
+export const PASSED_ROOK_BEHIND_EG = 177;
+
+// Threats, Ethereal 12.75: against the side named, except the push.
+export const THREAT_WEAK_PAWN_MG = -54;
+export const THREAT_WEAK_PAWN_EG = -185;
+export const THREAT_MINOR_BY_PAWN_MG = -268;
+export const THREAT_MINOR_BY_PAWN_EG = -405;
+export const THREAT_MINOR_BY_MINOR_MG = -122;
+export const THREAT_MINOR_BY_MINOR_EG = -220;
+export const THREAT_MINOR_BY_MAJOR_MG = -146;
+export const THREAT_MINOR_BY_MAJOR_EG = -268;
+export const THREAT_ROOK_BY_LESSER_MG = -234;
+export const THREAT_ROOK_BY_LESSER_EG = -137;
+export const THREAT_MINOR_BY_KING_MG = -210;
+export const THREAT_MINOR_BY_KING_EG = -102;
+export const THREAT_ROOK_BY_KING_MG = -161;
+export const THREAT_ROOK_BY_KING_EG = -88;
+export const THREAT_QUEEN_MG = -244;
+export const THREAT_QUEEN_EG = -34;
+export const THREAT_OVERLOADED_MG = -34;
+export const THREAT_OVERLOADED_EG = -78;
+export const THREAT_PUSH_MG = 73;
+export const THREAT_PUSH_EG = 156;
+
+// Complexity, Xiphos 0.6 and Ethereal 12.75: the endgame half's adjustment, seeded from Ethereal.
+export const COMPLEXITY_PAWNS = 39;
+export const COMPLEXITY_FLANKS = 400;
+export const COMPLEXITY_ENDGAME = 371;
+export const COMPLEXITY_OFFSET = -766;

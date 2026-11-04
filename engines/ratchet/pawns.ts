@@ -3,7 +3,9 @@
  * doubled, isolated, phalanx, defenders), passed pawns by rank, and each passer's
  * distance to both kings. Its value depends only on the pawns and the kings, so
  * it is cached by a key of both (Stash king_pawn_probe). An entry also keeps the
- * passed-pawn set, which endgame scaling reads.
+ * passed-pawn set, which endgame scaling reads. King shelter and pawn storm follow
+ * Ethereal 12.75 evaluateKingsPawns, as a value here and a share of the safety sum
+ * that pieces.ts reads with the span of each color's pawns.
  *
  * Every score is a packed (middlegame, endgame) pair, White's view.
  */
@@ -14,7 +16,8 @@ import { S } from "./eval";
 import {
   PASSED_OUR_KING_EG, PASSED_OUR_KING_MG, PASSED_THEIR_KING_EG, PASSED_THEIR_KING_MG, PAWN_BACKWARD_EG, PAWN_BACKWARD_MG,
   PAWN_DEFENDER_EG, PAWN_DEFENDER_MG, PAWN_DOUBLED_EG, PAWN_DOUBLED_MG, PAWN_ISOLATED_EG, PAWN_ISOLATED_MG, PAWN_PASSED_EG,
-  PAWN_PASSED_MG, PAWN_PHALANX_EG, PAWN_PHALANX_MG,
+  PAWN_PASSED_MG, PAWN_PHALANX_EG, PAWN_PHALANX_MG, SAFETY_SHELTER_EG, SAFETY_SHELTER_MG, SAFETY_STORM_EG, SAFETY_STORM_MG, SHELTER_EG, SHELTER_MG,
+  STORM_EG, STORM_MG,
 } from "./params";
 import { pawnKey } from "./state";
 
@@ -22,7 +25,7 @@ import { pawnKey } from "./state";
 
 const FILE_H: u64 = FILE_A << 7;
 /** by color and square: the squares ahead on its file */
-const FORWARD = new StaticArray<u64>(128);
+export const FORWARD = new StaticArray<u64>(128);
 /** by color and square: the squares ahead on the neighboring files, which its pawn may one day attack */
 const SPAN = new StaticArray<u64>(128);
 
@@ -48,16 +51,16 @@ export function initPawns(): void {
 }
 
 /** the squares a color's pawns attack */
-@inline function pawnAttacks(p: u64, color: i32): u64 {
+@inline export function pawnAttacks(p: u64, color: i32): u64 {
   return color == 0 ? ((p << 7) & ~FILE_H) | ((p << 9) & ~FILE_A) : ((p >> 9) & ~FILE_H) | ((p >> 7) & ~FILE_A);
 }
 
 /** the squares a color's pawns attack twice */
-@inline function pawnAttacks2(p: u64, color: i32): u64 {
+@inline export function pawnAttacks2(p: u64, color: i32): u64 {
   return color == 0 ? ((p << 7) & ~FILE_H) & ((p << 9) & ~FILE_A) : ((p >> 9) & ~FILE_H) & ((p >> 7) & ~FILE_A);
 }
 
-@inline function relRank(s: i32, color: i32): i32 {
+@inline export function relRank(s: i32, color: i32): i32 {
   return color == 0 ? s >> 3 : 7 - (s >> 3);
 }
 
@@ -71,11 +74,17 @@ export function initPawns(): void {
 const SIZE = 32768;
 const kpKey = new StaticArray<u64>(SIZE);
 const kpValue = new StaticArray<i32>(SIZE);
-/** by entry and color: the passed pawns */
+/** by entry and color: the passed pawns, the squares its pawns may one day attack, and its king's share of the safety sum */
 const kpPassed = new StaticArray<u64>(2 * SIZE);
+const kpSpan = new StaticArray<u64>(2 * SIZE);
+const kpSafety = new StaticArray<i32>(2 * SIZE);
 
 /** the passed pawns of each color, from the last kingPawn() */
 export const passedOf = new StaticArray<u64>(2);
+/** the span of each color's pawns, from the last kingPawn() */
+export const spanOf = new StaticArray<u64>(2);
+/** each color's king's share of the safety sum, packed, from the last kingPawn() */
+export const safetyOf = new StaticArray<i32>(2);
 
 export function clearPawns(): void {
   for (let i = 0; i < SIZE; i++) {
@@ -98,6 +107,10 @@ export function kingPawn(cached: bool): i32 {
   if (cached && unchecked(kpKey[i]) == key) {
     unchecked((passedOf[0] = kpPassed[2 * i]));
     unchecked((passedOf[1] = kpPassed[2 * i + 1]));
+    unchecked((spanOf[0] = kpSpan[2 * i]));
+    unchecked((spanOf[1] = kpSpan[2 * i + 1]));
+    unchecked((safetyOf[0] = kpSafety[2 * i]));
+    unchecked((safetyOf[1] = kpSafety[2 * i + 1]));
     return unchecked(kpValue[i]);
   }
   const wp = bb[PAWN];
@@ -115,6 +128,10 @@ export function kingPawn(cached: bool): i32 {
     unchecked((kpValue[i] = v));
     unchecked((kpPassed[2 * i] = passedOf[0]));
     unchecked((kpPassed[2 * i + 1] = passedOf[1]));
+    unchecked((kpSpan[2 * i] = spanOf[0]));
+    unchecked((kpSpan[2 * i + 1] = spanOf[1]));
+    unchecked((kpSafety[2 * i] = safetyOf[0]));
+    unchecked((kpSafety[2 * i + 1] = safetyOf[1]));
   }
   return v;
 }
@@ -133,6 +150,8 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
     span |= unchecked(SPAN[(us << 6) + <i32>ctz(b)]);
     b &= b - 1;
   }
+
+  unchecked((spanOf[us] = span));
 
   // backward, Stash evaluate_backward: a stop square attacked by their pawns and out of our span, on an open file
   const stops = us == 0 ? ours << 8 : ours >> 8;
@@ -201,5 +220,41 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
     const neighbors = ((file >> 1) & ~FILE_H) | ((file << 1) & ~FILE_A);
     if (!(neighbors & ours)) v += S(PAWN_ISOLATED_MG, PAWN_ISOLATED_EG);
   }
+  return v + shelter(us, ours, theirs, ourKing);
+}
+
+/**
+ * The pawn shield and storm around a color's king, its own view, on the king's file
+ * and its neighbors, Ethereal 12.75 evaluateKingsPawns; records its share of the
+ * safety sum in safetyOf. A distance counts ranks from the king, 7 for no pawn.
+ */
+function shelter(us: i32, ours: u64, theirs: u64, king: i32): i32 {
+  const kingFile = king & 7;
+  const kingRank = king >> 3;
+  const ahead: u64 = us == 0 ? <u64>-1 << <u64>(kingRank * 8) : <u64>-1 >> <u64>((7 - kingRank) * 8);
+  let v = 0;
+  let safety = 0;
+  for (let f = max(kingFile - 1, 0), last = min(kingFile + 1, 7); f <= last; f++) {
+    const file = (FILE_A << <u64>f) & ahead;
+    const ownDist = rankDistance(ours & file, us, kingRank);
+    const theirDist = rankDistance(theirs & file, us, kingRank);
+    const onKing = f == kingFile ? 1 : 0;
+    const sh = (onKing << 6) | (f << 3) | ownDist;
+    v += S(unchecked(SHELTER_MG[sh]), unchecked(SHELTER_EG[sh]));
+    const sa = (onKing << 3) | ownDist;
+    safety += S(unchecked(SAFETY_SHELTER_MG[sa]), unchecked(SAFETY_SHELTER_EG[sa]));
+    const blocked = ownDist != 7 && ownDist == theirDist - 1 ? 1 : 0;
+    const st = (blocked << 5) | (min(f, 7 - f) << 3) | theirDist;
+    v += S(unchecked(STORM_MG[st]), unchecked(STORM_EG[st]));
+    const ss = (blocked << 3) | theirDist;
+    safety += S(unchecked(SAFETY_STORM_MG[ss]), unchecked(SAFETY_STORM_EG[ss]));
+  }
+  unchecked((safetyOf[us] = safety));
   return v;
+}
+
+/** ranks from the king to the nearest of these pawns, seen from color `us`; 7 if none */
+@inline function rankDistance(pawns: u64, us: i32, kingRank: i32): i32 {
+  if (!pawns) return 7;
+  return us == 0 ? (<i32>ctz(pawns) >> 3) - kingRank : kingRank - ((63 - <i32>clz(pawns)) >> 3);
 }

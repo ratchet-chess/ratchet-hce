@@ -1,6 +1,6 @@
 /**
  * The own engine's eval: material and piece-square tables, the king-pawn terms
- * (pawns.ts), tapered between middlegame and endgame by phase (Fruit 2.0's form;
+ * (pawns.ts), the terms that read attack maps (pieces.ts), complexity, tapered between middlegame and endgame by phase (Fruit 2.0's form;
  * PeSTO's phase weights) after the endgame half is scaled (Stash 37), the side
  * to move's tempo, insufficient material, and KXK mop-up. Scores are for the
  * side to move, in the engine's unit.
@@ -13,11 +13,12 @@ import { BISHOP, KING, KNIGHT, PAWN, QUEEN, ROOK } from "../../core/constants";
 import { KING_ATT } from "../../core/tables";
 import { bb, board, side } from "../../core/position";
 import {
-  BISHOP_EG, BISHOP_MG, KING_EG, KING_MG, KNIGHT_EG, KNIGHT_MG, MAT_EG, MAT_MG, MOPUP_CLOSE, MOPUP_EDGE, PAWN_EG, PAWN_MG,
+  BISHOP_EG, BISHOP_MG, COMPLEXITY_ENDGAME, COMPLEXITY_FLANKS, COMPLEXITY_OFFSET, COMPLEXITY_PAWNS, KING_EG, KING_MG, KNIGHT_EG, KNIGHT_MG, MAT_EG, MAT_MG, MOPUP_CLOSE, MOPUP_EDGE, PAWN_EG, PAWN_MG,
   QUEEN_EG, QUEEN_MG, ROOK_EG, ROOK_MG, SCALE_BASE, SCALE_OCB, SCALE_OCB_PASSED, SCALE_OCB_PIECES, SCALE_OCB_PIECES_PER, SCALE_PER_PAWN,
   SCALE_ROOK_WING, TEMPO_EG, TEMPO_MG,
 } from "./params";
 import { initPawns, kingPawn, passedOf } from "./pawns";
+import { initPieces, kingSafetyEg, kingSafetyMg, pieceTerms } from "./pieces";
 
 /** engine units per centipawn; the host reads centipawns */
 export const UNITS_PER_CP = 4;
@@ -78,6 +79,7 @@ function pieceValue(p: i32, s: i32): i32 {
 /** fills PSQ from params.ts, and the pawn masks */
 export function initEval(): void {
   initPawns();
+  initPieces();
   for (let type = PAWN; type <= KING; type++) {
     for (let s = 0; s < 64; s++) {
       PSQ[(type << 6) + s] = pieceValue(type, s);
@@ -155,6 +157,22 @@ function endgameScale(eg: i32): i32 {
   return min(SCALE_BASE + SCALE_PER_PAWN * <i32>popcnt(sPawns), 256);
 }
 
+/** the eval's bound, below the search's mate range by more than the correction history can add */
+const EVAL_MAX = 30000;
+
+/**
+ * The endgame half's adjustment by how likely the stronger side is to convert,
+ * Xiphos 0.6's initiative and Ethereal 12.75 evaluateComplexity. It never changes
+ * which side is ahead.
+ */
+function complexity(eg: i32, pawns: u64): i32 {
+  const flanks = pawns & KINGSIDE && pawns & QUEENSIDE ? COMPLEXITY_FLANKS : 0;
+  const pure = !(bb[0] ^ bb[KING] ^ bb[PAWN]) && !(bb[8] ^ bb[8 | KING] ^ bb[8 | PAWN]) ? COMPLEXITY_ENDGAME : 0;
+  const c = COMPLEXITY_PAWNS * <i32>popcnt(pawns) + flanks + pure + COMPLEXITY_OFFSET;
+  const v = max(c, -abs(eg));
+  return eg > 0 ? v : eg < 0 ? -v : 0;
+}
+
 /**
  * The eval for the side to move from `psq`, the board's packed material and PSQT
  * sum. Without pawns, rooks or queens and with at most one minor each, it is a
@@ -172,10 +190,12 @@ export function evalWith(psq: i32, cached: bool): i32 {
 
   let phase = wMinors + bMinors + 2 * <i32>popcnt(rooks) + 4 * <i32>popcnt(queens);
   if (phase > PHASE_MAX) phase = PHASE_MAX;
-  const s = psq + kingPawn(cached) + (side == 0 ? S(TEMPO_MG, TEMPO_EG) : -S(TEMPO_MG, TEMPO_EG));
-  let eg = egOf(s);
+  const kp = kingPawn(cached);
+  const s = psq + kp + pieceTerms() + (side == 0 ? S(TEMPO_MG, TEMPO_EG) : -S(TEMPO_MG, TEMPO_EG));
+  let eg = egOf(s) + kingSafetyEg;
+  eg += complexity(eg, pawns);
   eg = (eg * endgameScale(eg)) / 256;
-  let v = (mgOf(s) * phase + eg * (PHASE_MAX - phase)) / PHASE_MAX;
+  let v = ((mgOf(s) + kingSafetyMg) * phase + eg * (PHASE_MAX - phase)) / PHASE_MAX;
 
   // KXK: one side has its king alone, the other at least one piece
   const wKing = <i32>ctz(bb[KING]);
@@ -191,6 +211,8 @@ export function evalWith(psq: i32, cached: bool): i32 {
       v += wAlone ? -mop : mop;
     }
   }
+  // Ratchet's own guard: king safety's square is unbounded, and the TT and mate scores need the eval well inside i16
+  v = max(min(v, EVAL_MAX), -EVAL_MAX);
   return side == 0 ? v : -v;
 }
 

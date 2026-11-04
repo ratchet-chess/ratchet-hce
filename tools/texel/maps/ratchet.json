@@ -447,6 +447,1016 @@
      "symbol": "PASSED_THEIR_KING_EG"
     }
    ]
+  },
+  {
+   "name": "MOB_KNIGHT_MG",
+   "size": 9,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "MOB_KNIGHT_MG"
+    }
+   ]
+  },
+  {
+   "name": "MOB_KNIGHT_EG",
+   "size": 9,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "MOB_KNIGHT_EG"
+    }
+   ]
+  },
+  {
+   "name": "MOB_BISHOP_MG",
+   "size": 14,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "MOB_BISHOP_MG"
+    }
+   ]
+  },
+  {
+   "name": "MOB_BISHOP_EG",
+   "size": 14,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "MOB_BISHOP_EG"
+    }
+   ]
+  },
+  {
+   "name": "MOB_ROOK_MG",
+   "size": 15,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "MOB_ROOK_MG"
+    }
+   ]
+  },
+  {
+   "name": "MOB_ROOK_EG",
+   "size": 15,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "MOB_ROOK_EG"
+    }
+   ]
+  },
+  {
+   "name": "MOB_QUEEN_MG",
+   "size": 28,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "MOB_QUEEN_MG"
+    }
+   ]
+  },
+  {
+   "name": "MOB_QUEEN_EG",
+   "size": 28,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "MOB_QUEEN_EG"
+    }
+   ]
+  },
+  {
+   "name": "OUTPOST_KNIGHT_MG",
+   "size": 4,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "OUTPOST_KNIGHT_MG"
+    }
+   ]
+  },
+  {
+   "name": "OUTPOST_KNIGHT_EG",
+   "size": 4,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "OUTPOST_KNIGHT_EG"
+    }
+   ]
+  },
+  {
+   "name": "OUTPOST_BISHOP_MG",
+   "size": 4,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "OUTPOST_BISHOP_MG"
+    }
+   ]
+  },
+  {
+   "name": "OUTPOST_BISHOP_EG",
+   "size": 4,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "OUTPOST_BISHOP_EG"
+    }
+   ]
+  },
+  {
+   "name": "BEHIND_KNIGHT_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "BEHIND_KNIGHT_MG"
+    }
+   ]
+  },
+  {
+   "name": "BEHIND_KNIGHT_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "BEHIND_KNIGHT_EG"
+    }
+   ]
+  },
+  {
+   "name": "BEHIND_BISHOP_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "BEHIND_BISHOP_MG"
+    }
+   ]
+  },
+  {
+   "name": "BEHIND_BISHOP_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "BEHIND_BISHOP_EG"
+    }
+   ]
+  },
+  {
+   "name": "FAR_KNIGHT_MG",
+   "size": 4,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "FAR_KNIGHT_MG"
+    }
+   ]
+  },
+  {
+   "name": "FAR_KNIGHT_EG",
+   "size": 4,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "FAR_KNIGHT_EG"
+    }
+   ]
+  },
+  {
+   "name": "BISHOP_PAIR_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "BISHOP_PAIR_MG"
+    }
+   ]
+  },
+  {
+   "name": "BISHOP_PAIR_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "BISHOP_PAIR_EG"
+    }
+   ]
+  },
+  {
+   "name": "BISHOP_LONG_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "BISHOP_LONG_MG"
+    }
+   ]
+  },
+  {
+   "name": "BISHOP_LONG_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "BISHOP_LONG_EG"
+    }
+   ]
+  },
+  {
+   "name": "BISHOP_PAWNS_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "BISHOP_PAWNS_MG"
+    }
+   ]
+  },
+  {
+   "name": "BISHOP_PAWNS_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "BISHOP_PAWNS_EG"
+    }
+   ]
+  },
+  {
+   "name": "BISHOP_RAMMED_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "BISHOP_RAMMED_MG"
+    }
+   ]
+  },
+  {
+   "name": "BISHOP_RAMMED_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "BISHOP_RAMMED_EG"
+    }
+   ]
+  },
+  {
+   "name": "ROOK_FILE_MG",
+   "size": 2,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "ROOK_FILE_MG"
+    }
+   ]
+  },
+  {
+   "name": "ROOK_FILE_EG",
+   "size": 2,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "ROOK_FILE_EG"
+    }
+   ]
+  },
+  {
+   "name": "ROOK_QUEEN_FILE_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "ROOK_QUEEN_FILE_MG"
+    }
+   ]
+  },
+  {
+   "name": "ROOK_QUEEN_FILE_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "ROOK_QUEEN_FILE_EG"
+    }
+   ]
+  },
+  {
+   "name": "ROOK_TRAPPED_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "ROOK_TRAPPED_MG"
+    }
+   ]
+  },
+  {
+   "name": "ROOK_TRAPPED_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "ROOK_TRAPPED_EG"
+    }
+   ]
+  },
+  {
+   "name": "ROOK_BURIED_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "ROOK_BURIED_MG"
+    }
+   ]
+  },
+  {
+   "name": "ROOK_BURIED_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "ROOK_BURIED_EG"
+    }
+   ]
+  },
+  {
+   "name": "SHELTER_MG",
+   "size": 128,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SHELTER_MG"
+    }
+   ],
+   "fixed": [
+    64,
+    72,
+    80,
+    88,
+    96,
+    104,
+    112,
+    120
+   ]
+  },
+  {
+   "name": "SHELTER_EG",
+   "size": 128,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SHELTER_EG"
+    }
+   ],
+   "fixed": [
+    64,
+    72,
+    80,
+    88,
+    96,
+    104,
+    112,
+    120
+   ]
+  },
+  {
+   "name": "STORM_MG",
+   "size": 64,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "STORM_MG"
+    }
+   ],
+   "fixed": [
+    32,
+    40,
+    48,
+    56
+   ]
+  },
+  {
+   "name": "STORM_EG",
+   "size": 64,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "STORM_EG"
+    }
+   ],
+   "fixed": [
+    32,
+    40,
+    48,
+    56
+   ]
+  },
+  {
+   "name": "SAFETY_SHELTER_MG",
+   "size": 16,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_SHELTER_MG"
+    }
+   ],
+   "fixed": [
+    8
+   ]
+  },
+  {
+   "name": "SAFETY_SHELTER_EG",
+   "size": 16,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_SHELTER_EG"
+    }
+   ],
+   "fixed": [
+    8
+   ]
+  },
+  {
+   "name": "SAFETY_STORM_MG",
+   "size": 16,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_STORM_MG"
+    }
+   ],
+   "fixed": [
+    8
+   ]
+  },
+  {
+   "name": "SAFETY_STORM_EG",
+   "size": 16,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_STORM_EG"
+    }
+   ],
+   "fixed": [
+    8
+   ]
+  },
+  {
+   "name": "SAFETY_KNIGHT_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_KNIGHT_MG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_KNIGHT_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_KNIGHT_EG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_BISHOP_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_BISHOP_MG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_BISHOP_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_BISHOP_EG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_ROOK_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_ROOK_MG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_ROOK_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_ROOK_EG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_QUEEN_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_QUEEN_MG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_QUEEN_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_QUEEN_EG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_ATTACK_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_ATTACK_MG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_ATTACK_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_ATTACK_EG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_WEAK_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_WEAK_MG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_WEAK_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_WEAK_EG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_NO_QUEEN_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_NO_QUEEN_MG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_NO_QUEEN_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_NO_QUEEN_EG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_CHECK_QUEEN_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_CHECK_QUEEN_MG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_CHECK_QUEEN_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_CHECK_QUEEN_EG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_CHECK_ROOK_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_CHECK_ROOK_MG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_CHECK_ROOK_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_CHECK_ROOK_EG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_CHECK_BISHOP_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_CHECK_BISHOP_MG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_CHECK_BISHOP_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_CHECK_BISHOP_EG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_CHECK_KNIGHT_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_CHECK_KNIGHT_MG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_CHECK_KNIGHT_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_CHECK_KNIGHT_EG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_UNSAFE_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_UNSAFE_MG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_UNSAFE_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_UNSAFE_EG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_OFFSET_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_OFFSET_MG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_OFFSET_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_OFFSET_EG"
+    }
+   ]
+  },
+  {
+   "name": "PASSED_ADVANCE_MG",
+   "size": 32,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PASSED_ADVANCE_MG"
+    }
+   ],
+   "fixed": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    15,
+    16,
+    23,
+    24,
+    31
+   ]
+  },
+  {
+   "name": "PASSED_ADVANCE_EG",
+   "size": 32,
+   "layout": "count",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PASSED_ADVANCE_EG"
+    }
+   ],
+   "fixed": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    15,
+    16,
+    23,
+    24,
+    31
+   ]
+  },
+  {
+   "name": "PASSED_SAFE_PATH_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PASSED_SAFE_PATH_MG"
+    }
+   ]
+  },
+  {
+   "name": "PASSED_SAFE_PATH_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PASSED_SAFE_PATH_EG"
+    }
+   ]
+  },
+  {
+   "name": "PASSED_ROOK_BEHIND_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PASSED_ROOK_BEHIND_MG"
+    }
+   ]
+  },
+  {
+   "name": "PASSED_ROOK_BEHIND_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PASSED_ROOK_BEHIND_EG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_WEAK_PAWN_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_WEAK_PAWN_MG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_WEAK_PAWN_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_WEAK_PAWN_EG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_MINOR_BY_PAWN_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_MINOR_BY_PAWN_MG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_MINOR_BY_PAWN_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_MINOR_BY_PAWN_EG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_MINOR_BY_MINOR_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_MINOR_BY_MINOR_MG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_MINOR_BY_MINOR_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_MINOR_BY_MINOR_EG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_MINOR_BY_MAJOR_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_MINOR_BY_MAJOR_MG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_MINOR_BY_MAJOR_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_MINOR_BY_MAJOR_EG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_ROOK_BY_LESSER_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_ROOK_BY_LESSER_MG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_ROOK_BY_LESSER_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_ROOK_BY_LESSER_EG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_MINOR_BY_KING_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_MINOR_BY_KING_MG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_MINOR_BY_KING_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_MINOR_BY_KING_EG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_ROOK_BY_KING_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_ROOK_BY_KING_MG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_ROOK_BY_KING_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_ROOK_BY_KING_EG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_QUEEN_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_QUEEN_MG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_QUEEN_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_QUEEN_EG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_OVERLOADED_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_OVERLOADED_MG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_OVERLOADED_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_OVERLOADED_EG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_PUSH_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_PUSH_MG"
+    }
+   ]
+  },
+  {
+   "name": "THREAT_PUSH_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "THREAT_PUSH_EG"
+    }
+   ]
+  },
+  {
+   "name": "COMPLEXITY_PAWNS",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "COMPLEXITY_PAWNS"
+    }
+   ]
+  },
+  {
+   "name": "COMPLEXITY_FLANKS",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "COMPLEXITY_FLANKS"
+    }
+   ]
+  },
+  {
+   "name": "COMPLEXITY_ENDGAME",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "COMPLEXITY_ENDGAME"
+    }
+   ]
+  },
+  {
+   "name": "COMPLEXITY_OFFSET",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "COMPLEXITY_OFFSET"
+    }
+   ]
   }
  ]
 }
