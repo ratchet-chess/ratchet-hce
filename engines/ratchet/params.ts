@@ -191,41 +191,48 @@ export const SCALE_PER_PAWN = 13;
 
 // ---------------------------------------------------------------- search
 
+/*
+ * The margins in the eval's unit start from the seeds their comments cite, then all
+ * move by one factor, 1.30, chosen by a race of games at the eval's wider scale. So
+ * a value here is its cited seed times that factor. SEE's margins read SEE_VALUE,
+ * which did not move, so they keep their seeds.
+ */
+
 /** SEE values by piece type (none, P, N, B, R, Q, K); the king is never captured */
 export const SEE_VALUE: StaticArray<i32> = [0, 400, 1200, 1200, 2000, 3600, 0];
 
 /** aspiration windows, Ethereal 0e47e9b aspirationWindow: from depth 4, delta 10 at its pawn 82, widened by half */
 export const ASP_DEPTH = 4;
-export const ASP_DELTA = 49;
+export const ASP_DELTA = 64;
 
 /** reverse futility, Stash f91e750: depth <= 7, 86 per ply less 79 when improving, at its pawn 103 */
 export const RFP_DEPTH = 7;
-export const RFP_MARGIN = 334;
-export const RFP_IMPROVING = 307;
+export const RFP_MARGIN = 434;
+export const RFP_IMPROVING = 399;
 
 /** razoring, Stash f91e750: depth <= 3, static eval + 120 per ply <= alpha, at its pawn 103 */
 export const RAZOR_DEPTH = 3;
-export const RAZOR_MARGIN = 466;
+export const RAZOR_MARGIN = 606;
 
 /** null move, Ethereal v12.75: R = 4 + depth / 6 + min(3, (eval - beta) / 200), at its pawn 82 */
 export const NMP_DEPTH = 2;
 export const NMP_BASE = 4;
 export const NMP_DEPTH_DIV = 6;
-export const NMP_EVAL_DIV = 975;
+export const NMP_EVAL_DIV = 1268;
 export const NMP_EVAL_MAX = 3;
 
 /** ProbCut, Stash f91e750: depth >= 6, beta + 152 at its pawn 103, a capture's reduced search at depth - 4 */
 export const PC_DEPTH = 6;
-export const PC_MARGIN = 590;
+export const PC_MARGIN = 767;
 export const PC_REDUCTION = 4;
 
 /** singular extensions, Stash f91e750: depth >= 7, TT depth >= depth - 3; singular beta = TT score - 10 d / 16 at its pawn 103, searched at d / 2 + 1 */
 export const SE_DEPTH = 7;
 export const SE_TT_DEPTH = 3;
-export const SE_MARGIN = 39;
+export const SE_MARGIN = 51;
 export const SE_MARGIN_DIV = 16;
 /** a double extension at a non-PV node whose singular search fails low by more than 14 at its pawn 103, while the line has at most 10 */
-export const SE_DOUBLE_MARGIN = 54;
+export const SE_DOUBLE_MARGIN = 70;
 export const SE_DOUBLE_MAX = 10;
 
 /** internal iterative reduction, Berserk 03cebd6: PV or cut node, depth >= 4, no TT move */
@@ -237,8 +244,8 @@ export const LMP_COUNT: StaticArray<i32> = [0, 3, 4, 6, 10, 14, 19, 25, 31, 0, 5
 
 /** futility on the reduced depth, Ethereal 0e47e9b: eval + 77 + 52 per ply <= alpha at its pawn 82; history limits by improving, v12.75 */
 export const FUT_DEPTH = 8;
-export const FUT_BASE = 376;
-export const FUT_PER_DEPTH = 254;
+export const FUT_BASE = 489;
+export const FUT_PER_DEPTH = 330;
 export const FUT_HISTORY: StaticArray<i32> = [12000, 6000];
 
 /** history pruning, Ethereal v12.75 as the dig note reads it: 1- and 2-ply continuation history below a limit, by improving */
@@ -263,7 +270,7 @@ export const GOOD_CAPTURE_DIV = 14;
 export const MVV: StaticArray<i32> = [0, 800, 2400, 2400, 4800, 7200, 0];
 
 /** qsearch: a capture is skipped if stand pat + its victim + this cannot reach alpha */
-export const QS_DELTA = 800;
+export const QS_DELTA = 1040;
 
 /** history bonus and malus, Weiss c735b8f: min(2418, 251 d - 267) and min(693, 532 d - 163) */
 export const HIST_BONUS_MUL = 251;
@@ -274,7 +281,7 @@ export const HIST_MALUS_SUB = 163;
 export const HIST_MALUS_MAX = 693;
 
 /** correction history, Stash 302136d, dcc25ed, ba73642 and ea9fd72: each table's entry within 32 at its pawn 103; an update weighs 1 + depth, at most 16, of 256 */
-export const CORR_MAX = 124;
+export const CORR_MAX = 161;
 export const CORR_WEIGHT_MAX = 16;
 
 // ---------------------------------------------------------------- time
