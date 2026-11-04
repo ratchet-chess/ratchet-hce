@@ -1,0 +1,124 @@
+{
+ "subject": "ratchet-search",
+ "release": "ratchet",
+ "eval": {
+  "form": "static"
+ },
+ "quirks": [],
+ "defaults": {
+  "type": "i32",
+  "step": 4
+ },
+ "blocks": [
+  {
+   "name": "ASP_DELTA",
+   "min": 16,
+   "max": 128,
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "ASP_DELTA"
+    }
+   ]
+  },
+  {
+   "name": "RFP_MARGIN",
+   "min": 120,
+   "max": 800,
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "RFP_MARGIN"
+    }
+   ]
+  },
+  {
+   "name": "RFP_IMPROVING",
+   "min": 100,
+   "max": 700,
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "RFP_IMPROVING"
+    }
+   ]
+  },
+  {
+   "name": "RAZOR_MARGIN",
+   "min": 150,
+   "max": 1100,
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "RAZOR_MARGIN"
+    }
+   ]
+  },
+  {
+   "name": "NMP_EVAL_DIV",
+   "min": 300,
+   "max": 2400,
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "NMP_EVAL_DIV"
+    }
+   ]
+  },
+  {
+   "name": "FUT_BASE",
+   "min": 120,
+   "max": 900,
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "FUT_BASE"
+    }
+   ]
+  },
+  {
+   "name": "FUT_PER_DEPTH",
+   "min": 80,
+   "max": 600,
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "FUT_PER_DEPTH"
+    }
+   ]
+  },
+  {
+   "name": "SEE_QUIET",
+   "min": 100,
+   "max": 600,
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SEE_QUIET"
+    }
+   ]
+  },
+  {
+   "name": "SEE_NOISY",
+   "min": 30,
+   "max": 190,
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SEE_NOISY"
+    }
+   ]
+  },
+  {
+   "name": "QS_DELTA",
+   "min": 250,
+   "max": 1900,
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "QS_DELTA"
+    }
+   ]
+  }
+ ]
+}
