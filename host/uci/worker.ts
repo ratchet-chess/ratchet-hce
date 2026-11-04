@@ -29,8 +29,8 @@ let sideToMove = 0;
  * nodestime does: a game's first go sets its clock from the GUI's, and each move
  * charges nodes / nodesTime and credits the increment, whatever the wall clock
  * says. Searches stay deterministic in nodes and independent of the machine.
- * nodesTime must stay below the host's speed, so the GUI's real clock, which
- * runs down slower, never flags.
+ * If nodesTime exceeds the host's speed, the GUI's real clock runs down faster than
+ * this one, so the GUI needs a margin, as tools/pool.ts gives it.
  */
 const nodesTime: number = workerData.nodesTime;
 
