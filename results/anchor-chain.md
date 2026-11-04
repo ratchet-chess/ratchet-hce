@@ -8,7 +8,7 @@ chain` plays a run's pairs not yet played and adds its games to the pool; `tools
 
 The verdicts in `results/anchor-checks.md` stand as played: they fit each anchor against every other
 in its check, so a stretched scale counts against a check's lowest and highest anchors. A flagged
-anchor here gets more games on its pairs before any drop (`REPLAY=1`). An anchor with one side has a
+anchor here gets more games on its pairs before any drop (`REPLAY=<anchor>`). An anchor with one side has a
 fit that a stretched scale still moves.
 
 A fit's interval comes from color-swapped pairs and covers sampling only. **gap's ±** adds CCRL's
