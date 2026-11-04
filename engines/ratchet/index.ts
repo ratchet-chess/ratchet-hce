@@ -12,7 +12,7 @@ import { MAX_MOVES } from "../../core/constants";
 import { initCore, legalMoves } from "../../core/index";
 import { generateMoves } from "../../core/movegen";
 import { bb, castling, setState, side } from "../../core/position";
-import { UNITS_PER_CP, evalWith, evaluateScratch, initEval, scratchPsq } from "./eval";
+import { UNITS_PER_CP, clearEvalCache, evalWith, evaluateScratch, initEval, scratchPsq } from "./eval";
 import { clearCorrection } from "./correction";
 import { clearPawns } from "./pawns";
 import { clearHistory } from "./history";
@@ -36,6 +36,7 @@ export function init(): void {
   clearHistory();
   clearCorrection();
   clearPawns();
+  clearEvalCache();
 }
 
 export function version(): i32 {
@@ -48,6 +49,7 @@ export function go(depth: i32): i32 {
   clearHistory();
   clearCorrection();
   clearPawns();
+  clearEvalCache();
   noClock();
   refresh();
   return think(min(depth, MAX_DEPTH));
@@ -74,6 +76,7 @@ export function newGame(): void {
   clearHistory();
   clearCorrection();
   clearPawns();
+  clearEvalCache();
 }
 
 export function nodesSearched(): f64 {

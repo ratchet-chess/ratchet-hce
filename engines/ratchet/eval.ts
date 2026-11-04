@@ -11,7 +11,7 @@
  */
 import { BISHOP, KING, KNIGHT, PAWN, QUEEN, ROOK } from "../../core/constants";
 import { KING_ATT } from "../../core/tables";
-import { bb, board, side } from "../../core/position";
+import { bb, board, hash, side } from "../../core/position";
 import {
   BISHOP_EG, BISHOP_MG, COMPLEXITY_ENDGAME, COMPLEXITY_FLANKS, COMPLEXITY_OFFSET, COMPLEXITY_PAWNS, KING_EG, KING_MG, KNIGHT_EG, KNIGHT_MG, MAT_EG, MAT_MG, MOPUP_CLOSE, MOPUP_EDGE, PAWN_EG, PAWN_MG,
   QUEEN_EG, QUEEN_MG, ROOK_EG, ROOK_MG, SCALE_BASE, SCALE_OCB, SCALE_OCB_PASSED, SCALE_OCB_PIECES, SCALE_OCB_PIECES_PER, SCALE_PER_PAWN,
@@ -214,6 +214,24 @@ export function evalWith(psq: i32, cached: bool): i32 {
   // Ratchet's own guard: king safety's square is unbounded, and the TT and mate scores need the eval well inside i16
   v = max(min(v, EVAL_MAX), -EVAL_MAX);
   return side == 0 ? v : -v;
+}
+
+/** by low bits of the position's hash: its high 48 bits and its eval in the low 16, Ethereal 12.75 EvalEntry; 0 when empty */
+const EVAL_CACHE_SIZE = 1 << 14;
+const evalCache = new StaticArray<u64>(EVAL_CACHE_SIZE);
+
+export function clearEvalCache(): void {
+  for (let i = 0; i < EVAL_CACHE_SIZE; i++) unchecked((evalCache[i] = 0));
+}
+
+/** the eval for the search, from the cache where it can, Ethereal 12.75 getCachedEvaluation and storeCachedEvaluation */
+export function evalCached(psq: i32): i32 {
+  const i = <i32>(hash & <u64>(EVAL_CACHE_SIZE - 1));
+  const entry = unchecked(evalCache[i]);
+  if ((entry ^ hash) >> 16 == 0 && entry != 0) return <i32><i16>entry;
+  const v = evalWith(psq, true);
+  unchecked((evalCache[i] = (hash & ~<u64>0xffff) | <u64><u16>v));
+  return v;
 }
 
 /** the eval recomputed from params.ts, for the host, the tuner and the gates */

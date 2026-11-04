@@ -70,14 +70,13 @@ export function initPawns(): void {
 
 // ---------------------------------------------------------------- table
 
-/** entries, as Stash's KING_PAWN_ENTRY_NB */
-const SIZE = 32768;
-const kpKey = new StaticArray<u64>(SIZE);
-const kpValue = new StaticArray<i32>(SIZE);
-/** by entry and color: the passed pawns, the squares its pawns may one day attack, and its king's share of the safety sum */
-const kpPassed = new StaticArray<u64>(2 * SIZE);
-const kpSpan = new StaticArray<u64>(2 * SIZE);
-const kpSafety = new StaticArray<i32>(2 * SIZE);
+/** entries, a power of two */
+const SIZE = 8192;
+/** words in an entry, one cache line: the key; the value and both safety shares; the passed sets; the spans */
+const WORDS = 8;
+const kpStore = new StaticArray<u64>(WORDS * SIZE + WORDS);
+/** the first entry, on a cache line's start */
+const kpTable = (changetype<usize>(kpStore) + 63) & ~(<usize>63);
 
 /** the passed pawns of each color, from the last kingPawn() */
 export const passedOf = new StaticArray<u64>(2);
@@ -87,10 +86,7 @@ export const spanOf = new StaticArray<u64>(2);
 export const safetyOf = new StaticArray<i32>(2);
 
 export function clearPawns(): void {
-  for (let i = 0; i < SIZE; i++) {
-    unchecked((kpKey[i] = 0));
-    unchecked((kpValue[i] = 0));
-  }
+  for (let i = 0; i < SIZE; i++) store<u64>(kpTable + (<usize>i << 6), 0);
 }
 
 /**
@@ -103,15 +99,15 @@ export function kingPawn(cached: bool): i32 {
   const bk = <i32>ctz(bb[8 | KING]);
   // the pawn key with both kings, Stash's king_pawn_key; never 0 for a real board, so 0 marks an empty slot
   const key = pawnKey ^ unchecked(Z_PIECE[(KING << 6) + wk]) ^ unchecked(Z_PIECE[((8 | KING) << 6) + bk]);
-  const i = <i32>(key & <u64>(SIZE - 1));
-  if (cached && unchecked(kpKey[i]) == key) {
-    unchecked((passedOf[0] = kpPassed[2 * i]));
-    unchecked((passedOf[1] = kpPassed[2 * i + 1]));
-    unchecked((spanOf[0] = kpSpan[2 * i]));
-    unchecked((spanOf[1] = kpSpan[2 * i + 1]));
-    unchecked((safetyOf[0] = kpSafety[2 * i]));
-    unchecked((safetyOf[1] = kpSafety[2 * i + 1]));
-    return unchecked(kpValue[i]);
+  const entry = kpTable + (<usize>(key & <u64>(SIZE - 1)) << 6);
+  if (cached && load<u64>(entry) == key) {
+    unchecked((safetyOf[0] = load<i32>(entry, 12)));
+    unchecked((safetyOf[1] = load<i32>(entry, 16)));
+    unchecked((passedOf[0] = load<u64>(entry, 24)));
+    unchecked((passedOf[1] = load<u64>(entry, 32)));
+    unchecked((spanOf[0] = load<u64>(entry, 40)));
+    unchecked((spanOf[1] = load<u64>(entry, 48)));
+    return load<i32>(entry, 8);
   }
   const wp = bb[PAWN];
   const bp = bb[8 | PAWN];
@@ -124,14 +120,14 @@ export function kingPawn(cached: bool): i32 {
   const v =
     sideValue(0, wp, bp, att0, att1, att20, att21, wk, bk) - sideValue(1, bp, wp, att1, att0, att21, att20, bk, wk);
   if (cached) {
-    unchecked((kpKey[i] = key));
-    unchecked((kpValue[i] = v));
-    unchecked((kpPassed[2 * i] = passedOf[0]));
-    unchecked((kpPassed[2 * i + 1] = passedOf[1]));
-    unchecked((kpSpan[2 * i] = spanOf[0]));
-    unchecked((kpSpan[2 * i + 1] = spanOf[1]));
-    unchecked((kpSafety[2 * i] = safetyOf[0]));
-    unchecked((kpSafety[2 * i + 1] = safetyOf[1]));
+    store<u64>(entry, key);
+    store<i32>(entry, v, 8);
+    store<i32>(entry, unchecked(safetyOf[0]), 12);
+    store<i32>(entry, unchecked(safetyOf[1]), 16);
+    store<u64>(entry, unchecked(passedOf[0]), 24);
+    store<u64>(entry, unchecked(passedOf[1]), 32);
+    store<u64>(entry, unchecked(spanOf[0]), 40);
+    store<u64>(entry, unchecked(spanOf[1]), 48);
   }
   return v;
 }

@@ -15,7 +15,7 @@ import { KING, MAX_MOVES, MAX_PLY, PAWN, movePromo } from "../../core/constants"
 import { generateCaptures, generateMoves } from "../../core/movegen";
 import { bb, halfmove, hash, inCheck, isRepetition, ply, side } from "../../core/position";
 import { correction, updateCorrection } from "./correction";
-import { UNITS_PER_CP, evalWith } from "./eval";
+import { UNITS_PER_CP, evalCached } from "./eval";
 import { bonusAt, butterfly, captureHist, contHist, gravity, gravityFrom, killers, malusAt } from "./history";
 import {
   MOVES, SCORES, STAGE_GOOD_NOISY, STAGE_QUIET, captureIndex, captureScore, initPicker, isNoisy, nextMove, pickedStage, pieceTo,
@@ -124,7 +124,7 @@ export function hostScore(s: i32): i32 {
 }
 
 @inline function evaluate(): i32 {
-  return evalWith(psq, true);
+  return evalCached(psq);
 }
 
 // ---------------------------------------------------------------- helpers
