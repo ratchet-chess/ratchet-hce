@@ -22,6 +22,10 @@ another job's node-clock units, and then without the 42 that may have, every anc
 no fit moves more than 7. Check J, refitted without its 34 time forfeits: the same anchors are dropped
 in the same order, and lozza-8 fits 3196 ± 51.
 
+Rows through check K hold intervals from the model's e(1-e), which ignores draws and reads wider than
+the pair-level intervals `tools/fit-rating.ts` now gives; `results/anchor-chain.md` shows those.
+These rows stand as played. A later check tests an anchor against its fit's interval and CCRL's errors.
+
 | check | date | anchors | games | result | protocol |
 |---|---|---|---|---|---|
 | A | 2026-10-23 | missingpawn, iota, megalodon, dragontooth | 600 | consistent once Dragontooth is dropped; most of its gap is one pair, 88.5% against Iota | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
