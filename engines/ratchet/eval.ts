@@ -128,29 +128,31 @@ const QUEENSIDE: u64 = ~KINGSIDE;
 function endgameScale(eg: i32): i32 {
   const strong = eg > 0 ? 0 : 1;
   const weak = strong ^ 1;
-  const sMat = material(strong);
-  const wMat = material(weak);
   const sPawns = bb[(strong << 3) | PAWN];
   const wPawns = bb[(weak << 3) | PAWN];
   const bishop = MAT_MG[BISHOP];
   // no pawns, and at most a bishop ahead
-  if (!sPawns && sMat - wMat <= bishop) return sMat <= bishop ? 0 : max(((sMat - wMat) * 8) / bishop, 0);
+  if (!sPawns) {
+    const sMat = material(strong);
+    const wMat = material(weak);
+    if (sMat - wMat <= bishop) return sMat <= bishop ? 0 : max(((sMat - wMat) * 8) / bishop, 0);
+  }
   // opposite bishops
   const wb = bb[BISHOP];
   const bbish = bb[8 | BISHOP];
   if (popcnt(wb) == 1 && popcnt(bbish) == 1 && ((wb & DARK) != 0) != ((bbish & DARK) != 0)) {
-    return sMat + wMat > 2 * bishop
+    return material(strong) + material(weak) > 2 * bishop
       ? SCALE_OCB_PIECES + SCALE_OCB_PIECES_PER * <i32>popcnt(bb[strong << 3])
       : SCALE_OCB + SCALE_OCB_PASSED * <i32>popcnt(passedOf[strong]);
   }
   // rook against rook, the strong side's pawns on one wing and not two ahead, the weak king beside its pawns
   const rook = MAT_MG[ROOK];
   if (
-    sMat == rook &&
-    wMat == rook &&
-    popcnt(sPawns) < 2 + popcnt(wPawns) &&
     ((sPawns & KINGSIDE) != 0) != ((sPawns & QUEENSIDE) != 0) &&
-    (KING_ATT[<i32>ctz(bb[(weak << 3) | KING])] & wPawns) != 0
+    popcnt(sPawns) < 2 + popcnt(wPawns) &&
+    (KING_ATT[<i32>ctz(bb[(weak << 3) | KING])] & wPawns) != 0 &&
+    material(strong) == rook &&
+    material(weak) == rook
   ) {
     return SCALE_ROOK_WING;
   }
@@ -192,10 +194,14 @@ export function evalWith(psq: i32, cached: bool): i32 {
   if (phase > PHASE_MAX) phase = PHASE_MAX;
   const kp = kingPawn(cached);
   const s = psq + kp + pieceTerms() + (side == 0 ? S(TEMPO_MG, TEMPO_EG) : -S(TEMPO_MG, TEMPO_EG));
-  let eg = egOf(s) + kingSafetyEg;
-  eg += complexity(eg, pawns);
-  eg = (eg * endgameScale(eg)) / 256;
-  let v = ((mgOf(s) + kingSafetyMg) * phase + eg * (PHASE_MAX - phase)) / PHASE_MAX;
+  let v = mgOf(s) + kingSafetyMg;
+  // at the full phase the endgame half weighs nothing
+  if (phase < PHASE_MAX) {
+    let eg = egOf(s) + kingSafetyEg;
+    eg += complexity(eg, pawns);
+    eg = (eg * endgameScale(eg)) / 256;
+    v = (v * phase + eg * (PHASE_MAX - phase)) / PHASE_MAX;
+  }
 
   // KXK: one side has its king alone, the other at least one piece
   const wKing = <i32>ctz(bb[KING]);
