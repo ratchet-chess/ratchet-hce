@@ -61,6 +61,8 @@ export interface EvalForm {
 
 export interface ParameterMap {
   subject: string;
+  /** the K every tune holds, instead of fitting one */
+  k?: number;
   release?: string;
   eval: EvalForm;
   quirks?: string[];

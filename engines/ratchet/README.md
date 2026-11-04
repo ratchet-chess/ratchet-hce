@@ -8,7 +8,9 @@ invariants that span files.
   The hand-seeded middlegame pawn is 400. The host sees centipawns, `searchScore` and `evaluate`
   divided by the unit, and mate scores unchanged: a mate in n plies is `MATE - n`.
 - **Seeded margins.** A search constant taken from another engine is that engine's value converted
-  by its middlegame pawn. After each eval retune the margins are retuned by SPSA, not reconverted.
+  by its middlegame pawn. After each eval retune the margins are retuned by SPSA, not reconverted by
+  formula. Every tune holds K at the Texel map's `k`, so a retune does not move the eval's scale. A refit
+  of K is followed by a retest of the margins.
 - **Packed eval.** Material and PSQT are one i32 per piece and square, the endgame half in the high
   16 bits (`eval.ts` `S`). Each half of any sum must stay within i16. King safety's square can leave i16, so
   its halves stay unpacked (`pieces.ts`), and `eval.ts` bounds the eval.
