@@ -9,7 +9,8 @@ one that is dropped should not. A check run with `CHECK=<letter>` writes its row
 From check K on, a check plays no pair from one engine family, whose versions stretch toward the
 newer one, and leaves out an anchor that loses over 2% of its games by a forfeit, before the drop
 loop. Each such check's row also gives the slope of a free fit against CCRL: above 1, gaps here are
-wider than CCRL's. Earlier rows stand as played.
+wider than CCRL's. Earlier rows stand as played. After check K, checks are runs of the chain in
+`results/anchor-chain.md`, which also decides the trusted anchors; these verdicts stand as played.
 
 Checks A to F were played in the retired chess-bench image, and G in the anchor tree that
 replaced it. That tree plays the same moves with the same node counts for every deterministic
