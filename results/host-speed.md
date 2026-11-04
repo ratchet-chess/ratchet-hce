@@ -7,3 +7,7 @@ the median over spread rounds, since reads come in low bursts; **load's range** 
 
 | job | host | copies | alone | at load | load's range | over host at load | over host alone | note | commit | date |
 |---|---|---|---|---|---|---|---|---|---|---|
+| 96 | local | 14 | 3205319 | 2459012 | 2370239 to 2526836 | 1.000 | 1.000 |  | ec4d866 | 2026-11-04 |
+| 96 | worker1 | 5 | 2094278 | 1965737 | 1958895 to 1966718 | 1.251 | 1.531 |  | ec4d866 | 2026-11-04 |
+| 96 | worker2 | 5 | 2085409 | 1946313 | 1941517 to 1950167 | 1.263 | 1.537 |  | ec4d866 | 2026-11-04 |
+| 96 | worker3 | 5 | 2092054 | 1963777 | 1961821 to 1965737 | 1.252 | 1.532 |  | ec4d866 | 2026-11-04 |
