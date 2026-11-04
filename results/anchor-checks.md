@@ -6,6 +6,11 @@ drops the one that disagrees most, until the rest agree. An anchor that agrees c
 one that is dropped should not. A check run with `CHECK=<letter>` writes its rows here, through
 `tools/results.ts check`.
 
+From check K on, a check plays no pair from one engine family, whose versions stretch toward the
+newer one, and leaves out an anchor that loses over 2% of its games by a forfeit, before the drop
+loop. Each such check's row also gives the slope of a free fit against CCRL: above 1, gaps here are
+wider than CCRL's. Earlier rows stand as played.
+
 Checks A to F were played in the retired chess-bench image, and G in the anchor tree that
 replaced it. That tree plays the same moves with the same node counts for every deterministic
 anchor (go depth 5 over 16 book lines). For Blunders 0.1.0, Lynx, Magog and Stash 9 and 11, which
