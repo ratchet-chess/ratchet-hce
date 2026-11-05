@@ -307,9 +307,11 @@ export const TM_OVERHEAD = 10.0;
 /** node share of the best move, Weiss 1401211: stop past soft * (0.52 + 3.73 * (1 - share)) */
 export const TM_NODE_BASE = 0.52;
 export const TM_NODE_MUL = 3.73;
-/** score drop, Stash f91e750 timeman_scale_score_diff: the soft limit times TM_SCORE_BASE ^ (fall / range), the fall clamped to +-range; 100 at its pawn 103 */
-export const TM_SCORE_BASE = 2.0;
-export const TM_SCORE_RANGE = 388;
+/** score fall over three iterations, Berserk 787b2e1b: the soft limit times 0.1127 + 0.0262 per centipawn, within 0.5028 and 1.6561; an NNUE-era value, read as 4 units per centipawn */
+export const TM_FALL_BASE = 0.1127;
+export const TM_FALL_PER = 0.00655;
+export const TM_FALL_MIN = 0.5028;
+export const TM_FALL_MAX = 1.6561;
 /** the soft limit with one legal move, Weiss d7d1334's cap */
 export const TM_ONE_MOVE = 500.0;
 
