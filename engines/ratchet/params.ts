@@ -189,7 +189,6 @@ export const SCALE_OCB_PIECES_PER = 9;
 /** opposite bishops alone: 33 + 21 per passed pawn of the strong side */
 export const SCALE_OCB = 33;
 export const SCALE_OCB_PASSED = 21;
-/** rook against rook, the strong side's pawns on one wing and not two ahead, the weak king beside its pawns */
 /** any other ending: 177 + 13 per pawn of the strong side, at most 256 */
 export const SCALE_BASE = 177;
 export const SCALE_PER_PAWN = 13;
