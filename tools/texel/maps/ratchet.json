@@ -246,6 +246,24 @@
    ]
   },
   {
+   "name": "PAWN_BACKWARD_OPEN_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PAWN_BACKWARD_OPEN_MG"
+    }
+   ]
+  },
+  {
+   "name": "PAWN_BACKWARD_OPEN_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PAWN_BACKWARD_OPEN_EG"
+    }
+   ]
+  },
+  {
    "name": "PAWN_DOUBLED_MG",
    "sources": [
     {
@@ -308,6 +326,38 @@
     {
      "file": "params.ts",
      "symbol": "PAWN_PASSED_EG"
+    }
+   ]
+  },
+  {
+   "name": "PAWN_CANDIDATE_MG",
+   "size": 8,
+   "layout": "count",
+   "fixed": [
+    0,
+    6,
+    7
+   ],
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PAWN_CANDIDATE_MG"
+    }
+   ]
+  },
+  {
+   "name": "PAWN_CANDIDATE_EG",
+   "size": 8,
+   "layout": "count",
+   "fixed": [
+    0,
+    6,
+    7
+   ],
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "PAWN_CANDIDATE_EG"
     }
    ]
   },
@@ -375,15 +425,11 @@
   },
   {
    "name": "PASSED_OUR_KING_MG",
-   "size": 24,
+   "size": 8,
    "layout": "count",
    "fixed": [
-    3,
-    4,
-    5,
-    10,
-    11,
-    17
+    0,
+    7
    ],
    "sources": [
     {
@@ -394,15 +440,11 @@
   },
   {
    "name": "PASSED_OUR_KING_EG",
-   "size": 24,
+   "size": 8,
    "layout": "count",
    "fixed": [
-    3,
-    4,
-    5,
-    10,
-    11,
-    17
+    0,
+    7
    ],
    "sources": [
     {
@@ -413,15 +455,11 @@
   },
   {
    "name": "PASSED_THEIR_KING_MG",
-   "size": 24,
+   "size": 8,
    "layout": "count",
    "fixed": [
-    3,
-    4,
-    5,
-    10,
-    11,
-    17
+    0,
+    7
    ],
    "sources": [
     {
@@ -432,15 +470,11 @@
   },
   {
    "name": "PASSED_THEIR_KING_EG",
-   "size": 24,
+   "size": 8,
    "layout": "count",
    "fixed": [
-    3,
-    4,
-    5,
-    10,
-    11,
-    17
+    0,
+    7
    ],
    "sources": [
     {

@@ -148,30 +148,36 @@ export const KING_EG: StaticArray<i32> = [
 // ---------------------------------------------------------------- pawns
 // Stash 37 kp_eval.c, converted by its middlegame pawn 103; each pair is (middlegame, endgame).
 
-/** a backward pawn on a file no enemy pawn closes: its stop square attacked by an enemy pawn and out of reach of its own */
-export const PAWN_BACKWARD_MG = -76;
-export const PAWN_BACKWARD_EG = -64;
-/** a file holding two or more of one side's pawns, once per file */
+/** a backward pawn that is not isolated, on a file an enemy pawn closes: its stop square attacked by an enemy pawn and out of reach of its own */
+export const PAWN_BACKWARD_MG = -38;
+export const PAWN_BACKWARD_EG = -32;
+/** the same on a file no enemy pawn closes */
+export const PAWN_BACKWARD_OPEN_MG = -76;
+export const PAWN_BACKWARD_OPEN_EG = -64;
+/** a pawn with a friendly pawn directly behind it */
 export const PAWN_DOUBLED_MG = -14;
 export const PAWN_DOUBLED_EG = -189;
-/** a file whose pawns have no friendly pawn on a neighboring file, once per file */
+/** a pawn with no friendly pawn on a neighboring file */
 export const PAWN_ISOLATED_MG = -26;
 export const PAWN_ISOLATED_EG = -49;
-/** a passed pawn by relative rank: no enemy pawn ahead on its file, and every square of its path an enemy pawn attacks is attacked as often by its own */
-export const PAWN_PASSED_MG: StaticArray<i32> = [0, -148, -125, 213, 218, 218, 423, 0];
-export const PAWN_PASSED_EG: StaticArray<i32> = [0, -39, 101, -166, -62, 358, 1348, 0];
+/** a passed pawn by relative rank: no enemy pawn ahead on its file or the next */
+export const PAWN_PASSED_MG: StaticArray<i32> = [0, -148, -125, -96, 399, 877, 1052, 0];
+export const PAWN_PASSED_EG: StaticArray<i32> = [0, -39, 101, 157, 290, 316, 599, 0];
+/** a candidate by relative rank: not passed, no enemy pawn ahead on its file, and every square of its path an enemy pawn attacks is attacked as often by its own; seeded from Ethereal 12.75 PawnCandidatePasser at its pawn 82 */
+export const PAWN_CANDIDATE_MG: StaticArray<i32> = [0, -59, -34, 10, 107, 239, 0, 0];
+export const PAWN_CANDIDATE_EG: StaticArray<i32> = [0, 102, 132, 259, 566, 381, 0, 0];
 /** a pawn with a friendly pawn beside it on the next file, by relative rank */
 export const PAWN_PHALANX_MG: StaticArray<i32> = [0, 42, 81, 91, 131, 162, -395, 0];
 export const PAWN_PHALANX_EG: StaticArray<i32> = [0, -12, 24, 67, 249, 1714, 3059, 0];
 /** a pawn defending a friendly pawn, by the defender's relative rank */
 export const PAWN_DEFENDER_MG: StaticArray<i32> = [0, 75, 81, 71, 71, 706, 0, 0];
 export const PAWN_DEFENDER_EG: StaticArray<i32> = [0, 88, 77, 135, 449, 605, 0, 0];
-/** a passed pawn at most 4 steps from queening, by (steps - 1) * 6 + min(steps + 2, own king's distance) - 1 */
-export const PASSED_OUR_KING_MG: StaticArray<i32> = [136, 37, -175, 0, 0, 0, 525, 162, -105, -82, 0, 0, 187, -140, -88, -178, -9, 0, -58, -32, -94, -25, -98, -1];
-export const PASSED_OUR_KING_EG: StaticArray<i32> = [582, 136, -372, 0, 0, 0, 203, -110, -266, -425, 0, 0, -11, -114, -364, -403, -535, 0, 1, -112, -243, -326, -331, -335];
-/** the same by the enemy king's distance */
-export const PASSED_THEIR_KING_MG: StaticArray<i32> = [179, 97, -72, 0, 0, 0, -135, 206, -84, -87, 0, 0, -86, 165, 10, -125, -175, 0, -386, -63, -49, -152, -154, -142];
-export const PASSED_THEIR_KING_EG: StaticArray<i32> = [-1051, -707, 271, 0, 0, 0, 133, -202, 526, 869, 0, 0, 588, 384, 567, 940, 1115, 0, 522, 295, 334, 426, 608, 651];
+/** a passed pawn, per step of its distance from its own king, by relative rank; seeded by lines through the earlier table, ranks 1 and 2 from Ethereal 12.75 at its pawn 82 */
+export const PASSED_OUR_KING_MG: StaticArray<i32> = [0, -15, 0, 4, -43, -209, -156, 0];
+export const PASSED_OUR_KING_EG: StaticArray<i32> = [0, 5, -20, -69, -134, -204, -477, 0];
+/** the same from the enemy king */
+export const PASSED_THEIR_KING_MG: StaticArray<i32> = [0, 24, 34, 24, -47, -15, -126, 0];
+export const PASSED_THEIR_KING_EG: StaticArray<i32> = [0, -5, 0, 48, 161, 294, 661, 0];
 
 // ---------------------------------------------------------------- endgame scaling
 // Stash 37 eval_scale_endgame: the endgame half times a factor of 256, set by hand
@@ -184,7 +190,6 @@ export const SCALE_OCB_PIECES_PER = 9;
 export const SCALE_OCB = 33;
 export const SCALE_OCB_PASSED = 21;
 /** rook against rook, the strong side's pawns on one wing and not two ahead, the weak king beside its pawns */
-export const SCALE_ROOK_WING = 130;
 /** any other ending: 177 + 13 per pawn of the strong side, at most 256 */
 export const SCALE_BASE = 177;
 export const SCALE_PER_PAWN = 13;

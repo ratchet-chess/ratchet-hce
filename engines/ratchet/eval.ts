@@ -10,12 +10,11 @@
  * build that sets a table at run time is scored with its new values.
  */
 import { BISHOP, KING, KNIGHT, PAWN, QUEEN, ROOK } from "../../core/constants";
-import { KING_ATT } from "../../core/tables";
 import { bb, board, hash, side } from "../../core/position";
 import {
   BISHOP_EG, BISHOP_MG, COMPLEXITY_ENDGAME, COMPLEXITY_FLANKS, COMPLEXITY_OFFSET, COMPLEXITY_PAWNS, KING_EG, KING_MG, KNIGHT_EG, KNIGHT_MG, MAT_EG, MAT_MG, MOPUP_CLOSE, MOPUP_EDGE, PAWN_EG, PAWN_MG,
   QUEEN_EG, QUEEN_MG, ROOK_EG, ROOK_MG, SCALE_BASE, SCALE_OCB, SCALE_OCB_PASSED, SCALE_OCB_PIECES, SCALE_OCB_PIECES_PER, SCALE_PER_PAWN,
-  SCALE_ROOK_WING, TEMPO_EG, TEMPO_MG,
+  TEMPO_EG, TEMPO_MG,
 } from "./params";
 import { initPawns, kingPawn, passedOf } from "./pawns";
 import { initPieces, kingSafetyEg, kingSafetyMg, pieceTerms } from "./pieces";
@@ -123,13 +122,13 @@ const QUEENSIDE: u64 = ~KINGSIDE;
 /**
  * The endgame half's scale out of 256, for the side it favors, Stash 37
  * eval_scale_endgame. Stash's endgame-specific scale functions (endgame.c) are
- * not in Ratchet; their endings take the general factor.
+ * not in Ratchet; their endings take the general factor. So does its one-wing
+ * rook ending, a rule no other engine read has in general form.
  */
 function endgameScale(eg: i32): i32 {
   const strong = eg > 0 ? 0 : 1;
   const weak = strong ^ 1;
   const sPawns = bb[(strong << 3) | PAWN];
-  const wPawns = bb[(weak << 3) | PAWN];
   const bishop = MAT_MG[BISHOP];
   // no pawns, and at most a bishop ahead
   if (!sPawns) {
@@ -144,17 +143,6 @@ function endgameScale(eg: i32): i32 {
     return material(strong) + material(weak) > 2 * bishop
       ? SCALE_OCB_PIECES + SCALE_OCB_PIECES_PER * <i32>popcnt(bb[strong << 3])
       : SCALE_OCB + SCALE_OCB_PASSED * <i32>popcnt(passedOf[strong]);
-  }
-  // rook against rook, the strong side's pawns on one wing and not two ahead, the weak king beside its pawns
-  const rook = MAT_MG[ROOK];
-  if (
-    ((sPawns & KINGSIDE) != 0) != ((sPawns & QUEENSIDE) != 0) &&
-    popcnt(sPawns) < 2 + popcnt(wPawns) &&
-    (KING_ATT[<i32>ctz(bb[(weak << 3) | KING])] & wPawns) != 0 &&
-    material(strong) == rook &&
-    material(weak) == rook
-  ) {
-    return SCALE_ROOK_WING;
   }
   return min(SCALE_BASE + SCALE_PER_PAWN * <i32>popcnt(sPawns), 256);
 }

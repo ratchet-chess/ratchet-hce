@@ -1,7 +1,8 @@
 /**
- * The king-pawn eval and its table, Stash 37 kp_eval.c: pawn structure (backward,
- * doubled, isolated, phalanx, defenders), passed pawns by rank, and each passer's
- * distance to both kings. Its value depends only on the pawns and the kings, so
+ * The king-pawn eval and its table, after Stash 37 kp_eval.c: pawn structure
+ * (backward, doubled, isolated, phalanx, defenders), passed and candidate pawns by
+ * rank, and each passer's distance to both kings, each form named where it is
+ * applied. Its value depends only on the pawns and the kings, so
  * it is cached by a key of both (Stash king_pawn_probe). An entry also keeps the
  * passed-pawn set, which endgame scaling reads. King shelter and pawn storm follow
  * Ethereal 12.75 evaluateKingsPawns, as a value here and a share of the safety sum
@@ -15,7 +16,7 @@ import { Z_PIECE } from "../../core/zobrist";
 import { S } from "./eval";
 import {
   PASSED_OUR_KING_EG, PASSED_OUR_KING_MG, PASSED_THEIR_KING_EG, PASSED_THEIR_KING_MG, PAWN_BACKWARD_EG, PAWN_BACKWARD_MG,
-  PAWN_DEFENDER_EG, PAWN_DEFENDER_MG, PAWN_DOUBLED_EG, PAWN_DOUBLED_MG, PAWN_ISOLATED_EG, PAWN_ISOLATED_MG, PAWN_PASSED_EG,
+  PAWN_BACKWARD_OPEN_EG, PAWN_BACKWARD_OPEN_MG, PAWN_CANDIDATE_EG, PAWN_CANDIDATE_MG, PAWN_DEFENDER_EG, PAWN_DEFENDER_MG, PAWN_DOUBLED_EG, PAWN_DOUBLED_MG, PAWN_ISOLATED_EG, PAWN_ISOLATED_MG, PAWN_PASSED_EG,
   PAWN_PASSED_MG, PAWN_PHALANX_EG, PAWN_PHALANX_MG, SAFETY_SHELTER_EG, SAFETY_SHELTER_MG, SAFETY_STORM_EG, SAFETY_STORM_MG, SHELTER_EG, SHELTER_MG,
   STORM_EG, STORM_MG,
 } from "./params";
@@ -149,10 +150,23 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
 
   unchecked((spanOf[us] = span));
 
-  // backward, Stash evaluate_backward: a stop square attacked by their pawns and out of our span, on an open file
+  // isolated, per pawn, Weiss 2.0 and Clockwork; Stash counts it once per file
+  let isolated: u64 = 0;
+  for (let f = 0; f < 8; f++) {
+    const file = FILE_A << <u64>f;
+    const neighbors = ((file >> 1) & ~FILE_H) | ((file << 1) & ~FILE_A);
+    if (!(neighbors & ours)) isolated |= ours & file;
+  }
+  v += S(PAWN_ISOLATED_MG, PAWN_ISOLATED_EG) * <i32>popcnt(isolated);
+
+  // doubled, per directly stacked pawn, Weiss 2.0, Clockwork and Laser; Stash counts it once per file
+  v += S(PAWN_DOUBLED_MG, PAWN_DOUBLED_EG) * <i32>popcnt(ours & (ours << 8));
+
+  // backward, Stash evaluate_backward's stop-square test: a stop square attacked by their pawns and out of our span. Not
+  // isolated, and one value each for an open and a closed file (Ethereal, Stockfish 11, Laser); Stash scores only the open file
   const stops = us == 0 ? ours << 8 : ours >> 8;
   const stuck = stops & theirAtt & ~span;
-  let backward = us == 0 ? stuck >> 8 : stuck << 8;
+  let backward = (us == 0 ? stuck >> 8 : stuck << 8) & ~isolated;
   if (backward) {
     let closed: u64 = 0;
     b = theirs;
@@ -160,8 +174,8 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
       closed |= unchecked(FORWARD[(them << 6) + <i32>ctz(b)]);
       b &= b - 1;
     }
-    backward &= ~closed;
-    v += S(PAWN_BACKWARD_MG, PAWN_BACKWARD_EG) * <i32>popcnt(backward);
+    v += S(PAWN_BACKWARD_MG, PAWN_BACKWARD_EG) * <i32>popcnt(backward & closed);
+    v += S(PAWN_BACKWARD_OPEN_MG, PAWN_BACKWARD_OPEN_EG) * <i32>popcnt(backward & ~closed);
   }
 
   // phalanx and defenders, Stash evaluate_connected
@@ -178,44 +192,39 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
     defenders &= defenders - 1;
   }
 
-  // passed pawns, Stash evaluate_passed: a free file ahead, and their pawns' control of it matched by ours
+  // passed pawns, the plain mask: no enemy pawn ahead on its file or the next (Ethereal, Weiss 2.0, Xiphos, Clockwork), so a
+  // rear twin passes too, which CPW, Fruit and Laser reject. A candidate has its own table, Ethereal and Fruit, and is
+  // not in the passed set: the file ahead is free and their pawns' control of it is matched by ours, CPW "Candidate
+  // Passed Pawn" and Stash evaluate_passed, which merges the two
   let passed: u64 = 0;
   b = ours;
   while (b) {
     const s = <i32>ctz(b);
     const path = unchecked(FORWARD[(us << 6) + s]);
-    if (!(path & theirs) && !(path & theirAtt & ~ourAtt) && !(path & theirAtt2 & ~ourAtt2)) {
+    if (!(path & theirs)) {
       const r = relRank(s, us);
-      v += S(unchecked(PAWN_PASSED_MG[r]), unchecked(PAWN_PASSED_EG[r]));
-      passed |= (<u64>1) << <u64>s;
+      if (!(unchecked(SPAN[(us << 6) + s]) & theirs)) {
+        v += S(unchecked(PAWN_PASSED_MG[r]), unchecked(PAWN_PASSED_EG[r]));
+        passed |= (<u64>1) << <u64>s;
+      } else if (!(path & theirAtt & ~ourAtt) && !(path & theirAtt2 & ~ourAtt2)) {
+        v += S(unchecked(PAWN_CANDIDATE_MG[r]), unchecked(PAWN_CANDIDATE_EG[r]));
+      }
     }
     b &= b - 1;
   }
   unchecked((passedOf[us] = passed));
 
-  // each passer near queening, by both kings' distance to it, Stash evaluate_passed_pos
+  // each passer, by both kings' distance to it, linear per rank, Ethereal 12.75 evaluatePassed; Stash's 2-D table
+  // holds this form, and adds cells that only sparse data fills
   b = passed;
   while (b) {
     const s = <i32>ctz(b);
-    const steps = 7 - relRank(s, us);
-    if (steps <= 4) {
-      const o = (steps - 1) * 6 + min(steps + 2, distance(ourKing, s)) - 1;
-      const t = (steps - 1) * 6 + min(steps + 2, distance(theirKing, s)) - 1;
-      v += S(unchecked(PASSED_OUR_KING_MG[o]), unchecked(PASSED_OUR_KING_EG[o]));
-      v += S(unchecked(PASSED_THEIR_KING_MG[t]), unchecked(PASSED_THEIR_KING_EG[t]));
-    }
+    const r = relRank(s, us);
+    v += S(unchecked(PASSED_OUR_KING_MG[r]), unchecked(PASSED_OUR_KING_EG[r])) * distance(ourKing, s);
+    v += S(unchecked(PASSED_THEIR_KING_MG[r]), unchecked(PASSED_THEIR_KING_EG[r])) * distance(theirKing, s);
     b &= b - 1;
   }
 
-  // doubled and isolated, once per file, Stash evaluate_doubled_isolated
-  for (let f = 0; f < 8; f++) {
-    const file = FILE_A << <u64>f;
-    const onFile = ours & file;
-    if (!onFile) continue;
-    if (onFile & (onFile - 1)) v += S(PAWN_DOUBLED_MG, PAWN_DOUBLED_EG);
-    const neighbors = ((file >> 1) & ~FILE_H) | ((file << 1) & ~FILE_A);
-    if (!(neighbors & ours)) v += S(PAWN_ISOLATED_MG, PAWN_ISOLATED_EG);
-  }
   return v + shelter(us, ours, theirs, ourKing);
 }
 
