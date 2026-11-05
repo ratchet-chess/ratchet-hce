@@ -5,6 +5,9 @@
  *
  * Every score is a packed (middlegame, endgame) pair, White's view. kingPawn() runs
  * first: this file reads its passedOf, spanOf and safetyOf.
+ *
+ * Each per-color function is inlined at pieceTerms()'s two calls. The constant color
+ * folds its branches and turns its table reads into constant addresses.
  */
 import { BISHOP, FILE_A, KING, KNIGHT, PAWN, QUEEN, ROOK } from "../../core/constants";
 import { bb, castling } from "../../core/position";
@@ -90,7 +93,7 @@ export let kingSafetyEg = 0;
 }
 
 /** the pawn and king entries of a color's maps, and its mobility area, Stash 37 evaldata_init_next: no enemy pawn attacks, own king, or own pawn that is blocked or on its low ranks */
-function setup(us: i32, occ: u64): void {
+@inline function setup(us: i32, occ: u64): void {
   const them = us ^ 1;
   const ours = bb[(us << 3) | PAWN];
   const theirs = bb[(them << 3) | PAWN];
@@ -137,7 +140,7 @@ function setup(us: i32, occ: u64): void {
 }
 
 /** knights: Ethereal 12.75 evaluateKnights, less its pawn-king and closedness parts; the mobility table is Stash 37's */
-function knights(us: i32): i32 {
+@inline function knights(us: i32): i32 {
   const them = us ^ 1;
   const ownKing = <i32>ctz(bb[(us << 3) | KING]);
   const theirKing = <i32>ctz(bb[(them << 3) | KING]);
@@ -167,7 +170,7 @@ function knights(us: i32): i32 {
 }
 
 /** bishops: Ethereal 12.75 evaluateBishops, seeing through own bishops and queens; the same-color pawn terms are Laser 1.7's, the mobility table Stash 37's */
-function bishops(us: i32, occ: u64): i32 {
+@inline function bishops(us: i32, occ: u64): i32 {
   const o = us << 3;
   const seen = occ ^ (bb[o | BISHOP] | bb[o | QUEEN]);
   const pawns = bb[PAWN] | bb[8 | PAWN];
@@ -199,7 +202,7 @@ function bishops(us: i32, occ: u64): i32 {
 }
 
 /** rooks, seeing through own rooks and queens (Ethereal 12.75): file terms Ethereal's; the queen's file, trapped and mobility table Stash 37's */
-function rooks(us: i32, occ: u64): i32 {
+@inline function rooks(us: i32, occ: u64): i32 {
   const o = us << 3;
   const t = (us ^ 1) << 3;
   const seen = occ ^ (bb[o | ROOK] | bb[o | QUEEN]);
@@ -231,7 +234,7 @@ function rooks(us: i32, occ: u64): i32 {
 }
 
 /** queens: mobility over Stash 37's table, seeing through nothing as Ethereal 12.75 */
-function queens(us: i32, occ: u64): i32 {
+@inline function queens(us: i32, occ: u64): i32 {
   const o = us << 3;
   const weight = S(SAFETY_QUEEN_MG, SAFETY_QUEEN_EG);
   unchecked((attackedBy[o | QUEEN] = 0));
@@ -255,7 +258,7 @@ function queens(us: i32, occ: u64): i32 {
  * kingSafetyEg: Ethereal 12.75 evaluateKings's sum, without its count rescale, and
  * Stash 37's unsafe checks. It counts from two attackers, or one with an enemy queen.
  */
-function kingSafety(us: i32, occ: u64): void {
+@inline function kingSafety(us: i32, occ: u64): void {
   const them = us ^ 1;
   const o = us << 3;
   const t = them << 3;
@@ -296,7 +299,7 @@ function kingSafety(us: i32, occ: u64): void {
 // ---------------------------------------------------------------- passed pawns
 
 /** each passer's room to advance, Ethereal 12.75 evaluatePassed; a rook behind it, Weiss c735b8f. Rank and king distance are in pawns.ts. */
-function passers(us: i32, occ: u64): i32 {
+@inline function passers(us: i32, occ: u64): i32 {
   const them = us ^ 1;
   const o = us << 3;
   const enemy = bb[them << 3];
@@ -322,7 +325,7 @@ function passers(us: i32, occ: u64): i32 {
 // ---------------------------------------------------------------- threats
 
 /** threats against a color's pieces, and its safe pushes that attack, Ethereal 12.75 evaluateThreats */
-function threats(us: i32, occ: u64): i32 {
+@inline function threats(us: i32, occ: u64): i32 {
   const them = us ^ 1;
   const o = us << 3;
   const t = them << 3;
