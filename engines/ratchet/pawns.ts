@@ -26,9 +26,9 @@ import { pawnKey } from "./state";
 
 const FILE_H: u64 = FILE_A << 7;
 /** by color and square: the squares ahead on its file */
-export const FORWARD = new StaticArray<u64>(128);
+export const FORWARD = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 128));
 /** by color and square: the squares ahead on the neighboring files, which its pawn may one day attack */
-const SPAN = new StaticArray<u64>(128);
+const SPAN = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 128));
 
 export function initPawns(): void {
   for (let s = 0; s < 64; s++) {
@@ -75,16 +75,14 @@ export function initPawns(): void {
 const SIZE = 8192;
 /** words in an entry, one cache line: the key; the value and both safety shares; the passed sets; the spans */
 const WORDS = 8;
-const kpStore = new StaticArray<u64>(WORDS * SIZE + WORDS);
-/** the first entry, on a cache line's start */
-const kpTable = (changetype<usize>(kpStore) + 63) & ~(<usize>63);
+const kpTable = memory.data(sizeof<u64>() * WORDS * SIZE, 64);
 
 /** the passed pawns of each color, from the last kingPawn() */
-export const passedOf = new StaticArray<u64>(2);
+export const passedOf = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 2));
 /** the span of each color's pawns, from the last kingPawn() */
-export const spanOf = new StaticArray<u64>(2);
+export const spanOf = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 2));
 /** each color's king's share of the safety sum, packed, from the last kingPawn() */
-export const safetyOf = new StaticArray<i32>(2);
+export const safetyOf = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 2));
 
 export function clearPawns(): void {
   for (let i = 0; i < SIZE; i++) store<u64>(kpTable + (<usize>i << 6), 0);

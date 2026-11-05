@@ -27,17 +27,17 @@ export const STAGE_DONE = 7;
 /** a quiet promotion sorts first among quiets, an underpromotion last */
 const PROMO_SCORE = 1 << 20;
 
-export const MOVES = new StaticArray<i32>(MAX_PLY * MAX_MOVES);
-export const SCORES = new StaticArray<i32>(MAX_PLY * MAX_MOVES);
-const stage = new StaticArray<i32>(MAX_PLY);
-const cur = new StaticArray<i32>(MAX_PLY);
-const end = new StaticArray<i32>(MAX_PLY);
-const badEnd = new StaticArray<i32>(MAX_PLY);
-const ttOf = new StaticArray<i32>(MAX_PLY);
-const killerOf = new StaticArray<i32>(MAX_PLY);
-const cmOf = new StaticArray<i32>(MAX_PLY);
-const fmOf = new StaticArray<i32>(MAX_PLY);
-const f4Of = new StaticArray<i32>(MAX_PLY);
+export const MOVES = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY * MAX_MOVES));
+export const SCORES = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY * MAX_MOVES));
+const stage = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
+const cur = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
+const end = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
+const badEnd = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
+const ttOf = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
+const killerOf = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
+const cmOf = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
+const fmOf = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
+const f4Of = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
 
 /** the stage that gave the last move picked */
 export let pickedStage = 0;

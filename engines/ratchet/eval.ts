@@ -43,7 +43,7 @@ const PHASE_MAX = 24;
 }
 
 /** material plus PSQT per piece code and square, White's view: piece code << 6 | square */
-export const PSQ = new StaticArray<i32>(16 * 64);
+export const PSQ = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 16 * 64));
 
 function tableMg(type: i32, s: i32): i32 {
   switch (type) {
@@ -212,7 +212,7 @@ export function evalWith(psq: i32, cached: bool): i32 {
 
 /** by low bits of the position's hash: its high 48 bits and its eval in the low 16, Ethereal 12.75 EvalEntry; 0 when empty */
 const EVAL_CACHE_SIZE = 1 << 14;
-const evalCache = new StaticArray<u64>(EVAL_CACHE_SIZE);
+const evalCache = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * EVAL_CACHE_SIZE));
 
 export function clearEvalCache(): void {
   for (let i = 0; i < EVAL_CACHE_SIZE; i++) unchecked((evalCache[i] = 0));

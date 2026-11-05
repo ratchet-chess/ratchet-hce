@@ -15,19 +15,19 @@ import { HIST_BONUS_MAX, HIST_BONUS_MUL, HIST_BONUS_SUB, HIST_MALUS_MAX, HIST_MA
 export const HIST_MAX = 16384;
 
 /** side * 4096 + (from | to << 6) */
-export const butterfly = new StaticArray<i16>(2 * 4096);
+export const butterfly = changetype<StaticArray<i16>>(memory.data(sizeof<i16>() * 2 * 4096));
 /** (previous piece << 6 | its square) << 10 | (piece << 6 | square): 16 piece codes, so 2 MiB */
-export const contHist = new StaticArray<i16>(1024 * 1024);
+export const contHist = changetype<StaticArray<i16>>(memory.data(sizeof<i16>() * 1024 * 1024));
 /** (piece << 6 | square) << 3 | victim type */
-export const captureHist = new StaticArray<i16>(16 * 64 * 8);
+export const captureHist = changetype<StaticArray<i16>>(memory.data(sizeof<i16>() * 16 * 64 * 8));
 /** one killer per ply, with room for the child of the deepest ply */
-export const killers = new StaticArray<i32>(MAX_PLY + 2);
+export const killers = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + 2)));
 
 export function clearHistory(): void {
-  for (let i = 0; i < butterfly.length; i++) unchecked((butterfly[i] = 0));
-  for (let i = 0; i < contHist.length; i++) unchecked((contHist[i] = 0));
-  for (let i = 0; i < captureHist.length; i++) unchecked((captureHist[i] = 0));
-  for (let i = 0; i < killers.length; i++) unchecked((killers[i] = 0));
+  for (let i = 0; i < 2 * 4096; i++) unchecked((butterfly[i] = 0));
+  for (let i = 0; i < 1024 * 1024; i++) unchecked((contHist[i] = 0));
+  for (let i = 0; i < 16 * 64 * 8; i++) unchecked((captureHist[i] = 0));
+  for (let i = 0; i < MAX_PLY + 2; i++) unchecked((killers[i] = 0));
 }
 
 /** the bonus for the move that cut at `depth`, Weiss c735b8f */

@@ -1,11 +1,11 @@
 /** Zobrist keys, filled from a fixed seed so hashes are identical across runs. */
 
 /** piece code * 64 + square */
-export const Z_PIECE = new StaticArray<u64>(16 * 64);
+export const Z_PIECE = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 16 * 64));
 /** by castling-rights mask */
-export const Z_CASTLE = new StaticArray<u64>(16);
+export const Z_CASTLE = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 16));
 /** by en-passant square; index 64 (no square) stays 0 */
-export const Z_EP = new StaticArray<u64>(65);
+export const Z_EP = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 65));
 export let Z_SIDE: u64 = 0;
 
 let seed: u64 = 0x2545f4914f6cdd1d;

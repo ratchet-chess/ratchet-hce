@@ -36,7 +36,7 @@ const CENTER: u64 = 0x0000001818000000;
 const LONG_DIAGONALS: u64 = 0x8142241818244281;
 
 /** by color and square: the king's area, Ethereal's kingAreaMasks: its moves, its square and the rank ahead, a file wider on the edge */
-const KING_AREA = new StaticArray<u64>(128);
+const KING_AREA = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 128));
 
 /** the safety sum's divisors, Ethereal's 720 and 20: the square's scales by the seeds' conversion, so its output converts too */
 const KS_DIV_MG = 3512;
@@ -63,23 +63,23 @@ export function initPieces(): void {
 // ---------------------------------------------------------------- maps
 
 /** by color: squares attacked, and attacked at least twice */
-const attacked = new StaticArray<u64>(2);
-const attacked2 = new StaticArray<u64>(2);
+const attacked = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 2));
+const attacked2 = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 2));
 /** by color << 3 | piece type: squares that type attacks */
-const attackedBy = new StaticArray<u64>(16);
+const attackedBy = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 16));
 /** by color: the squares its pawns attack twice */
-const pawnDouble = new StaticArray<u64>(2);
+const pawnDouble = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 2));
 /** by color: the squares its pieces' mobility counts */
-const mobility = new StaticArray<u64>(2);
+const mobility = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 2));
 /** by color: its own pawns rammed against an enemy pawn */
-const rammed = new StaticArray<u64>(2);
+const rammed = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 2));
 /** by color: the squares directly behind any pawn, from its side */
-const behindPawn = new StaticArray<u64>(2);
+const behindPawn = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 2));
 /** by color, of its own king: the area, and the attacks, attackers and weights on it */
-const kingArea = new StaticArray<u64>(2);
-const zoneAttacks = new StaticArray<i32>(2);
-const zoneAttackers = new StaticArray<i32>(2);
-const zoneWeight = new StaticArray<i32>(2);
+const kingArea = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 2));
+const zoneAttacks = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 2));
+const zoneAttackers = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 2));
+const zoneWeight = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 2));
 
 /** king safety's halves, White's view, from the last pieceTerms(): unpacked, since the square can leave i16 */
 export let kingSafetyMg = 0;

@@ -50,17 +50,17 @@ const PLY_GUARD = MAX_PLY - 8;
 /** the stack is indexed by ply + SS, so a node reads the four plies above the root */
 const SS = 4;
 /** the move made at a ply, NULL_MOVE for a null move, 0 above the root */
-const ssMove = new StaticArray<i32>(MAX_PLY + SS + 1);
+const ssMove = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + SS + 1)));
 /** the continuation-history row of the move made at a ply, -1 for none */
-const ssCont = new StaticArray<i32>(MAX_PLY + SS + 1);
+const ssCont = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + SS + 1)));
 /** the corrected static eval, EVAL_NONE in check */
-const ssStatic = new StaticArray<i32>(MAX_PLY + SS + 1);
+const ssStatic = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + SS + 1)));
 /** the raw static eval, the one the TT stores */
-const ssRaw = new StaticArray<i32>(MAX_PLY + SS + 1);
+const ssRaw = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + SS + 1)));
 /** double extensions on the line to a ply, Stash f91e750 double_extensions */
-const ssDouble = new StaticArray<i32>(MAX_PLY + SS + 1);
+const ssDouble = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + SS + 1)));
 /** the move a ply's singular search leaves out, 0 for none */
-const excludedAt = new StaticArray<i32>(MAX_PLY + 1);
+const excludedAt = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + 1)));
 /** the iteration's depth, which bounds extensions (Stash f91e750) */
 let rootDepth = 0;
 /**
@@ -72,21 +72,21 @@ const EXCLUDED_MIX: u64 = 0x9e3779b97f4a7c15;
 const NULL_MOVE = 1 << 30;
 
 /** the triangular PV: row p holds the line from ply p, to pvLen[p] */
-const pvTable = new StaticArray<i32>(MAX_PLY * MAX_PLY);
-const pvLen = new StaticArray<i32>(MAX_PLY + 1);
+const pvTable = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY * MAX_PLY));
+const pvLen = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + 1)));
 
 /** the moves each ply has searched, for the history malus */
 const QUIETS_MAX = 64;
 const CAPTURES_MAX = 32;
-const quietsTried = new StaticArray<i32>(MAX_PLY * QUIETS_MAX);
-const capturesTried = new StaticArray<i32>(MAX_PLY * CAPTURES_MAX);
+const quietsTried = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY * QUIETS_MAX));
+const capturesTried = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY * CAPTURES_MAX));
 
 /** late move reductions by depth and move count, Ethereal v12.75 initSearch: 0.75 + ln d ln m / 2.25 */
-const LMR = new StaticArray<u8>(64 * 64);
+const LMR = changetype<StaticArray<u8>>(memory.data(sizeof<u8>() * 64 * 64));
 
 /** the root's legal moves and the nodes spent under each, for the time rule */
-const rootMoves = new StaticArray<i32>(MAX_MOVES);
-const rootNodes = new StaticArray<f64>(MAX_MOVES);
+const rootMoves = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_MOVES));
+const rootNodes = changetype<StaticArray<f64>>(memory.data(sizeof<f64>() * MAX_MOVES));
 let rootCount = 0;
 
 let nodeCount: u64 = 0;
@@ -94,7 +94,7 @@ let stopped = false;
 let completed = 0;
 
 /** the last finished iteration's line, move and score */
-const rootPv = new StaticArray<i32>(MAX_PLY);
+const rootPv = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
 export let rootPvLen = 0;
 export let bestScore = 0;
 
@@ -595,14 +595,14 @@ export function think(maxDepth: i32): i32 {
   rootPvLen = 0;
   bestScore = 0;
   ttNewSearch();
-  for (let i = 0; i < ssMove.length; i++) {
+  for (let i = 0; i < MAX_PLY + SS + 1; i++) {
     ssMove[i] = 0;
     ssCont[i] = -1;
     ssStatic[i] = EVAL_NONE;
     ssRaw[i] = EVAL_NONE;
     ssDouble[i] = 0;
   }
-  for (let i = 0; i < excludedAt.length; i++) excludedAt[i] = 0;
+  for (let i = 0; i < MAX_PLY + 1; i++) excludedAt[i] = 0;
   rootCount = generateMoves(rootMoves, 0, true);
   for (let i = 0; i < rootCount; i++) rootNodes[i] = 0;
   if (rootCount == 0) return 0;

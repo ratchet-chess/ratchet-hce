@@ -5,22 +5,22 @@
  */
 import { KNOWN_MAGICS } from "./magics";
 
-export const KNIGHT_ATT = new StaticArray<u64>(64);
-export const KING_ATT = new StaticArray<u64>(64);
+export const KNIGHT_ATT = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 64));
+export const KING_ATT = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 64));
 /** squares a pawn of a color (0 or 1) on s attacks, at color * 64 + s */
-export const PAWN_ATT = new StaticArray<u64>(128);
+export const PAWN_ATT = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 128));
 /** squares strictly between a and b when aligned, at a * 64 + b */
-export const BETWEEN = new StaticArray<u64>(4096);
+export const BETWEEN = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 4096));
 /** the full edge-to-edge line through a and b when aligned, at a * 64 + b */
-export const LINE = new StaticArray<u64>(4096);
+export const LINE = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 4096));
 
 /** per-record magic data; rooks use records 0..63, bishops 64..127 */
-export const MAGIC_MASK = new StaticArray<u64>(128);
-export const MAGIC_MUL = new StaticArray<u64>(128);
-export const MAGIC_SHIFT = new StaticArray<u64>(128);
-export const MAGIC_OFF = new StaticArray<i32>(128);
+export const MAGIC_MASK = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 128));
+export const MAGIC_MUL = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 128));
+export const MAGIC_SHIFT = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 128));
+export const MAGIC_OFF = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 128));
 /** sum of 2^(mask bits) over all rook and bishop squares */
-export const SLIDER_ATT = new StaticArray<u64>(107648);
+export const SLIDER_ATT = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 107648));
 
 const DF: StaticArray<i32> = [1, -1, 0, 0, 1, 1, -1, -1];
 const DR: StaticArray<i32> = [0, 0, 1, -1, 1, -1, 1, -1];
@@ -78,10 +78,10 @@ function rand64(): u64 {
   return seed * 0x2545f4914f6cdd1d;
 }
 
-const occs = new StaticArray<u64>(4096);
-const atts = new StaticArray<u64>(4096);
-const used = new StaticArray<i32>(4096);
-const stored = new StaticArray<u64>(4096);
+const occs = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 4096));
+const atts = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 4096));
+const used = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 4096));
+const stored = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 4096));
 
 export function initTables(): void {
   for (let s = 0; s < 64; s++) {

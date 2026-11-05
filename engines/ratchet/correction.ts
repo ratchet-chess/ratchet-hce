@@ -21,10 +21,10 @@ const WEIGHT_SCALE = 256;
  * (table * 2 + side to move) * SIZE + the key's low bits; table 0 by pawns, 1
  * and 2 by White's and Black's non-pawn pieces, 3 by minor and 4 by major pieces
  */
-const corr = new StaticArray<i32>(5 * 2 * SIZE);
+const corr = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 5 * 2 * SIZE));
 
 export function clearCorrection(): void {
-  for (let i = 0; i < corr.length; i++) unchecked((corr[i] = 0));
+  for (let i = 0; i < 5 * 2 * SIZE; i++) unchecked((corr[i] = 0));
 }
 
 @inline function slot(table: i32, stm: i32, key: u64): i32 {

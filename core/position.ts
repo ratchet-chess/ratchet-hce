@@ -10,6 +10,10 @@
  * `ply` counts from the search root. Game moves are applied with playMove(), which
  * folds them into the repetition history and resets ply to 0, so the undo stack
  * only ever holds search moves.
+ *
+ * A hot table is static memory, changetype<StaticArray<T>>(memory.data(...)), not
+ * new StaticArray<T>(...). Its address is then a constant in the code, not a global
+ * to load on every read. It has no header, so its length is not readable.
  */
 import { BISHOP, FLAG_CASTLE, FLAG_DOUBLE, FLAG_EP, KING, KNIGHT, MAX_PLY, NO_SQ, PAWN, QUEEN, ROOK, moveFrom, movePromo, moveTo } from "./constants";
 import { KING_ATT, KNIGHT_ATT, PAWN_ATT, bishopAttacks, bit, rookAttacks } from "./tables";
@@ -19,8 +23,8 @@ const FLAG_SPECIAL = FLAG_EP | FLAG_CASTLE;
 /** game positions whose hashes are kept for repetition detection */
 const MAX_HISTORY = 1024;
 
-export const bb = new StaticArray<u64>(16);
-export const board = new StaticArray<u8>(64);
+export const bb = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 16));
+export const board = changetype<StaticArray<u8>>(memory.data(sizeof<u8>() * 64));
 export let side: i32 = 0;
 export let castling: i32 = 0;
 export let ep: i32 = NO_SQ;
@@ -32,14 +36,14 @@ export let fullmove: i32 = 1;
 
 /** Undo record per ply, UNDO_STRIDE i32s: captured | castling << 8 | ep << 16, then halfmove. */
 const UNDO_STRIDE = 2;
-const undo = new StaticArray<i32>(MAX_PLY * UNDO_STRIDE);
+const undo = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY * UNDO_STRIDE));
 
 /** hash per position: game history first, then the search path; the current one is at gameLen + ply */
-const hashes = new StaticArray<u64>(MAX_HISTORY + MAX_PLY + 1);
+const hashes = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * (MAX_HISTORY + MAX_PLY + 1)));
 let gameLen: i32 = 0;
 
 /** the castling rights left after a move from or to each square */
-export const CASTLE_MASK = new StaticArray<u8>(64);
+export const CASTLE_MASK = changetype<StaticArray<u8>>(memory.data(sizeof<u8>() * 64));
 
 export function initPosition(): void {
   for (let s = 0; s < 64; s++) CASTLE_MASK[s] = 15;
