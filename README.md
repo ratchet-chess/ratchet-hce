@@ -37,7 +37,7 @@ is a release here.
 - `results/`: measured results that change as protocols change, such as ratings, anchor checks and timings; the tools write their rows.
 - `host/`: the TypeScript host: the WASM wrapper, FEN, and the UCI front end, which passes each `go`'s limits and a clock to the release.
 - `bin/`: the UCI launcher.
-- `web/`: a browser page to play a release or the own engine on a chessground board. The engine searches in a Web Worker, and the core referees.
+- `web/`: a browser page to play a release or the own engine, or to watch two play, on a real clock or a node budget, on a chessground board. Each engine searches in a Web Worker, and the core referees.
 - `test/`: the gates: perft, incremental state, each release's own move generator, and the own engine's eval mirror; and the 0x88 board the perft gate checks the core against.
 - `bench/`: the perft benchmark, the search benchmark over the releases' shared position set, and the own engine's eval benchmark.
 - `tools/`: fidelity checks, matches, ratings, the conversion suite, and readers of match PGNs and time logs.
