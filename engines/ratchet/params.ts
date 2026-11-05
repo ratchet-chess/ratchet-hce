@@ -291,8 +291,8 @@ export const CORR_WEIGHT_MAX = 16;
 
 // ---------------------------------------------------------------- time
 
-/** Weiss c735b8f InitTimeManagement: sudden death uses 0.022 of the time left, at most 0.2 of the clock */
-export const TM_SHARE = 0.022;
+/** Weiss c735b8f InitTimeManagement: sudden death uses a share of the time left, at most 0.2 of the clock; its 0.022 scaled so that the soft limit's score factor keeps mean time use */
+export const TM_SHARE = 0.0296;
 export const TM_SHARE_CAP = 0.2;
 /** with moves to go, 0.7 over min(moves to go, 50) (Weiss) */
 export const TM_MTG_SHARE = 0.7;
