@@ -178,9 +178,9 @@ function complexity(eg: i32, pawns: u64): i32 {
 /**
  * The eval for the side to move from `psq`, the board's packed material and PSQT
  * sum. Without pawns, rooks or queens and with at most one minor each, it is a
- * draw. Against a bare king, the stronger side is paid for driving it to the edge
- * and bringing its own king close (KXK mop-up). `cached` lets the king-pawn
- * terms use their table.
+ * draw (CPW "Draw Evaluation"). Against a bare king, the stronger side is paid for
+ * driving it to the edge and bringing its own king close (KXK mop-up, CPW "Mop-up
+ * Evaluation"). `cached` lets the king-pawn terms use their table.
  */
 export function evalWith(psq: i32, cached: bool): i32 {
   const pawns = bb[PAWN] | bb[8 | PAWN];

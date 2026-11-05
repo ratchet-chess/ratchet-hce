@@ -201,7 +201,7 @@ export const SCALE_PER_PAWN = 13;
 /** SEE values by piece type (none, P, N, B, R, Q, K); the king is never captured */
 export const SEE_VALUE: StaticArray<i32> = [0, 400, 1200, 1200, 2000, 3600, 0];
 
-/** aspiration windows, Ethereal 0e47e9b aspirationWindow: from depth 4, delta 10 at its pawn 82, widened by half */
+/** aspiration windows, Ethereal 0e47e9b aspirationWindow: from depth 4, delta 10 at its pawn 82, widened by half; search.ts think names where the form differs */
 export const ASP_DEPTH = 4;
 export const ASP_DELTA = 64;
 
@@ -238,7 +238,7 @@ export const SE_DOUBLE_MAX = 10;
 /** internal iterative reduction, Berserk 03cebd6: PV or cut node, depth >= 4, no TT move */
 export const IIR_DEPTH = 4;
 
-/** late move pruning, Ethereal v12.75 LateMovePruningCounts: quiets tried by depth, not improving then improving */
+/** late move pruning, Ethereal v12.75 LateMovePruningCounts: by depth, not improving then improving; search.ts counts moves played against it, where Ethereal counts quiets seen */
 export const LMP_DEPTH = 8;
 export const LMP_COUNT: StaticArray<i32> = [0, 3, 4, 6, 10, 14, 19, 25, 31, 0, 5, 7, 11, 17, 26, 36, 48, 63];
 
@@ -248,7 +248,7 @@ export const FUT_BASE = 489;
 export const FUT_PER_DEPTH = 330;
 export const FUT_HISTORY: StaticArray<i32> = [12000, 6000];
 
-/** history pruning, Ethereal v12.75 as the dig note reads it: 1- and 2-ply continuation history below a limit, by improving */
+/** history pruning, Ethereal v12.75 as the dig note reads it: 1- and 2-ply continuation history below a limit, by improving; one pair where Ethereal keeps a limit and a depth per table */
 export const HP_DEPTH: StaticArray<i32> = [3, 2];
 export const HP_LIMIT: StaticArray<i32> = [-1000, -2500];
 
@@ -269,7 +269,7 @@ export const GOOD_CAPTURE_DIV = 14;
 /** most valuable victim by piece type, Clockwork 641d9f5 score_move */
 export const MVV: StaticArray<i32> = [0, 800, 2400, 2400, 4800, 7200, 0];
 
-/** qsearch: a capture is skipped if stand pat + its victim + this cannot reach alpha */
+/** qsearch delta pruning, Weiss 2.0's per-capture shape: a capture is skipped if stand pat + its victim + this cannot reach alpha; CPW "Delta Pruning"'s 200 centipawns */
 export const QS_DELTA = 1040;
 
 /** history bonus and malus, Weiss c735b8f: min(2418, 251 d - 267) and min(693, 532 d - 163) */

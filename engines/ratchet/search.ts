@@ -81,7 +81,7 @@ const CAPTURES_MAX = 32;
 const quietsTried = new StaticArray<i32>(MAX_PLY * QUIETS_MAX);
 const capturesTried = new StaticArray<i32>(MAX_PLY * CAPTURES_MAX);
 
-/** late move reductions by depth and move count, Ethereal v12.75 InitializeSearch: 0.75 + ln d ln m / 2.25 */
+/** late move reductions by depth and move count, Ethereal v12.75 initSearch: 0.75 + ln d ln m / 2.25 */
 const LMR = new StaticArray<u8>(64 * 64);
 
 /** the root's legal moves and the nodes spent under each, for the time rule */
@@ -246,7 +246,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     tPv = ttPv;
     // no cut at PV nodes (Stockfish 4739037f), nor late in the fifty-move count (Stockfish bae019b5, Alexandria)
     if (!pvNode && ttDepth >= depth && halfmove < 90 && boundCuts(tBound, tScore, alpha, beta)) {
-      // Weiss 5168a50: a quiet TT move that cuts earns its bonus
+      // Weiss 5168a50: a quiet TT move that cuts earns its bonus; the killer is Ratchet's addition, as in Xiphos and Stockfish 11
       if (tMove && tScore >= beta && !isNoisy(tMove)) {
         rewardQuiet(tMove, bonusAt(depth), p);
         killers[p] = tMove;
@@ -287,7 +287,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       if (v <= ra) return v;
     }
 
-    // null move, Ethereal v12.75, with Weiss's eval >= static eval guard; Ethereal 94e78e3's TT guard
+    // null move, Ethereal v12.75's R and guards, with the eval >= static eval gate of Stash f91e750 and Stockfish 11;
+    // it returns the search's score, as Weiss 2.0, Xiphos and Stash do, where Ethereal returns beta
     if (
       excl == 0 &&
       depth >= NMP_DEPTH &&
@@ -295,8 +296,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       eval >= staticEval &&
       ssMove[p + SS - 1] != NULL_MOVE &&
       ssMove[p + SS - 2] != NULL_MOVE &&
-      hasPieces() &&
-      !(hit && tBound == BOUND_UPPER && tScore < beta)
+      hasPieces()
     ) {
       const r = NMP_BASE + depth / NMP_DEPTH_DIV + min(NMP_EVAL_MAX, (eval - beta) / NMP_EVAL_DIV);
       ssMove[p + SS] = NULL_MOVE;
@@ -365,11 +365,12 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       if (f4 >= 0) hist += <i32>contHist[f4 + pt];
     }
 
-    // pruning, once a move has kept the node from a mated score
+    // pruning, once a move has kept the node from a mated score; the root is spared, Ratchet's guard, as in Xiphos, Weiss 2.0 and Koivisto
     if (!root && best > -MATE_IN_MAX) {
       const lmrDepth = max(0, depth - <i32>LMR[min(depth, 63) * 64 + min(played, 63)]);
       if (!noisy) {
-        // late move pruning, Ethereal v12.75
+        // late move pruning, Ethereal v12.75's table: it counts moves played and drops the move that triggers it,
+        // as Xiphos and Weiss 2.0 do, where Ethereal counts quiets seen and searches that move
         if (depth <= LMP_DEPTH && played >= LMP_COUNT[(improving ? 9 : 0) + depth]) {
           skipQuiets = true;
           continue;
@@ -379,7 +380,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
           skipQuiets = true;
           continue;
         }
-        // history pruning, Ethereal v12.75: counter-move and follow-up history
+        // history pruning, after Ethereal v12.75 Step 11D and 11E: counter-move and follow-up history, with one limit and
+        // depth for both, and with the killer not exempt, where Ethereal exempts it and the counter move
         const imp = improving ? 1 : 0;
         if (lmrDepth <= HP_DEPTH[imp] && (cmh < HP_LIMIT[imp] || fmh < HP_LIMIT[imp])) continue;
       }
@@ -432,7 +434,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       v = -search(-beta, -alpha, newDepth, pvNode ? false : !cutNode);
     } else {
       let full = true;
-      // late move reductions on quiets, Ethereal v12.75: R = 1 is no reduction
+      // late move reductions on quiets, Ethereal v12.75 Step 15A: R = 1 is no reduction. Its extension and king-evasion
+      // terms and its noisy reductions are left out, so an extension stays in the reduced search, as in Weiss 2.0 and Xiphos
       if (!noisy && depth > 2) {
         let r = <i32>LMR[min(depth, 63) * 64 + min(played, 63)];
         if (!pvNode) r++;
@@ -597,7 +600,8 @@ export function think(maxDepth: i32): i32 {
   let previous = 0;
   for (let depth = 1; depth <= maxDepth; depth++) {
     rootDepth = depth;
-    // aspiration, Ethereal aspirationWindow: fail low halves beta down, fail high searches one ply less
+    // aspiration, Ethereal aspirationWindow: fail low halves beta down, fail high searches one ply less; the failed
+    // bound widens from the score, as in Stash, Stockfish 11 and Xiphos, where Ethereal widens from the old bound
     let delta = ASP_DELTA;
     let alpha = -INF;
     let beta = INF;

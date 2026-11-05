@@ -72,8 +72,8 @@ export function captureScore(m: i32): i32 {
 }
 
 /**
- * a quiet's order: butterfly plus 1-, 2- and 4-ply continuation history (Stash
- * 660df34 adds the 4-ply); `cm`, `fm` and `f4` are -1 when there is no such move
+ * a quiet's order: butterfly plus 1-, 2- and 4-ply continuation history (Stockfish
+ * 10 score<QUIETS>); `cm`, `fm` and `f4` are -1 when there is no such move
  */
 export function quietScore(m: i32, cm: i32, fm: i32, f4: i32): i32 {
   const promo = movePromo(m);
