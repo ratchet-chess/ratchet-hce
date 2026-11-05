@@ -48,6 +48,7 @@ const opt = (name: string) => (args.includes(name) ? args[args.indexOf(name) + 1
 const against = opt("--against");
 const hash = opt("--hash");
 const keep = args.includes("--keep");
+if (against && (hash || keep)) throw new Error("--hash and --keep do not apply to --against, whose child passes use the defaults");
 const repeat = Number(opt("--repeat") ?? (against ? 6 : 3));
 const positionsPath = opt("--positions") ?? new URL("./positions.txt", import.meta.url).pathname;
 const positions = readFileSync(positionsPath, "utf8")
