@@ -27,6 +27,7 @@ when its gap exceeds it.
 | J | anchors-20261103-131039.pgn | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 | K | anchors-20261103-203736.pgn | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 | L | anchors-20261104-040240.pgn | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
+| M | anchors-20261104-164241.pgn | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign |
 
 | anchor | CCRL Blitz | nearest fit (95%) | gap | gap's ± | games | nearest anchors played | verdict |
 |---|---|---|---|---|---|---|---|
@@ -46,12 +47,18 @@ when its gap exceeds it.
 | simbelmyne-1.10.0 | 3239 | 3231 ± 25 | -8 | 27 | 400 | laser-1.7, mantissa-3.7.2, priessnitz-2.0, halogen-10 | agrees |
 | laser-1.7 | 3292 | 3298 ± 22 | +6 | 23 | 500 | mantissa-3.7.2, simbelmyne-1.10.0, weiss-2.0, halogen-10 | agrees |
 | mantissa-3.7.2 | 3311 | 3317 ± 22 | +6 | 24 | 500 | laser-1.7, weiss-2.0, xiphos-0.6, simbelmyne-1.10.0 | agrees |
-| weiss-2.0 | 3318 | 3304 ± 20 | -14 | 22 | 400 | mantissa-3.7.2, xiphos-0.6, stash-37.0, laser-1.7 | agrees |
-| xiphos-0.6 | 3354 | 3338 ± 23 | -16 | 25 | 300 | mantissa-3.7.2, weiss-2.0, stash-37.0 | agrees |
-| stash-37.0 | 3418 | 3432 ± 27 | +14 | 30 | 200 | weiss-2.0, xiphos-0.6 | agrees, one side |
+| weiss-2.0 | 3318 | 3319 ± 21 | +1 | 23 | 400 | mantissa-3.7.2, xiphos-0.6, laser-1.7, perseus-1.1 | agrees |
+| xiphos-0.6 | 3354 | 3343 ± 21 | -11 | 23 | 400 | mantissa-3.7.2, weiss-2.0, stash-37.0, perseus-1.1 | agrees |
+| perseus-1.1 | 3397 | 3371 ± 23 | -26 | 25 | 400 | xiphos-0.6, stash-37.0, weiss-2.0, blackcore-6.0 | flagged |
+| stash-37.0 | 3418 | 3434 ± 20 | +16 | 23 | 400 | xiphos-0.6, perseus-1.1, blackcore-6.0, marvin-6.3.0 | agrees |
+| blackcore-6.0 | 3438 | 3431 ± 21 | -7 | 23 | 400 | perseus-1.1, stash-37.0, marvin-6.3.0, midnight-9 | agrees |
+| marvin-6.3.0 | 3458 | 3468 ± 19 | +10 | 22 | 400 | stash-37.0, blackcore-6.0, midnight-9, carp-3.0.1 | agrees |
+| midnight-9 | 3476 | 3484 ± 18 | +8 | 21 | 400 | blackcore-6.0, marvin-6.3.0, carp-3.0.1, willow-4.0 | agrees |
+| carp-3.0.1 | 3525 | 3518 ± 20 | -7 | 22 | 300 | marvin-6.3.0, midnight-9, willow-4.0 | agrees |
+| willow-4.0 | 3531 | 3521 ± 22 | -10 | 25 | 200 | midnight-9, carp-3.0.1 | agrees, one side |
 
 | measure | value |
 |---|---|
-| games | 6600 |
+| games | 7900 |
 | neighbor pairs unplayed | none |
-| slope against CCRL | 1.10 +/- 0.06 against CCRL over 19 anchors |
+| slope against CCRL | 1.09 +/- 0.04 against CCRL over 25 anchors |
