@@ -52,7 +52,7 @@ do not say where, ask the user.
 - **Read a feature's Chess Programming Wiki page (`vendor/cpw/`) and two other engines before choosing its form.** Its comment names the form it rejected.
 - **Its version is a constant that `id name` reports.** An admitted change bumps the patch version. A stage's end bumps the minor version, and that commit is rated. A version is a commit, not a frozen copy.
 - **It has no fidelity bar.** It passes the gates a release on the core passes, and the conversion suite.
-- **A change that keeps the node signature is a speed change.** Measure it on every runtime; it needs no match.
+- **A change that keeps the node signature is a speed change.** Measure it on Bun and Node; it needs no match.
 - **Any other change is admitted by SPRT against its parent.** Start with cheap tests, and go longer or deeper only when a result needs it.
 - **Tuned values are written into the engine itself,** as a commit, not as a variant.
 
@@ -91,7 +91,7 @@ The steps run in this order. Each step's output is the next step's input.
 ## Engineering rules
 
 - **Correctness comes before speed.** A speed number counts only after `bun test/perft.ts --full` passes. Run it for any change to move generation or `make`/`unmake`.
-- **Measure search speed on every runtime.** Benchmarks run under Bun, Node and Deno, because runtime rankings differ by workload and release. Matches, tests and tools run on Bun only.
+- **Measure search speed on every runtime.** Benchmarks run under Bun, Node and Deno, because runtime rankings differ by workload and release. An own-engine step measures Bun and Node only. Matches, tests and tools run on Bun only.
 - **Repeat a benchmark before you trust a delta.** Run-to-run noise is several percent. A change below that noise is not a result.
 - **Run one benchmark per machine at a time,** under `bun tools/queue.ts hold --kind exclusive -- <command>`. A benchmark beside a match, or on a loaded machine, measures the load.
 - **Write no hand-picked unit tests.** The gates, the fidelity checks and the matches judge a change.
@@ -102,6 +102,7 @@ The steps run in this order. Each step's output is the next step's input.
 
 ## History and scratch
 
+- **A commit message explains the change and how the code works after it.** Plans and owed work go on the task.
 - **Unpushed history may be rewritten; pushed history never is.**
 - **A tested tree is the committed tree.** Commit the tree as tested, not a rebuild of it.
 - **Build experiments on scratch branches.** Delete a branch once its result is committed or saved as a patch.
