@@ -11,12 +11,12 @@
 // ---------------------------------------------------------------- eval
 
 /** material by piece type (none, P, N, B, R, Q, K), middlegame and endgame; hand-seeded, Texel-tuned */
-export const MAT_MG: StaticArray<i32> = [0, 320, 1863, 1672, 2284, 5036, 0];
-export const MAT_EG: StaticArray<i32> = [0, 431, 1912, 1946, 3564, 6448, 0];
+export const MAT_MG: StaticArray<i32> = [0, 307, 1854, 1640, 2347, 5065, 0];
+export const MAT_EG: StaticArray<i32> = [0, 460, 1869, 1906, 3506, 6317, 0];
 
 /** the side to move's bonus, added as a (middlegame, endgame) pair before the blend (Stash, Clockwork) */
 export const TEMPO_MG = 152;
-export const TEMPO_EG = 277;
+export const TEMPO_EG = 276;
 
 /** KXK mop-up, CPW "Mop-up Evaluation": per step of the bare king's center distance, and per step the kings close */
 export const MOPUP_EDGE = 80;
@@ -26,158 +26,158 @@ export const MOPUP_CLOSE = 32;
 // first row. Hand-seeded, then Texel-tuned on the zurichess quiet set (results/tuning.md).
 export const PAWN_MG: StaticArray<i32> = [
      0,   0,   0,   0,   0,   0,   0,   0,
-     20,   113,   30, 56, 70,  231,  251,  29,
-     26,   30,   71,   76,   118,   98,   179,   12,
-    2,  46,  116,  158,  199,  107,  66,  -32,
-    82,  147,  158,  165,  141,  123,  151,  34,
-    186,  132,  157,  246,  291,  351,  289,  58,
-   712, 514, 477, 655, 168, 163, 32, 121,
+     34,   126,   45, 70, 84,  245,  265,  41,
+     40,   43,   84,   90,   131,   112,   192,   25,
+    18,  59,  132,  171,  215,  116,  79,  -19,
+    97,  158,  169,  185,  160,  134,  168,  50,
+    200,  164,  174,  264,  344,  373,  323,  78,
+   552, 382, 377, 557, 171, 196, 55, 29,
      0,   0,   0,   0,   0,   0,   0,   0,
 ];
 export const PAWN_EG: StaticArray<i32> = [
      0,    0,    0,    0,    0,    0,    0,    0,
-     385,  310,  377,  307,  392,  312,  278, 300,
-   338,  321, 289,  283,  307, 339, 274, 310,
-     408,  354,  249, 200, 236, 293,  343,  352,
-    452,   315,  246,  156, 228,  307,  369,    416,
-   521,  443,  354,  218,  246,  320,  435,  507,
-   207,  313,  321,  176,  487,  300,  410,  484,
+     351,  275,  338,  272,  358,  278,  249, 267,
+   301,  286, 257,  246,  276, 306, 247, 275,
+     369,  322,  213, 170, 203, 270,  313,  318,
+    414,   287,  218,  115, 193,  282,  335,    379,
+   480,  390,  332,  207,  204,  303,  412,  475,
+   219,  310,  314,  164,  401,  241,  341,  487,
      0,    0,    0,    0,    0,    0,    0,    0,
 ];
 export const KNIGHT_MG: StaticArray<i32> = [
-  91,  185, 141, 94,  259,  155,  145,  139,
-  131, 134,   186,   218,   227,  264,   253,  158,
-   252,   187,  257,  242,  312,  295,  290,  188,
-   289,  275,  311,  272,  333,  349,  333,   238,
-    335,  326,  301,  330,  315,  367,  331,  303,
-  -126,  211,  178,  220,  260,  430,  372,  279,
-  110,  -95,  295,  221,   78,  256,   197,   19,
-  -582, -421, -99,  15,  449, -157, -273, -502,
+  118,  208, 158, 123,  287,  183,  169,  166,
+  156, 169,   209,   238,   248,  287,   280,  179,
+   275,   208,  274,  261,  333,  314,  315,  210,
+   310,  320,  329,  290,  356,  369,  367,   262,
+    356,  342,  323,  349,  337,  399,  357,  333,
+  -108,  236,  193,  228,  288,  452,  392,  339,
+  113,  -58,  337,  256,   133,  294,   218,   65,
+  -546, -365, -24,  89,  545, -108, -249, -474,
 ];
 export const KNIGHT_EG: StaticArray<i32> = [
-  115, 116,  157,   367,  261,  229, 109, -6,
-  151,  199,    282,   328,   330,  175,  206, 48,
-   203,   332,   314,  448,   412,   302,  263,  227,
-   384,   396,  518,  571,  530,  480,   530,  379,
-   376,   455,  580,  650,  588,   547,   462,  375,
-   422,  468,   602,   619,   576,   432,  304, 152,
-   146,   458,  255,   437,   426, 278,  322, 46,
-  80, 297,    382, 268, 198,  242, 208, -162,
+  74, 77,  131,   318,  214,  183, 55, -64,
+  103,  139,    247,   302,   303,  140,  165, 8,
+   158,   306,   305,  426,   384,   279,  222,  195,
+   357,   324,  503,  547,  493,  456,   473,  333,
+   342,   435,  556,  622,  561,   505,   418,  327,
+   394,  430,   589,   610,   556,   420,  270, 77,
+   124,   406,  205,   392,   363, 226,  279, -38,
+  -1, 235,    315, 190, 123,  158, 123, -226,
 ];
 export const BISHOP_MG: StaticArray<i32> = [
-   -30,   135,    151,  163,   209,   85, -10,  -39,
-    202,  176,  220,   153,  153,  279,  232,   130,
-    164,  173,  132,  156,  180,  206,  263,  158,
-    206,  211,  172,  212,  230,  169,   169,   222,
-    165,   192,  146,  206,  202,  252,   134,   126,
-   158,  164,  22,  170,  10,  210,  132,   204,
-    28,  -84,   -39,  -243,  154,  -37,  -86, -243,
-    -44,   15, -568, -308, -343, -24,   79,  100,
+   10,   166,    178,  205,   240,   115, 9,  -6,
+    229,  205,  245,   182,  183,  312,  263,   161,
+    193,  204,  165,  186,  207,  234,  295,  182,
+    232,  238,  206,  239,  268,  198,   204,   249,
+    190,   221,  179,  246,  229,  288,   166,   157,
+   191,  195,  55,  193,  32,  257,  176,   237,
+    63,  -62,   -12,  -195,  162,  -19,  -60, -215,
+    -13,   17, -627, -311, -244, -18,   75,  84,
 ];
 export const BISHOP_EG: StaticArray<i32> = [
-   385,   548,  546,   596,    579,  576,    560,  438,
-   457,  400,    518,   582,   586,    553,  360,  418,
-   508,   581,   575,   614,   703,   462,    562,  545,
-    440,   563,   685,  740,   651,   696,   613,  460,
-    549,   557,   690,   759,   735,   679,   617,   586,
-    507,   656,   536,   656,   724,   579,   668,   605,
-   614,   549,   672,   636,  591,   739,   500,  540,
-   434,  600,   680,   638,   811,  594,  557, 294,
+   363,   549,  548,   579,    576,  572,    566,  435,
+   463,  399,    529,   577,   587,    544,  356,  419,
+   511,   573,   561,   608,   706,   468,    555,  560,
+    448,   561,   658,  738,   627,   685,   592,  462,
+    549,   560,   676,   726,   729,   657,   607,   573,
+    498,   651,   524,   653,   718,   547,   635,   588,
+   606,   557,   677,   613,  617,   733,   491,  544,
+   427,  622,   738,   658,   757,  604,  557, 315,
 ];
 export const ROOK_MG: StaticArray<i32> = [
-   9,   43,   7,  57,  82,   79,  35,  130,
-  -101,   40,  -22,   82,   88,   48,   11, -133,
-  -98,  -16,  2,  10,   38,   113,   99,  -5,
-  -50,  -7,   34,   -1,   73,   46,  192,  22,
-   -47,   27,  28,  60,  119,  113,   -6,  30,
-    -65,  5,  -12,  115,  -78,  181,  219,  -38,
-   16,  20,  200,  67,  142,  187,   -115,  97,
-   43,  78,  -103,  124,  129,   -102,   63,  0,
+   0,   30,   -1,  47,  73,   70,  27,  120,
+  -109,   34,  -25,   80,   80,   34,   12, -148,
+  -106,  -29,  0,  -9,   26,   105,   91,  -15,
+  -64,  -9,   18,   -6,   74,   48,  189,  4,
+   -46,   24,  23,  35,  112,  81,   -9,  14,
+    -82,  -18,  -24,  100,  -103,  145,  225,  -71,
+   -3,  15,  183,  39,  159,  156,   -126,  84,
+   24,  58,  -94,  41,  162,   -167,   5,  -46,
 ];
 export const ROOK_EG: StaticArray<i32> = [
-    808,   825,   876,   820,   790,   818,   806,  649,
-    872,   803,   869,   837,    818,   841,    782,   817,
-    907,   925,   895,   881,   848,   780,    846,   785,
-    950,   1005,   977,   955,   918,   913,  882,   884,
-    1016,   979,  1070,   984,   995,   1007,   1051,   978,
-    1068,   1065,   1041,   962,   1027,   965,  974,   974,
-    1081,   1074,   993,   1055,  999,   1031,   1163,   1040,
-    1078,   1064,  1146,   1042,   1069,   1155,   1071,   1058,
+    793,   823,   856,   806,   775,   799,   784,  630,
+    851,   782,   843,   812,    799,   830,    749,   808,
+    891,   913,   870,   876,   834,   756,    820,   767,
+    942,   978,   964,   934,   887,   880,  850,   877,
+    983,   954,  1046,   975,   974,   1002,   1022,   962,
+    1053,   1054,   1017,   941,   1013,   957,  939,   967,
+    1066,   1048,   976,   1043,  953,   1025,   1139,   1015,
+    1060,   1048,  1106,   1067,   1017,   1154,   1077,   1052,
 ];
 export const QUEEN_MG: StaticArray<i32> = [
-   311,  232,  237,   333,  234, 215, 151, 168,
-  145,  248,   315,   286,   322,   428,    318,   311,
-  182,   305,  237,   276,  258,    258,   312,   366,
-   297, 127,  235,  180,  241,  241,   298,   217,
-  129, 150,  118,  76,   185,   278,  256,  228,
-   224, 114,  181,   186,   153,  372,  308,  403,
-   96, -76,  100,   220, -257,  240,   187,  358,
-   233, 108,  52, -131,  435,  316,  713,   203,
+   294,  232,  233,   332,  237, 213, 152, 199,
+  145,  239,   318,   286,   322,   431,    328,   291,
+  197,   306,  232,   276,  252,    264,   308,   364,
+   295, 141,  231,  181,  247,  241,   296,   224,
+  143, 146,  127,  76,   189,   289,  255,  233,
+   219, 129,  180,   191,   154,  380,  330,  421,
+   76, -70,  67,   261, -202,  291,   184,  341,
+   238, 116,  50, -146,  379,  340,  731,   208,
 ];
 export const QUEEN_EG: StaticArray<i32> = [
-  849, 914, 958, 802,  1088, 955, 1010, 778,
-  1060, 945, 949, 960,  996, 774, 841, 932,
-   1080, 918,   1134,  1022,   1115,   1149,   1260,  1026,
-  960,  1328,   1138,  1284,  1160,  1106,  1221,   1278,
-    1279,   1228,   1215,  1232,  1189,  1100,  1244,  1276,
-   1075,   1268,   1031,  1351,  1193,  1102,   926,  1058,
-  1096,   1158,  1228,  1270,  1676,  883,   1064,  1115,
-  939,  1289,  1404,  1490,   1021,  1030, 733,  1477,
+  885, 905, 966, 804,  1079, 963, 1000, 710,
+  1055, 971, 924, 949,  991, 762, 813, 978,
+   1021, 907,   1144,  1008,   1124,   1109,   1271,  1029,
+  982,  1264,   1149,  1263,  1124,  1102,  1223,   1251,
+    1241,   1243,   1179,  1226,  1171,  1064,  1249,  1263,
+   1085,   1234,   1028,  1335,  1195,  1091,   896,  1017,
+  1135,   1121,  1280,  1184,  1583,  818,   1072,  1160,
+  926,  1261,  1382,  1492,   1080,  977, 695,  1468,
 ];
 export const KING_MG: StaticArray<i32> = [
-   -139,  -149,   -132, -328,   -1, -82,  140,  188,
-    -59,  -135,  -169, -291, -89,  -64,  94,  225,
-    9,  16, -28, -253, -61, 34,  142, 118,
-  -184,   111, 14, -373, -176, -17, 123, -21,
-    167,  -4,  265, -321, 1, 123,  331, 155,
-    449,  49,  406,   -308,  282,  420,  676,  62,
-   324,   63,   -112,  -33,   -241,  -148, 126, -431,
-   -792,  -145,  25,  -250, -435, -311,  141,  -348,
+   -202,  -204,   -180, -372,   -44, -124,  134,  179,
+    -106,  -188,  -206, -303, -130,  -99,  92,  215,
+    -10,  -32, -53, -280, -77, 17,  169, 132,
+  -104,   119, 0, -359, -152, 12, 137, -14,
+    165,  4,  308, -289, 55, 147,  348, 147,
+    373,  140,  399,   -257,  342,  486,  660,  130,
+   431,   47,   -145,  -54,   -255,  -67, 144, -386,
+   -880,  -89,  95,  -193, -354, -221,  95,  -366,
 ];
 export const KING_EG: StaticArray<i32> = [
-  -677, -455, 256,  -168, -120,  17, -147, -274,
-  -378,  -333,   371,   5,   41,   85,  -54, -71,
-  -312,  -314,   407,  62,  115,  80,   -11,  -22,
-   -245,  -294,  479,  135,  169,  179,   -50,   -60,
-   -236,  -74,  459,  150,  166,  216,  45,   -1,
-    -151,   -2,   440,   148,   54,  283,  131,   177,
-  -250,   -20,   663,   35,   222,  501,  184,  369,
-  -615, -321, 286, -124,    -23,   345,   31,  -243,
+  -671, -432, 283,  -139, -109,  25, -149, -286,
+  -374,  -313,   392,   2,   52,   89,  -61, -81,
+  -324,  -296,   422,  76,  118,  80,   -30,  -45,
+   -303,  -284,  495,  136,  157,  167,   -57,   -66,
+   -257,  -65,  451,  143,  140,  211,  43,   6,
+    -124,   -33,   459,   129,   30,  267,  162,   144,
+  -291,   -6,   691,   57,   215,  472,  194,  344,
+  -509, -382, 295, -107,    -32,   284,   63,  -159,
 ];
 
 // ---------------------------------------------------------------- pawns
 // Stash 37 kp_eval.c, converted by its middlegame pawn 103; each pair is (middlegame, endgame).
 
 /** a backward pawn that is not isolated, on a file an enemy pawn closes: its stop square attacked by an enemy pawn and out of reach of its own */
-export const PAWN_BACKWARD_MG = -8;
-export const PAWN_BACKWARD_EG = -56;
+export const PAWN_BACKWARD_MG = -7;
+export const PAWN_BACKWARD_EG = -58;
 /** the same on a file no enemy pawn closes */
-export const PAWN_BACKWARD_OPEN_MG = -82;
+export const PAWN_BACKWARD_OPEN_MG = -81;
 export const PAWN_BACKWARD_OPEN_EG = -88;
 /** a pawn with a friendly pawn directly behind it */
 export const PAWN_DOUBLED_MG = -20;
-export const PAWN_DOUBLED_EG = -163;
+export const PAWN_DOUBLED_EG = -168;
 /** a pawn with no friendly pawn on a neighboring file */
 export const PAWN_ISOLATED_MG = -40;
-export const PAWN_ISOLATED_EG = -70;
+export const PAWN_ISOLATED_EG = -67;
 /** a passed pawn by relative rank: no enemy pawn ahead on its file or the next */
-export const PAWN_PASSED_MG: StaticArray<i32> = [0, -53, -56, -187, 111, 741, 1054, 0];
-export const PAWN_PASSED_EG: StaticArray<i32> = [0, -13, 175, 219, 295, 184, 654, 0];
+export const PAWN_PASSED_MG: StaticArray<i32> = [0, -6, -26, -166, 110, 631, 952, 0];
+export const PAWN_PASSED_EG: StaticArray<i32> = [0, -13, 169, 206, 310, 130, 587, 0];
 /** a candidate by relative rank: not passed, no enemy pawn ahead on its file, and every square of its path an enemy pawn attacks is attacked as often by its own; seeded from Ethereal 12.75 PawnCandidatePasser at its pawn 82 */
-export const PAWN_CANDIDATE_MG: StaticArray<i32> = [0, -63, -53, -55, 11, 172, 0, 0];
-export const PAWN_CANDIDATE_EG: StaticArray<i32> = [0, 37, 40, 167, 327, 380, 0, 0];
+export const PAWN_CANDIDATE_MG: StaticArray<i32> = [0, -58, -50, -51, 18, 149, 0, 0];
+export const PAWN_CANDIDATE_EG: StaticArray<i32> = [0, 23, 37, 161, 309, 395, 0, 0];
 /** a pawn with a friendly pawn beside it on the next file, by relative rank */
-export const PAWN_PHALANX_MG: StaticArray<i32> = [0, 40, 74, 88, 162, 252, -356, 0];
-export const PAWN_PHALANX_EG: StaticArray<i32> = [0, -22, 4, 73, 254, 1502, 2521, 0];
+export const PAWN_PHALANX_MG: StaticArray<i32> = [0, 42, 75, 89, 170, 276, -339, 0];
+export const PAWN_PHALANX_EG: StaticArray<i32> = [0, -24, -1, 68, 240, 1459, 2441, 0];
 /** a pawn defending a friendly pawn, by the defender's relative rank */
-export const PAWN_DEFENDER_MG: StaticArray<i32> = [0, 70, 79, 71, 64, 848, 0, 0];
-export const PAWN_DEFENDER_EG: StaticArray<i32> = [0, 74, 67, 141, 454, 377, 0, 0];
+export const PAWN_DEFENDER_MG: StaticArray<i32> = [0, 71, 81, 71, 62, 769, 0, 0];
+export const PAWN_DEFENDER_EG: StaticArray<i32> = [0, 73, 62, 137, 445, 415, 0, 0];
 /** a passed pawn, per step of its distance from its own king, by relative rank; seeded by lines through the earlier table, ranks 1 and 2 from Ethereal 12.75 at its pawn 82 */
-export const PASSED_OUR_KING_MG: StaticArray<i32> = [0, -6, -12, 24, 9, -68, 0, 0];
-export const PASSED_OUR_KING_EG: StaticArray<i32> = [0, -5, -20, -84, -124, -144, -237, 0];
+export const PASSED_OUR_KING_MG: StaticArray<i32> = [0, -5, -8, 27, 2, -57, -29, 0];
+export const PASSED_OUR_KING_EG: StaticArray<i32> = [0, -6, -23, -84, -119, -134, -190, 0];
 /** the same from the enemy king */
-export const PASSED_THEIR_KING_MG: StaticArray<i32> = [0, -5, -4, 16, -26, -39, -187, 0];
-export const PASSED_THEIR_KING_EG: StaticArray<i32> = [0, 3, 11, 65, 162, 244, 373, 0];
+export const PASSED_THEIR_KING_MG: StaticArray<i32> = [0, -13, -14, 7, -21, -33, -83, 0];
+export const PASSED_THEIR_KING_EG: StaticArray<i32> = [0, 2, 17, 71, 159, 245, 305, 0];
 
 // ---------------------------------------------------------------- endgame scaling
 // Stash 37 eval_scale_endgame: the endgame half times a factor of 256, set by hand
@@ -321,249 +321,249 @@ export const TM_ONE_MOVE = 500.0;
 
 /** mobility by count, Stash 37 */
 export const MOB_KNIGHT_MG: StaticArray<i32> = [
-  -311, -259, -212, -195, -132, -104, -75, -31,
-  2,
+  -292, -237, -190, -174, -108, -79, -49, -4,
+  51,
 ];
 export const MOB_KNIGHT_EG: StaticArray<i32> = [
-  -257, 280, 421, 509, 507, 569, 582, 574,
-  546,
+  -211, 276, 423, 513, 499, 557, 563, 551,
+  484,
 ];
 export const MOB_BISHOP_MG: StaticArray<i32> = [
-  -56, 8, 89, 91, 128, 169, 182, 198,
-  199, 208, 260, 271, 384, 19,
+  -29, 34, 115, 117, 155, 196, 209, 228,
+  228, 238, 286, 305, 362, 65,
 ];
 export const MOB_BISHOP_EG: StaticArray<i32> = [
-  -26, 138, 242, 374, 418, 437, 480, 505,
-  540, 533, 476, 519, 461, 600,
+  -68, 116, 225, 358, 393, 411, 455, 472,
+  508, 502, 450, 489, 475, 558,
 ];
 export const MOB_ROOK_MG: StaticArray<i32> = [
-  -229, -31, 25, 42, 61, 61, 78, 101,
-  124, 169, 150, 207, 217, 188, 296,
+  -246, -46, 10, 26, 45, 45, 63, 85,
+  106, 150, 134, 191, 199, 185, 272,
 ];
 export const MOB_ROOK_EG: StaticArray<i32> = [
-  10, 221, 412, 452, 523, 582, 601, 618,
-  658, 672, 711, 748, 764, 795, 760,
+  3, 190, 389, 435, 503, 559, 576, 595,
+  638, 652, 686, 724, 740, 758, 744,
 ];
 export const MOB_QUEEN_MG: StaticArray<i32> = [
-  -194, -98, -134, -135, -111, -115, -84, -78,
-  -77, -67, -61, -54, -49, -30, -20, -14,
-  -26, -27, -36, 58, 62, 205, 303, 276,
-  302, 202, -290, 127,
+  -194, -94, -127, -130, -105, -108, -76, -71,
+  -68, -60, -54, -49, -40, -25, -10, -9,
+  -17, -19, -29, 85, 81, 190, 295, 278,
+  236, 199, -294, 47,
 ];
 export const MOB_QUEEN_EG: StaticArray<i32> = [
-  -536, 583, 926, 1486, 1421, 1524, 1595, 1667,
-  1796, 1848, 1895, 1906, 1985, 1967, 2008, 2018,
-  2058, 2112, 2133, 2062, 2009, 1908, 1767, 1769,
-  1718, 1786, 2151, 1636,
+  -536, 669, 855, 1522, 1441, 1496, 1553, 1628,
+  1745, 1814, 1856, 1880, 1942, 1934, 1958, 1986,
+  2011, 2066, 2093, 1984, 1947, 1892, 1739, 1730,
+  1775, 1744, 2167, 1751,
 ];
 /** outposts by [outside file][pawn-defended], Ethereal 12.75 */
 export const OUTPOST_KNIGHT_MG: StaticArray<i32> = [
-  31, 134, 79, 109,
+  53, 133, 84, 106,
 ];
 export const OUTPOST_KNIGHT_EG: StaticArray<i32> = [
-  -133, -2, -108, -71,
+  -159, 3, -124, -62,
 ];
 export const OUTPOST_BISHOP_MG: StaticArray<i32> = [
-  17, 120, -54, 146,
+  16, 124, -55, 163,
 ];
 export const OUTPOST_BISHOP_EG: StaticArray<i32> = [
-  -32, 72, 83, -121,
+  -26, 70, 86, -156,
 ];
 /** a minor directly behind any pawn, Ethereal 12.75 */
-export const BEHIND_KNIGHT_MG = 24;
-export const BEHIND_KNIGHT_EG = 97;
+export const BEHIND_KNIGHT_MG = 22;
+export const BEHIND_KNIGHT_EG = 105;
 export const BEHIND_BISHOP_MG = 31;
 export const BEHIND_BISHOP_EG = 67;
 /** a knight four to seven squares from both kings, Ethereal 12.75 */
 export const FAR_KNIGHT_MG: StaticArray<i32> = [
-  -83, -58, -130, -143,
+  -86, -63, -133, -182,
 ];
 export const FAR_KNIGHT_EG: StaticArray<i32> = [
-  26, -39, 17, -354,
+  34, -22, 31, -282,
 ];
 /** the bishop pair, Ethereal 12.75 */
-export const BISHOP_PAIR_MG = 173;
-export const BISHOP_PAIR_EG = 359;
+export const BISHOP_PAIR_MG = 175;
+export const BISHOP_PAIR_EG = 357;
 /** a bishop that sees both center squares from a long diagonal, Ethereal 12.75 */
 export const BISHOP_LONG_MG = 88;
-export const BISHOP_LONG_EG = 115;
+export const BISHOP_LONG_EG = 116;
 /** per own pawn on the bishop's color, Laser 1.7 */
-export const BISHOP_PAWNS_MG = -2;
-export const BISHOP_PAWNS_EG = -23;
+export const BISHOP_PAWNS_MG = 1;
+export const BISHOP_PAWNS_EG = -27;
 /** per rammed own pawn on the bishop's color, Laser 1.7 */
-export const BISHOP_RAMMED_MG = -7;
-export const BISHOP_RAMMED_EG = -70;
+export const BISHOP_RAMMED_MG = -8;
+export const BISHOP_RAMMED_EG = -64;
 /** a rook on a semi-open and an open file, Ethereal 12.75 */
 export const ROOK_FILE_MG: StaticArray<i32> = [
-  56, 195,
+  57, 197,
 ];
 export const ROOK_FILE_EG: StaticArray<i32> = [
-  84, 18,
+  80, 16,
 ];
 /** a rook on the enemy queen's file, Stash 37 */
-export const ROOK_QUEEN_FILE_MG = 40;
-export const ROOK_QUEEN_FILE_EG = 116;
+export const ROOK_QUEEN_FILE_MG = 42;
+export const ROOK_QUEEN_FILE_EG = 109;
 /** a rook hemmed in by its own king, with and without castling rights, Stash 37 */
 export const ROOK_TRAPPED_MG = 46;
-export const ROOK_TRAPPED_EG = 2;
-export const ROOK_BURIED_MG = -209;
-export const ROOK_BURIED_EG = 54;
+export const ROOK_TRAPPED_EG = 15;
+export const ROOK_BURIED_MG = -211;
+export const ROOK_BURIED_EG = 59;
 
 // King safety, Ethereal 12.75: the safety sum's terms, in the units its square reads (pieces.ts KS_DIV_MG).
 /** the pawn shield by [king's file][file][own pawn's distance, 7 for none] */
 export const SHELTER_MG: StaticArray<i32> = [
-  331, 605, 609, 594, 385, 806, -78, 379,
-  169, 174, 189, -169, -234, 128, 395, -149,
-  283, 346, 261, 188, 268, -146, 54, 144,
-  44, 47, 23, 42, 28, -169, -485, -64,
-  -34, 27, -79, -47, -127, -499, -1318, -101,
-  64, 21, -36, 8, 51, 118, -372, -139,
-  170, 121, 12, 65, 98, 8, 166, -74,
-  -82, 12, 39, 29, -6, -127, -398, -167,
-  0, 140, 169, -246, -398, -39, -820, -315,
-  0, -538, -570, -803, -369, -501, -907, -923,
-  0, 37, -134, -148, 1, -368, -429, -269,
-  0, -256, -213, -199, -259, -530, -34, -341,
-  0, -130, -143, -178, -131, -393, -493, -279,
-  0, -14, -130, -136, 110, -939, 254, -290,
-  0, 110, 83, 38, 16, -440, -93, -197,
-  0, -84, -97, -238, -226, -360, -1098, -463,
+  396, 656, 666, 652, 404, 882, -78, 426,
+  147, 196, 205, -142, -190, 144, 395, -143,
+  284, 352, 276, 204, 300, -178, 54, 164,
+  47, 44, 20, 41, 23, -183, -584, -65,
+  -28, 13, -78, -44, -137, -509, -1377, -104,
+  60, 19, -41, 7, 55, 108, -314, -140,
+  173, 123, 25, 75, 115, -45, 259, -63,
+  -78, 12, 37, 24, -16, -143, -271, -167,
+  0, 158, 248, -293, -426, -39, -820, -306,
+  0, -558, -594, -810, -382, -492, -907, -942,
+  0, 28, -135, -158, -5, -384, -429, -280,
+  0, -300, -264, -233, -311, -636, -34, -370,
+  0, -138, -151, -186, -143, -459, -493, -289,
+  0, -10, -129, -155, 154, -860, 254, -293,
+  0, 109, 84, 40, 25, -485, -86, -200,
+  0, -95, -108, -252, -253, -368, -1098, -471,
 ];
 export const SHELTER_EG: StaticArray<i32> = [
-  351, 211, 313, 295, 345, 412, -161, 315,
-  -397, -413, -409, -317, -165, 238, 400, -407,
-  74, -28, 46, 101, 70, 642, 222, -30,
-  141, 45, 40, -26, -7, 179, 545, 27,
-  56, -66, 2, -14, 20, 297, 808, -12,
-  -20, -87, -70, -135, -99, -163, 540, -14,
-  13, -37, -9, -36, 30, 426, 480, 35,
-  -28, -67, -20, -10, 58, 221, -783, 68,
-  0, 433, 524, 701, 696, 244, -15, 601,
-  0, -94, -90, 33, -353, 111, 20, -60,
-  0, 30, 64, -9, 134, -15, -361, -3,
-  0, 334, 264, 181, 256, 659, -220, 175,
-  0, 158, 91, 116, 55, 471, -254, 109,
-  0, -114, -57, -166, -260, 242, 190, -54,
-  0, -92, -96, -148, -143, 240, 427, 31,
-  0, -282, -182, -119, -46, -81, -239, -25,
+  338, 211, 295, 274, 404, 375, -161, 310,
+  -371, -431, -415, -344, -218, 180, 400, -409,
+  91, -9, 41, 100, 44, 645, 222, -33,
+  137, 44, 34, -28, 9, 171, 661, 23,
+  53, -49, 0, -27, 34, 260, 896, -10,
+  -23, -95, -74, -140, -125, -221, 438, -22,
+  24, -26, -8, -31, 9, 431, 357, 38,
+  -28, -64, -14, 4, 81, 251, -860, 68,
+  0, 458, 473, 776, 753, 244, -15, 614,
+  0, -101, -89, 0, -362, 16, 20, -73,
+  0, 51, 66, 17, 136, -39, -361, 12,
+  0, 360, 293, 188, 295, 684, -220, 180,
+  0, 187, 112, 129, 84, 571, -254, 137,
+  0, -110, -52, -138, -307, 121, 190, -47,
+  0, -78, -85, -142, -184, 264, 422, 48,
+  0, -275, -178, -119, -20, -93, -239, -28,
 ];
 /** the pawn storm by [blocked][file from the edge][enemy pawn's distance, 7 for none] */
 export const STORM_MG: StaticArray<i32> = [
-  -45, 162, -15, -141, -66, -21, -41, -97,
-  -6, 113, -81, 6, 6, 55, 8, -107,
-  182, 205, -130, -58, -41, 6, 59, -66,
-  148, 22, 46, -105, -5, 30, -10, -33,
-  0, -88, -139, 62, 70, -25, 271, -269,
-  0, -73, -92, 158, 98, 26, 294, -711,
-  0, -166, -37, 30, -7, -21, 231, 621,
-  0, -5, 20, -65, -14, 59, 244, 442,
+  19, 206, -10, -144, -71, -23, -43, -105,
+  -56, 127, -86, 11, 13, 64, 16, -97,
+  224, 223, -133, -67, -50, 1, 55, -72,
+  167, 69, 48, -78, 20, 53, 14, -9,
+  0, -88, -142, 60, 80, -13, 292, -267,
+  0, -73, -88, 166, 90, 18, 297, -672,
+  0, -166, -37, 21, -8, -45, 193, 550,
+  0, -5, 46, -39, 10, 85, 302, 421,
 ];
 export const STORM_EG: StaticArray<i32> = [
-  71, 51, 23, -3, -38, -56, -45, -89,
-  214, 230, 155, 73, 68, 34, 30, 39,
-  143, 152, 136, 49, 34, -5, -60, 16,
-  -25, 46, -56, -13, -72, -100, -127, -60,
-  0, -78, 7, -118, -108, -30, -128, 1284,
-  0, -205, -16, -38, 3, -82, -334, 267,
-  0, -302, -102, -35, 9, -156, -239, -176,
-  0, -127, -203, -82, -53, -215, -327, 361,
+  46, 37, 22, 1, -33, -55, -44, -76,
+  221, 210, 146, 63, 59, 24, 26, 28,
+  115, 145, 129, 46, 28, -11, -71, 9,
+  -44, 34, -56, -24, -83, -104, -126, -72,
+  0, -78, 10, -118, -126, -59, -179, 1184,
+  0, -205, -20, -45, 16, -39, -273, 192,
+  0, -302, -110, -42, -17, -116, -145, -133,
+  0, -127, -219, -93, -57, -232, -444, 276,
 ];
 /** shelter's and storm's share of the safety sum */
 export const SAFETY_SHELTER_MG: StaticArray<i32> = [
-  -296, -93, -93, 62, 145, 288, -1212, -114,
-  0, -193, -203, -107, 158, -24, -704, -283,
+  -302, -104, -109, 60, 148, 229, -1306, -101,
+  0, -217, -225, -124, 133, -106, -743, -297,
 ];
 export const SAFETY_SHELTER_EG: StaticArray<i32> = [
-  -56, -253, -16, 711, 277, -2818, 2271, -729,
-  0, 270, 1395, 756, -423, -2290, -2309, -867,
+  37, -147, 15, 802, 386, -2951, 2137, -868,
+  0, 386, 1295, 619, -320, -2420, -2309, -893,
 ];
 export const SAFETY_STORM_MG: StaticArray<i32> = [
-  354, 389, 288, 88, 129, 99, 81, 59,
-  0, 5, 258, 25, -47, -35, 419, 1774,
+  366, 458, 280, 88, 119, 91, 77, 55,
+  0, 5, 255, 32, -50, -44, 496, 1719,
 ];
 export const SAFETY_STORM_EG: StaticArray<i32> = [
-  949, 839, 1777, -70, -244, -501, -153, -547,
-  0, 0, 541, -873, 800, 39, 3768, 2040,
+  970, 958, 1890, 51, -138, -407, -60, -619,
+  0, 0, 658, -843, 654, 156, 3635, 1909,
 ];
 /** per attacker reaching the king's area */
-export const SAFETY_KNIGHT_MG = 176;
-export const SAFETY_KNIGHT_EG = 1735;
-export const SAFETY_BISHOP_MG = 243;
-export const SAFETY_BISHOP_EG = 1159;
-export const SAFETY_ROOK_MG = 251;
-export const SAFETY_ROOK_EG = 779;
-export const SAFETY_QUEEN_MG = 139;
-export const SAFETY_QUEEN_EG = 699;
+export const SAFETY_KNIGHT_MG = 200;
+export const SAFETY_KNIGHT_EG = 1567;
+export const SAFETY_BISHOP_MG = 272;
+export const SAFETY_BISHOP_EG = 1258;
+export const SAFETY_ROOK_MG = 295;
+export const SAFETY_ROOK_EG = 875;
+export const SAFETY_QUEEN_MG = 167;
+export const SAFETY_QUEEN_EG = 789;
 /** per attack on the area; Ethereal's value times 9/12, its rescale of the count to a 9-square area, left out */
-export const SAFETY_ATTACK_MG = 91;
-export const SAFETY_ATTACK_EG = 23;
+export const SAFETY_ATTACK_MG = 77;
+export const SAFETY_ATTACK_EG = 120;
 /** per weak square of the area */
-export const SAFETY_WEAK_MG = 118;
-export const SAFETY_WEAK_EG = -44;
+export const SAFETY_WEAK_MG = 123;
+export const SAFETY_WEAK_EG = -22;
 /** the attacker has no queen */
-export const SAFETY_NO_QUEEN_MG = -1413;
-export const SAFETY_NO_QUEEN_EG = -1458;
+export const SAFETY_NO_QUEEN_MG = -1511;
+export const SAFETY_NO_QUEEN_EG = -1390;
 /** per safe check */
-export const SAFETY_CHECK_QUEEN_MG = 218;
-export const SAFETY_CHECK_QUEEN_EG = 3332;
-export const SAFETY_CHECK_ROOK_MG = 675;
-export const SAFETY_CHECK_ROOK_EG = 3356;
-export const SAFETY_CHECK_BISHOP_MG = 353;
-export const SAFETY_CHECK_BISHOP_EG = 4163;
-export const SAFETY_CHECK_KNIGHT_MG = 510;
-export const SAFETY_CHECK_KNIGHT_EG = 2951;
+export const SAFETY_CHECK_QUEEN_MG = 219;
+export const SAFETY_CHECK_QUEEN_EG = 3362;
+export const SAFETY_CHECK_ROOK_MG = 696;
+export const SAFETY_CHECK_ROOK_EG = 3250;
+export const SAFETY_CHECK_BISHOP_MG = 364;
+export const SAFETY_CHECK_BISHOP_EG = 4289;
+export const SAFETY_CHECK_KNIGHT_MG = 540;
+export const SAFETY_CHECK_KNIGHT_EG = 2829;
 /** per unsafe check, Stash 37; its S(18, 85) restated for Ethereal's divisors, then converted */
-export const SAFETY_UNSAFE_MG = 60;
-export const SAFETY_UNSAFE_EG = 92;
+export const SAFETY_UNSAFE_MG = 65;
+export const SAFETY_UNSAFE_EG = 102;
 /** the sum's offset */
-export const SAFETY_OFFSET_MG = -160;
-export const SAFETY_OFFSET_EG = -266;
+export const SAFETY_OFFSET_MG = -149;
+export const SAFETY_OFFSET_EG = -188;
 
 // Passed pawns outside the king-pawn table, Ethereal 12.75 and Weiss c735b8f.
 /** by [can advance][safe to advance][rank]; each cell is Ethereal's less its blocked and unsafe cell, since pawns.ts has the rank's base value */
 export const PASSED_ADVANCE_MG: StaticArray<i32> = [
   0, 0, 0, 0, 0, 0, 0, 0,
-  0, 100, 100, -32, -87, -130, -175, 0,
-  0, 37, 76, -45, 35, -2, 204, 0,
-  0, 97, 156, -13, -25, -192, -531, 0,
+  0, 85, 104, -41, -73, -124, -212, 0,
+  0, 40, 77, -45, 54, 29, 175, 0,
+  0, 92, 146, -9, -13, -142, -508, 0,
 ];
 export const PASSED_ADVANCE_EG: StaticArray<i32> = [
   0, 0, 0, 0, 0, 0, 0, 0,
-  0, 33, -71, 40, -15, 182, 184, 0,
-  0, 164, -63, 85, -32, 199, 386, 0,
-  0, 62, -139, 55, 133, 919, 1859, 0,
+  0, 40, -79, 43, -38, 196, 230, 0,
+  0, 148, -67, 79, -65, 185, 422, 0,
+  0, 60, -136, 44, 111, 895, 1864, 0,
 ];
 /** no enemy piece or attack on the pawn or its path, Ethereal 12.75 */
-export const PASSED_SAFE_PATH_MG = -214;
-export const PASSED_SAFE_PATH_EG = 311;
+export const PASSED_SAFE_PATH_MG = -200;
+export const PASSED_SAFE_PATH_EG = 304;
 /** an own rook behind the pawn on its file, Weiss c735b8f */
-export const PASSED_ROOK_BEHIND_MG = 72;
-export const PASSED_ROOK_BEHIND_EG = 123;
+export const PASSED_ROOK_BEHIND_MG = 71;
+export const PASSED_ROOK_BEHIND_EG = 124;
 
 // Threats, Ethereal 12.75: against the side named, except the push.
 export const THREAT_WEAK_PAWN_MG = -46;
-export const THREAT_WEAK_PAWN_EG = -230;
-export const THREAT_MINOR_BY_PAWN_MG = -345;
-export const THREAT_MINOR_BY_PAWN_EG = -316;
+export const THREAT_WEAK_PAWN_EG = -231;
+export const THREAT_MINOR_BY_PAWN_MG = -348;
+export const THREAT_MINOR_BY_PAWN_EG = -306;
 export const THREAT_MINOR_BY_MINOR_MG = -108;
-export const THREAT_MINOR_BY_MINOR_EG = -182;
-export const THREAT_MINOR_BY_MAJOR_MG = -111;
-export const THREAT_MINOR_BY_MAJOR_EG = -368;
-export const THREAT_ROOK_BY_LESSER_MG = -316;
-export const THREAT_ROOK_BY_LESSER_EG = -190;
-export const THREAT_MINOR_BY_KING_MG = -130;
-export const THREAT_MINOR_BY_KING_EG = -304;
-export const THREAT_ROOK_BY_KING_MG = -225;
-export const THREAT_ROOK_BY_KING_EG = -274;
-export const THREAT_QUEEN_MG = -335;
-export const THREAT_QUEEN_EG = -175;
+export const THREAT_MINOR_BY_MINOR_EG = -181;
+export const THREAT_MINOR_BY_MAJOR_MG = -110;
+export const THREAT_MINOR_BY_MAJOR_EG = -373;
+export const THREAT_ROOK_BY_LESSER_MG = -321;
+export const THREAT_ROOK_BY_LESSER_EG = -181;
+export const THREAT_MINOR_BY_KING_MG = -110;
+export const THREAT_MINOR_BY_KING_EG = -314;
+export const THREAT_ROOK_BY_KING_MG = -212;
+export const THREAT_ROOK_BY_KING_EG = -283;
+export const THREAT_QUEEN_MG = -336;
+export const THREAT_QUEEN_EG = -161;
 export const THREAT_OVERLOADED_MG = -13;
 export const THREAT_OVERLOADED_EG = -102;
 export const THREAT_PUSH_MG = 81;
-export const THREAT_PUSH_EG = 124;
+export const THREAT_PUSH_EG = 125;
 
 // Complexity, Xiphos 0.6 and Ethereal 12.75: the endgame half's adjustment, seeded from Ethereal.
-export const COMPLEXITY_PAWNS = 29;
-export const COMPLEXITY_FLANKS = 376;
-export const COMPLEXITY_ENDGAME = 374;
-export const COMPLEXITY_OFFSET = -682;
+export const COMPLEXITY_PAWNS = 32;
+export const COMPLEXITY_FLANKS = 416;
+export const COMPLEXITY_ENDGAME = 386;
+export const COMPLEXITY_OFFSET = -739;
