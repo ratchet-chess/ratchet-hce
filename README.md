@@ -63,7 +63,7 @@ bun run bench:all            # perft throughput under Bun, Node and Deno
 bun run bench:search:all     # each engine's node signature and search speed under Bun, Node and Deno
 bun bench/search.ts --engine ratchet --against <ref>  # the build's SPEED over the same engine built from <ref>, for tools/pool.ts
 bun bench/eval.ts --against <ref>  # the eval alone in ns per call, read in seconds, for a speed edit to the own engine
-bun run web:build && bun run web  # the play page, built from build/ into web/dist/ and served at http://127.0.0.1:8080/
+bun run web  # the play page: rebuilds any stale wasm, builds web/dist/, serves http://127.0.0.1:8080/
 ```
 
 `bin/ratchet` is the UCI engine for a GUI or a match runner: `bin/ratchet [bun|node|deno] --release <name>`.

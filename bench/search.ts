@@ -8,6 +8,9 @@
  *   --engine <name>        one engine under engines/ (default: every engine built in build/)
  *   --depth <n>            the depth of every search (default: the engine's entry in DEPTH)
  *   --repeat <n>           timed passes after the warm-up pass (default 3); each pass prints a line
+ *   --hash <mb>            size the transposition table first (default: the engine's own)
+ *   --keep                 play the set as one game: newGame once per pass, then goClock to the depth,
+ *                          so the tables fill as they do in play, and its signature is the kept pass's
  *   --positions <file>     `name|fen` lines (default bench/positions.txt, the set of the releases' references)
  *   --wasm <file>          with --engine: bench this build of the engine instead of build/<engine>.wasm
  *   --against <ref>        compare --engine's build/<engine>.wasm, the candidate, with the same engine
@@ -43,6 +46,8 @@ const DEPTH: Record<string, number> = {
 const args = process.argv.slice(2);
 const opt = (name: string) => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
 const against = opt("--against");
+const hash = opt("--hash");
+const keep = args.includes("--keep");
 const repeat = Number(opt("--repeat") ?? (against ? 6 : 3));
 const positionsPath = opt("--positions") ?? new URL("./positions.txt", import.meta.url).pathname;
 const positions = readFileSync(positionsPath, "utf8")
@@ -73,10 +78,12 @@ function depthOf(name: string): number {
 function pass(engine: Engine, depth: number): { nodes: number; ms: number } {
   let nodes = 0;
   let ms = 0;
+  if (keep) engine.newGame();
   for (const fen of positions) {
     engine.setPosition(fen, []);
     const t0 = performance.now();
-    engine.go(depth);
+    if (keep) engine.goClock({ depth });
+    else engine.go(depth);
     ms += performance.now() - t0;
     nodes += engine.nodes();
   }
@@ -136,6 +143,7 @@ if (against) {
 } else {
   for (const name of engines) {
     const engine = await Engine.load(wasmPath ?? name);
+    if (hash) engine.setHash(Number(hash));
     const depth = depthOf(name);
     const signature = pass(engine, depth).nodes;
     const times: number[] = [];
