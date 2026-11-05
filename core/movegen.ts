@@ -9,7 +9,7 @@
  * keeps the order the moves have in generateMoves(), so a stage's sort sees the
  * same list a filter of the whole one would give.
  */
-import { BISHOP, FLAG_CASTLE, FLAG_DOUBLE, FLAG_EP, KING, KNIGHT, NO_SQ, PAWN, QUEEN, ROOK, movePromo } from "./constants";
+import { BISHOP, FILE_A, FLAG_CASTLE, FLAG_DOUBLE, FLAG_EP, KING, KNIGHT, NO_SQ, PAWN, QUEEN, ROOK, movePromo } from "./constants";
 import { attackedWith, bb, board, castling, ep, make, side, unmake } from "./position";
 import { BETWEEN, KING_ATT, KNIGHT_ATT, LINE, PAWN_ATT, bishopAttacks, bit, rookAttacks } from "./tables";
 
@@ -20,6 +20,10 @@ import { BETWEEN, KING_ATT, KNIGHT_ATT, LINE, PAWN_ATT, bishopAttacks, bit, rook
   out[n + 3] = base | (KNIGHT << 12);
   return n + 4;
 }
+
+const FILE_H: u64 = FILE_A << 7;
+const RANK_2: u64 = 0xff00;
+const RANK_7: u64 = 0xff000000000000;
 
 const GEN_ALL = 0;
 const GEN_NOISY = 1;
@@ -120,6 +124,16 @@ export function generateQuiets(out: StaticArray<i32>, start: i32): i32 {
     const fwd = us == 0 ? 8 : -8;
     const startRank = us == 0 ? 1 : 6;
     let pawns = bb[us8 | PAWN];
+    // Noisy modes skip pawns with nothing to take or promote, keeping square order.
+    if (!quiets) {
+      const reach = us == 0
+        ? ((thOcc & ~FILE_H) >> 7) | ((thOcc & ~FILE_A) >> 9)
+        : ((thOcc & ~FILE_A) << 7) | ((thOcc & ~FILE_H) << 9);
+      let able = reach;
+      if (ep != NO_SQ) able |= PAWN_ATT[(them << 6) + ep];
+      if (mode == GEN_NOISY) able |= us == 0 ? RANK_7 : RANK_2;
+      pawns &= able;
+    }
     while (pawns) {
       const from = <i32>ctz(pawns);
       pawns &= pawns - 1;

@@ -20,6 +20,8 @@ const BUCKET_BYTES = 32;
 const ENTRY_BYTES = 10;
 const ENTRIES = 3;
 
+/** the allocation, and the table inside it on a cache line, so no 32-byte bucket crosses one */
+let block: usize = 0;
 let table: usize = 0;
 let buckets: u64 = 0;
 let generation = 0;
@@ -35,8 +37,9 @@ export let ttPv = false;
 /** a new table of `mb` megabytes, emptied */
 export function ttAlloc(mb: i32): void {
   const bytes = <usize>max(1, mb) << 20;
-  if (table) heap.free(table);
-  table = heap.alloc(bytes);
+  if (block) heap.free(block);
+  block = heap.alloc(bytes + 64);
+  table = (block + 63) & ~<usize>63;
   buckets = <u64>(bytes / BUCKET_BYTES);
   ttClear();
 }
