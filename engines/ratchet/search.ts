@@ -180,6 +180,10 @@ function rewardQuiet(m: i32, bonus: i32, p: i32): void {
   if (f4 >= 0) gravityFrom(contHist, f4 + pt, base, bonus);
 }
 
+/** the last check test made after a move, keyed by the position, so the child need not repeat it */
+let knownCheckKey: u64 = 0;
+let knownCheck = false;
+
 /**
  * The history update after a cut by `best` at `depth` (Weiss UpdateHistory): a
  * bonus to it and a malus to each move of its kind tried before it; captures
@@ -229,7 +233,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     if (alpha >= beta) return alpha;
   }
 
-  const check = inCheck();
+  const check = hash == knownCheckKey ? knownCheck : inCheck();
   const excl = excludedAt[p];
   const key = excl ? hash ^ (<u64>excl * EXCLUDED_MIX) : hash;
   const hit = ttProbe(key);
@@ -239,7 +243,6 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   let tDepth = 0;
   let tPv = false;
   if (hit) {
-    tMove = fullMove(ttMove);
     tScore = scoreFromTT(ttScore, p);
     tBound = ttBound;
     tDepth = ttDepth;
@@ -247,12 +250,16 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     // no cut at PV nodes (Stockfish 4739037f), nor late in the fifty-move count (Stockfish bae019b5, Alexandria)
     if (!pvNode && ttDepth >= depth && halfmove < 90 && boundCuts(tBound, tScore, alpha, beta)) {
       // Weiss 5168a50: a quiet TT move that cuts earns its bonus; the killer is Ratchet's addition, as in Xiphos and Stockfish 11
-      if (tMove && tScore >= beta && !isNoisy(tMove)) {
-        rewardQuiet(tMove, bonusAt(depth), p);
-        killers[p] = tMove;
+      if (tScore >= beta) {
+        const cutMove = fullMove(ttMove);
+        if (cutMove && !isNoisy(cutMove)) {
+          rewardQuiet(cutMove, bonusAt(depth), p);
+          killers[p] = cutMove;
+        }
       }
       return tScore;
     }
+    tMove = fullMove(ttMove);
   }
 
   // the static eval, and the eval the pruning reads: the TT score where its bound says it is better (Weiss, Clockwork 6bf993b)
@@ -427,7 +434,11 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     doMove(m);
     played++;
     // the check extension, on the move in the parent, under the same limits
-    if (mayExtend && !singular && inCheck()) ext = 1;
+    if (mayExtend && !singular) {
+      knownCheck = inCheck();
+      knownCheckKey = hash;
+      if (knownCheck) ext = 1;
+    }
     const newDepth = depth - 1 + ext;
     let v = 0;
     if (played == 1) {
@@ -513,7 +524,7 @@ function qsearch(alpha: i32, beta: i32): i32 {
   if (stopped) return 0;
   const pvNode = beta - alpha > 1;
   if (halfmove >= 100 || isRepetition()) return 0;
-  const check = inCheck();
+  const check = hash == knownCheckKey ? knownCheck : inCheck();
   if (p >= PLY_GUARD) return check ? 0 : evaluate();
 
   const key = hash;
@@ -522,10 +533,10 @@ function qsearch(alpha: i32, beta: i32): i32 {
   let tScore = 0;
   let tBound = 0;
   if (hit) {
-    tMove = fullMove(ttMove);
     tScore = scoreFromTT(ttScore, p);
     tBound = ttBound;
     if (!pvNode && halfmove < 90 && boundCuts(tBound, tScore, alpha, beta)) return tScore;
+    tMove = fullMove(ttMove);
   }
 
   let best = -MATE + p;

@@ -133,6 +133,8 @@ export function generateQuiets(out: StaticArray<i32>, start: i32): i32 {
       if (ep != NO_SQ) able |= PAWN_ATT[(them << 6) + ep];
       if (mode == GEN_NOISY) able |= us == 0 ? RANK_7 : RANK_2;
       pawns &= able;
+    } else if (mode == GEN_QUIETS) {
+      pawns &= us == 0 ? ~(occ >> 8) : ~(occ << 8);
     }
     while (pawns) {
       const from = <i32>ctz(pawns);
@@ -242,10 +244,23 @@ export function isLegal(m: i32): bool {
     else a = KING_ATT[from];
     if (!(a & bit(to))) return false;
   }
-  make(m);
-  const ok = !attackedWith(<i32>ctz(bb[us8 | KING]), us ^ 1, bb[0] | bb[8]);
-  unmake(m);
-  return ok;
+  if (m & FLAG_EP) {
+    make(m);
+    const ok = !attackedWith(<i32>ctz(bb[us8 | KING]), us ^ 1, bb[0] | bb[8]);
+    unmake(m);
+    return ok;
+  }
+  // The board after the move, without making it: a piece on `to` is captured.
+  const th8 = (us ^ 1) << 3;
+  const after = (occ ^ bit(from)) | bit(to);
+  const left = ~bit(to);
+  const ksq = type == KING ? to : <i32>ctz(bb[us8 | KING]);
+  if (PAWN_ATT[(us << 6) + ksq] & bb[th8 | PAWN] & left) return false;
+  if (KNIGHT_ATT[ksq] & bb[th8 | KNIGHT] & left) return false;
+  if (KING_ATT[ksq] & bb[th8 | KING]) return false;
+  const q = bb[th8 | QUEEN];
+  if (bishopAttacks(ksq, after) & (bb[th8 | BISHOP] | q) & left) return false;
+  return (rookAttacks(ksq, after) & (bb[th8 | ROOK] | q) & left) == 0;
 }
 
 /** whether castling move m is legal: generateMoves()'s castling test */
