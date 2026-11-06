@@ -266,6 +266,12 @@ export const LMR_BASE = 75;
 export const LMR_DIV = 225;
 export const LMR_HISTORY_DIV = 5000;
 export const LMR_HISTORY_MAX = 2;
+/**
+ * the reduced depth futility and history pruning read: depth less base + ln(depth) ln(moves) / div, the logs scaled by
+ * 1024 and the sum in 1/1024 ply. It has its own values, so LMR's can move without moving the pruning. Its seeds are LMR's
+ */
+export const PRUNE_BASE = 768;
+export const PRUNE_DIV = 2304;
 
 /** a capture is tried among the good ones if SEE >= -score / this, Clockwork 641d9f5's divisor 51 at its pawn 112 */
 export const GOOD_CAPTURE_DIV = 14;

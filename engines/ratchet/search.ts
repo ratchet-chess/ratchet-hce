@@ -23,7 +23,7 @@ import {
 } from "./movepick";
 import {
   ASP_DELTA, ASP_DEPTH, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_COUNT, LMP_DEPTH, LMR_BASE,
-  LMR_DIV, LMR_HISTORY_DIV, LMR_HISTORY_MAX, NMP_BASE, PC_DEPTH, PC_MARGIN, PC_REDUCTION, SE_DEPTH, SE_DOUBLE_MARGIN, SE_DOUBLE_MAX, SE_MARGIN,
+  LMR_DIV, LMR_HISTORY_DIV, LMR_HISTORY_MAX, NMP_BASE, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN, SE_DOUBLE_MAX, SE_MARGIN,
   SE_MARGIN_DIV, SE_TT_DEPTH, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA, RAZOR_DEPTH,
   RAZOR_MARGIN, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, SEE_DEPTH, SEE_NOISY, SEE_QUIET, SEE_VALUE,
 } from "./params";
@@ -83,6 +83,8 @@ const capturesTried = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * M
 
 /** late move reductions by depth and move count, Ethereal v12.75 initSearch: 0.75 + ln d ln m / 2.25 */
 const LMR = changetype<StaticArray<u8>>(memory.data(sizeof<u8>() * 64 * 64));
+/** ln(i) * 1024, rounded */
+const LN = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 64));
 
 /** the root's legal moves and the nodes spent under each, for the time rule */
 const rootMoves = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_MOVES));
@@ -99,6 +101,7 @@ export let rootPvLen = 0;
 export let bestScore = 0;
 
 export function initSearch(): void {
+  for (let i = 1; i < 64; i++) LN[i] = <i32>Math.round(Math.log(<f64>i) * 1024);
   for (let d = 1; d < 64; d++) {
     for (let m = 1; m < 64; m++) {
       LMR[d * 64 + m] = <u8>(<f64>LMR_BASE / 100 + (Math.log(<f64>d) * Math.log(<f64>m)) / (<f64>LMR_DIV / 100));
@@ -374,7 +377,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
 
     // pruning, once a move has kept the node from a mated score; the root is spared, Ratchet's guard, as in Xiphos, Weiss 2.0 and Koivisto
     if (!root && best > -MATE_IN_MAX) {
-      const lmrDepth = max(0, depth - <i32>LMR[min(depth, 63) * 64 + min(played, 63)]);
+      const lmrDepth = max(0, depth - ((PRUNE_BASE + (LN[min(depth, 63)] * LN[min(played, 63)]) / PRUNE_DIV) >> 10));
       if (!noisy) {
         // late move pruning, Ethereal v12.75's table: it counts moves played and drops the move that triggers it,
         // as Xiphos and Weiss 2.0 do, where Ethereal counts quiets seen and searches that move
