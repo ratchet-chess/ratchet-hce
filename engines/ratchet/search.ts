@@ -23,7 +23,7 @@ import {
 } from "./movepick";
 import {
   ASP_DELTA, ASP_DEPTH, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_COUNT, LMP_DEPTH, LMR_BASE,
-  LMR_DIV, LMR_HISTORY_DIV, LMR_HISTORY_MAX, NMP_BASE, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN, SE_DOUBLE_MAX, SE_MARGIN,
+  LMR_DIV, LMR_EARLY_STAGE, LMR_HISTORY_DIV, LMR_HISTORY_MAX, LMR_HISTORY_STEP, LMR_NON_PV, LMR_NOT_IMPROVING, NMP_BASE, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN, SE_DOUBLE_MAX, SE_MARGIN,
   SE_MARGIN_DIV, SE_TT_DEPTH, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA, RAZOR_DEPTH,
   RAZOR_MARGIN, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, SEE_DEPTH, SEE_NOISY, SEE_QUIET, SEE_VALUE,
 } from "./params";
@@ -81,9 +81,7 @@ const CAPTURES_MAX = 32;
 const quietsTried = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY * QUIETS_MAX));
 const capturesTried = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY * CAPTURES_MAX));
 
-/** late move reductions by depth and move count, Ethereal v12.75 initSearch: 0.75 + ln d ln m / 2.25 */
-const LMR = changetype<StaticArray<u8>>(memory.data(sizeof<u8>() * 64 * 64));
-/** ln(i) * 1024, rounded */
+/** ln(i) * 1024, rounded: late move reductions and the pruning's reduced depth read it */
 const LN = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 64));
 
 /** the root's legal moves and the nodes spent under each, for the time rule */
@@ -102,11 +100,6 @@ export let bestScore = 0;
 
 export function initSearch(): void {
   for (let i = 1; i < 64; i++) LN[i] = <i32>Math.round(Math.log(<f64>i) * 1024);
-  for (let d = 1; d < 64; d++) {
-    for (let m = 1; m < 64; m++) {
-      LMR[d * 64 + m] = <u8>(<f64>LMR_BASE / 100 + (Math.log(<f64>d) * Math.log(<f64>m)) / (<f64>LMR_DIV / 100));
-    }
-  }
 }
 
 export function nodesSearched(): f64 {
@@ -451,12 +444,12 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       // late move reductions on quiets, Ethereal v12.75 Step 15A: R = 1 is no reduction. Its extension and king-evasion
       // terms and its noisy reductions are left out, so an extension stays in the reduced search, as in Weiss 2.0 and Xiphos
       if (!noisy && depth > 2) {
-        let r = <i32>LMR[min(depth, 63) * 64 + min(played, 63)];
-        if (!pvNode) r++;
-        if (!improving) r++;
-        if (pickedStage < STAGE_QUIET) r--;
-        r -= max(-LMR_HISTORY_MAX, min(LMR_HISTORY_MAX, hist / LMR_HISTORY_DIV));
-        r = min(depth - 1, max(r, 1));
+        let sum = LMR_BASE + (LN[min(depth, 63)] * LN[min(played, 63)]) / LMR_DIV;
+        if (!pvNode) sum += LMR_NON_PV;
+        if (!improving) sum += LMR_NOT_IMPROVING;
+        if (pickedStage < STAGE_QUIET) sum -= LMR_EARLY_STAGE;
+        sum -= LMR_HISTORY_STEP * max(-LMR_HISTORY_MAX, min(LMR_HISTORY_MAX, hist / LMR_HISTORY_DIV));
+        const r = min(depth - 1, max(sum >> 10, 1));
         if (r > 1) {
           v = -search(-alpha - 1, -alpha, newDepth - r + 1, true);
           full = v > alpha;

@@ -261,11 +261,21 @@ export const SEE_DEPTH = 9;
 export const SEE_QUIET = 312;
 export const SEE_NOISY = 93;
 
-/** late move reductions, Ethereal v12.75: 0.75 + ln(depth) ln(moves) / 2.25, both in hundredths; history per step, capped */
-export const LMR_BASE = 75;
-export const LMR_DIV = 225;
+/**
+ * late move reductions in 1/1024 ply, the terms summed before the sum is cut to whole plies (Clockwork 641d9f5), where
+ * Ethereal v12.75 and Weiss add whole plies. Base + ln(depth) ln(moves) / div is Ethereal's 0.75 + ln d ln m / 2.25, with the
+ * logs scaled by 1024. A non-PV node, a node not improving and a move from before the quiet stage are its terms, and history
+ * moves the sum by whole steps, capped
+ */
+export const LMR_BASE = 768;
+export const LMR_DIV = 2304;
+export const LMR_NON_PV = 1024;
+export const LMR_NOT_IMPROVING = 1024;
+export const LMR_EARLY_STAGE = 1024;
+export const LMR_HISTORY_STEP = 1024;
 export const LMR_HISTORY_DIV = 5000;
 export const LMR_HISTORY_MAX = 2;
+
 /**
  * the reduced depth futility and history pruning read: depth less base + ln(depth) ln(moves) / div, the logs scaled by
  * 1024 and the sum in 1/1024 ply. It has its own values, so LMR's can move without moving the pruning. Its seeds are LMR's
