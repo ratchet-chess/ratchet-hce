@@ -86,6 +86,7 @@ The match tools play releases with fastchess, each side from a snapshot of its c
 - `tools/depth.ts`: the mean depth of a match's PGNs.
 - `tools/similarity.ts`: how often engines choose the same move over one position set, for `results/similarity.md`.
 - `tools/host-speed.ts`: each host's speed at game load, for the pinned ratios that scale a worker's time control, in `results/host-speed.md`.
+- `tools/speed-read.ts`: a `SPEED` read on one host, through the queue, so the other hosts keep playing;
 - `tools/browser-bench.ts`: an engine's speed in real browsers by hash size, its cold start, and what each browser offers an engine, in `results/browser.md`. It runs under an exclusive hold on this host, or as an exclusive unit on a worker in the `browser` image.
 - `tools/spsa.ts`: an SPSA tune of a map's constants, in one queue job; `tools/texel/main.ts write` puts its values in the engine for an SPRT;
 - `tools/queue.ts`: the CPU manager's queue, which hands every host its units in priority order and drains a host for a priority job. The manager (`tools/queue/manager.ts`) runs in a container on this host, and an agent on each host (`tools/queue/agent.ts`) claims units and runs them. `tools/pool.ts` and `tools/calibrate.sh` submit their games there; Texel, the conversion suite and benchmarks run on this host under a `hold`, which keeps the queue's units off it.
