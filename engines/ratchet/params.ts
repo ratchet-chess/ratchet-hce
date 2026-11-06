@@ -216,6 +216,8 @@ export const RFP_IMPROVING = 399;
 
 /** razoring, Stash f91e750: depth <= 3, static eval + 120 per ply <= alpha, at its pawn 103 */
 export const RAZOR_DEPTH = 3;
+/** at this depth or less, razoring returns qsearch's score without the null-window test */
+export const RAZOR_QS_DEPTH = 2;
 export const RAZOR_MARGIN = 606;
 
 /** null move, Ethereal v12.75: R = 4 + depth / 6 + min(3, (eval - beta) / 200), at its pawn 82 */
@@ -232,6 +234,8 @@ export const PC_REDUCTION = 4;
 
 /** singular extensions, Stash f91e750: depth >= 7, TT depth >= depth - 3; singular beta = TT score - 10 d / 16 at its pawn 103, searched at d / 2 + 1 */
 export const SE_DEPTH = 7;
+/** the singular search's depth is depth / 2 plus this */
+export const SE_SEARCH_ADD = 1;
 export const SE_TT_DEPTH = 3;
 export const SE_MARGIN = 51;
 export const SE_MARGIN_DIV = 16;
@@ -267,6 +271,7 @@ export const SEE_NOISY = 93;
  * logs scaled by 1024. A non-PV node, a node not improving and a move from before the quiet stage are its terms, and history
  * moves the sum by whole steps, capped
  */
+export const LMR_MIN_DEPTH = 3;
 export const LMR_BASE = 768;
 export const LMR_DIV = 2304;
 export const LMR_NON_PV = 1024;

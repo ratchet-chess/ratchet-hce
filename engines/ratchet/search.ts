@@ -23,9 +23,9 @@ import {
 } from "./movepick";
 import {
   ASP_DELTA, ASP_DEPTH, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_COUNT, LMP_DEPTH, LMR_BASE,
-  LMR_DIV, LMR_EARLY_STAGE, LMR_HISTORY_DIV, LMR_HISTORY_MAX, LMR_HISTORY_STEP, LMR_NON_PV, LMR_NOT_IMPROVING, NMP_BASE, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN, SE_DOUBLE_MAX, SE_MARGIN,
-  SE_MARGIN_DIV, SE_TT_DEPTH, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA, RAZOR_DEPTH,
-  RAZOR_MARGIN, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, SEE_DEPTH, SEE_NOISY, SEE_QUIET, SEE_VALUE,
+  LMR_DIV, LMR_EARLY_STAGE, LMR_HISTORY_DIV, LMR_HISTORY_MAX, LMR_HISTORY_STEP, LMR_MIN_DEPTH, LMR_NON_PV, LMR_NOT_IMPROVING, NMP_BASE, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN, SE_DOUBLE_MAX, SE_MARGIN,
+  SE_MARGIN_DIV, SE_SEARCH_ADD, SE_TT_DEPTH, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA, RAZOR_DEPTH,
+  RAZOR_MARGIN, RAZOR_QS_DEPTH, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, SEE_DEPTH, SEE_NOISY, SEE_QUIET, SEE_VALUE,
 } from "./params";
 import { seeGe } from "./see";
 import { doMove, doNull, psq, undoMove, undoNull } from "./state";
@@ -284,7 +284,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
 
     // razoring, Stash f91e750: to qsearch at depth 2 or less, a null-window qsearch below alpha at depth 3
     if (excl == 0 && depth <= RAZOR_DEPTH && staticEval + RAZOR_MARGIN * depth <= alpha) {
-      if (depth <= 2) return qsearch(alpha, beta);
+      if (depth <= RAZOR_QS_DEPTH) return qsearch(alpha, beta);
       const ra = alpha - RAZOR_MARGIN * depth;
       const v = qsearch(ra, ra + 1);
       if (v <= ra) return v;
@@ -402,7 +402,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       singular = true;
       const sBeta = tScore - (SE_MARGIN * depth) / SE_MARGIN_DIV;
       excludedAt[p] = m;
-      const sv = search(sBeta - 1, sBeta, depth / 2 + 1, cutNode);
+      const sv = search(sBeta - 1, sBeta, depth / 2 + SE_SEARCH_ADD, cutNode);
       excludedAt[p] = 0;
       if (stopped) return 0;
       // the singular search reran this ply: put back its picker and its stack entries
@@ -443,7 +443,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       let full = true;
       // late move reductions on quiets, Ethereal v12.75 Step 15A: R = 1 is no reduction. Its extension and king-evasion
       // terms and its noisy reductions are left out, so an extension stays in the reduced search, as in Weiss 2.0 and Xiphos
-      if (!noisy && depth > 2) {
+      if (!noisy && depth >= LMR_MIN_DEPTH) {
         let sum = LMR_BASE + (LN[min(depth, 63)] * LN[min(played, 63)]) / LMR_DIV;
         if (!pvNode) sum += LMR_NON_PV;
         if (!improving) sum += LMR_NOT_IMPROVING;
