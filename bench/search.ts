@@ -12,12 +12,16 @@
  *   --keep                 play the set as one game: newGame once per pass, then goClock to the depth,
  *                          so the tables fill as they do in play, and its signature is the kept pass's
  *   --positions <file>     `name|fen` lines (default bench/positions.txt, the set of the releases' references)
+ *   --warmup <n>           positions in the warm-up pass (default: the whole set). A slice warms the runtime's
+ *                          compiler in a fraction of the time, for a quiet host; the whole set also rides out a
+ *                          load that comes and goes on this host
  *   --wasm <file>          with --engine: bench this build of the engine instead of build/<engine>.wasm
  *   --against <ref>        compare --engine's build/<engine>.wasm, the candidate, with the same engine
  *                          built from a git ref, the base, and print the candidate's SPEED for tools/pool.ts
  *
- * The warm-up pass is untimed and also checks that every pass returns the same nodes,
- * so a build that is not deterministic as driven fails instead of reporting a number.
+ * The warm-up pass is untimed. Every pass over the whole set must return the same
+ * nodes, the warm-up included when it is the whole set, so a build that is not
+ * deterministic as driven fails instead of reporting a number.
  *
  * With --against, the base is built by tools/snapshot.sh into tmp/bench/<sha>/ and reused
  * after that. Each round benches each build once, in its own fresh process on this runtime,
@@ -55,6 +59,7 @@ const positions = readFileSync(positionsPath, "utf8")
   .trim()
   .split("\n")
   .map((l) => l.slice(l.indexOf("|") + 1));
+const warmup = Math.min(positions.length, Math.max(1, Number(opt("--warmup") ?? positions.length)));
 
 const wasmPath = opt("--wasm");
 if (wasmPath && !opt("--engine")) throw new Error("--wasm needs --engine");
@@ -75,12 +80,12 @@ function depthOf(name: string): number {
   return DEPTH[key];
 }
 
-/** one pass over every position: total nodes and milliseconds */
-function pass(engine: Engine, depth: number): { nodes: number; ms: number } {
+/** one pass over `set`, every position by default: total nodes and milliseconds */
+function pass(engine: Engine, depth: number, set: string[] = positions): { nodes: number; ms: number } {
   let nodes = 0;
   let ms = 0;
   if (keep) engine.newGame();
-  for (const fen of positions) {
+  for (const fen of set) {
     engine.setPosition(fen, []);
     const t0 = performance.now();
     if (keep) engine.goClock({ depth });
@@ -91,20 +96,10 @@ function pass(engine: Engine, depth: number): { nodes: number; ms: number } {
   return { nodes, ms };
 }
 
-/** one timed pass, in milliseconds; exits if its nodes differ from the signature */
-function timed(engine: Engine, depth: number, signature: number, label: string): number {
-  const r = pass(engine, depth);
-  if (r.nodes !== signature) {
-    console.log(`${label} depth ${depth}: NODES DIFFER BETWEEN PASSES, ${r.nodes} after ${signature}`);
-    process.exit(1);
-  }
-  return r.ms;
-}
-
 /** one warm-up and one timed pass of `wasm` in a fresh process on this runtime */
 function childPass(name: string, wasm: string, depth: number): { signature: number; knps: number } {
   const script = join(root, "bench/search.ts");
-  const own = ["--engine", name, "--wasm", wasm, "--depth", String(depth), "--repeat", "1", "--positions", positionsPath];
+  const own = ["--engine", name, "--wasm", wasm, "--depth", String(depth), "--repeat", "1", "--positions", positionsPath, "--warmup", String(warmup)];
   const argv = runtime().startsWith("deno") ? ["run", "--allow-read", script, ...own] : [script, ...own];
   const r = spawnSync(process.execPath, argv, { encoding: "utf8" });
   const m = /signature (\d+), median (\d+) knps/.exec(r.stdout);
@@ -146,12 +141,19 @@ if (against) {
     const engine = await Engine.load(wasmPath ?? name);
     if (hash) engine.setHash(Number(hash));
     const depth = depthOf(name);
-    const signature = pass(engine, depth).nodes;
+    // the warm-up: its nodes are the signature when it covers the set, else the first timed pass's
+    const warm = pass(engine, depth, positions.slice(0, warmup)).nodes;
+    let signature = warmup === positions.length ? warm : 0;
     const times: number[] = [];
     for (let i = 0; i < repeat; i++) {
-      const ms = timed(engine, depth, signature, name);
-      times.push(ms);
-      console.log(`${name.padEnd(26)} d${depth}  ${String(signature).padStart(11)} nodes  ${(signature / ms).toFixed(0).padStart(6)} knps  (${(ms / 1000).toFixed(2)}s)`);
+      const r = pass(engine, depth);
+      if (signature && r.nodes !== signature) {
+        console.log(`${name} depth ${depth}: NODES DIFFER BETWEEN PASSES, ${r.nodes} after ${signature}`);
+        process.exit(1);
+      }
+      signature = r.nodes;
+      times.push(r.ms);
+      console.log(`${name.padEnd(26)} d${depth}  ${String(signature).padStart(11)} nodes  ${(signature / r.ms).toFixed(0).padStart(6)} knps  (${(r.ms / 1000).toFixed(2)}s)`);
     }
     console.log(`${name.padEnd(26)} d${depth}  signature ${signature}, median ${(signature / median(times)).toFixed(0)} knps`);
   }
