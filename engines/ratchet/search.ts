@@ -22,7 +22,7 @@ import {
   quietScore, resumeAfterTT, selectBest, victimOf,
 } from "./movepick";
 import {
-  ASP_DELTA, ASP_DEPTH, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_COUNT, LMP_DEPTH, LMR_BASE,
+  ASP_DELTA, ASP_DEPTH, CHECK_EXT, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_COUNT, LMP_DEPTH, LMR_BASE,
   LMR_DIV, LMR_EARLY_STAGE, LMR_HISTORY_DIV, LMR_HISTORY_MAX, LMR_HISTORY_STEP, LMR_MIN_DEPTH, LMR_NON_PV, LMR_NOT_IMPROVING, MAT_EG, NMP_BASE, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN, SE_DOUBLE_MAX, SE_MARGIN,
   SE_MARGIN_DIV, SE_SEARCH_ADD, SE_TT_DEPTH, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA, RAZOR_DEPTH,
   RAZOR_MARGIN, RAZOR_QS_DEPTH, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, SEE_DEPTH, SEE_NOISY, SEE_QUIET,
@@ -433,7 +433,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     if (mayExtend && !singular) {
       knownCheck = inCheck();
       knownCheckKey = hash;
-      if (knownCheck) ext = 1;
+      if (knownCheck) ext = CHECK_EXT;
     }
     const newDepth = depth - 1 + ext;
     let v = 0;

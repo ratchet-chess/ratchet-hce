@@ -243,6 +243,9 @@ export const SE_MARGIN_DIV = 16;
 export const SE_DOUBLE_MARGIN = 70;
 export const SE_DOUBLE_MAX = 10;
 
+/** the check extension's plies, on the move in the parent (Stash f91e750); 0 turns it off, for the flag screen */
+export const CHECK_EXT = 1;
+
 /** internal iterative reduction, Berserk 03cebd6: PV or cut node, depth >= 4, no TT move */
 export const IIR_DEPTH = 4;
 
