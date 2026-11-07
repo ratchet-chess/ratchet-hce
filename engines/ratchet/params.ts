@@ -298,8 +298,8 @@ export const GOOD_CAPTURE_DIV = 14;
 export const MVV: StaticArray<i32> = [0, 800, 2400, 2400, 4800, 7200, 0];
 
 /**
- * qsearch delta pruning, the per-capture shape of Weiss 2.0 and Stockfish 15: a capture is skipped if stand pat + its victim's MAT_EG + this
- * cannot reach alpha; CPW "Delta Pruning"'s 200 centipawns. The victim is in the eval's unit, as stand pat and alpha are, so SEE_VALUE,
+ * qsearch delta pruning, the per-capture shape of Stockfish 15 and Stash f91e750: a capture that gives no check is skipped if stand pat + its
+ * victim's MAT_EG + this cannot reach alpha; CPW "Delta Pruning"'s 200 centipawns. The victim is in the eval's unit, as stand pat and alpha are, so SEE_VALUE,
  * which is narrower, does not fit this test. Ethereal 12.75's one test per node, on the best capture, is the form rejected.
  */
 export const QS_DELTA = 1040;

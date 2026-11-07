@@ -14,7 +14,7 @@
  */
 import { KING, MAX_MOVES, MAX_PLY, PAWN, movePromo } from "../../core/constants";
 import { generateCaptures, generateMoves } from "../../core/movegen";
-import { bb, halfmove, hash, inCheck, isRepetition, ply, side } from "../../core/position";
+import { bb, halfmove, hash, inCheck, isRepetition, make, ply, side, unmake } from "../../core/position";
 import { correction, updateCorrection } from "./correction";
 import { UNITS_PER_CP, evalCached } from "./eval";
 import { bonusAt, butterfly, captureHist, contHist, gravity, gravityFrom, killers, malusAt } from "./history";
@@ -518,10 +518,20 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
 
 /**
  * The quiescence search: stand pat, then captures and queen promotions that pass
- * SEE >= 0 (Weiss 2568fb7), each skipped if its victim cannot lift stand pat to
- * alpha; in check, every evasion. It probes and stores the TT at depth 0, never
- * as an exact bound (Stockfish 45e5e65a).
+ * SEE >= 0 (Weiss 2568fb7); in check, every evasion. Delta pruning skips a capture
+ * that gives no check and whose victim cannot lift stand pat to alpha, and the
+ * skip raises the score to that estimate, so the upper bound holds for the skipped
+ * capture too (Stockfish 15 and Stash f91e750 qsearch). It probes and stores the TT
+ * at depth 0, never as an exact bound (Stockfish 45e5e65a).
  */
+/** whether a move gives check: the core's make and unmake alone, since no eval state is read */
+@inline function givesCheck(m: i32): bool {
+  make(m);
+  const given = inCheck();
+  unmake(m);
+  return given;
+}
+
 function qsearch(alpha: i32, beta: i32): i32 {
   const p = ply;
   pvLen[p] = p;
@@ -555,6 +565,8 @@ function qsearch(alpha: i32, beta: i32): i32 {
     if (best > alpha) alpha = best;
   }
 
+  // fixed before the loop, as both sources do: a skip raises best, and a running base would read that raise
+  const deltaBase = best;
   const base = p * MAX_MOVES;
   const end = generateMoves(MOVES, base, check);
   if (check && end == base) return -MATE + p;
@@ -568,7 +580,13 @@ function qsearch(alpha: i32, beta: i32): i32 {
     const m = MOVES[i];
     if (!check) {
       if (!seeGe(m, 0)) continue;
-      if (!movePromo(m) && best + MAT_EG[victimOf(m)] + QS_DELTA <= alpha) continue;
+      if (!movePromo(m) && deltaBase > -MATE_IN_MAX) {
+        const estimate = deltaBase + MAT_EG[victimOf(m)] + QS_DELTA;
+        if (estimate <= alpha && !givesCheck(m)) {
+          if (estimate > best) best = estimate;
+          continue;
+        }
+      }
     }
     doMove(m);
     const v = -qsearch(-beta, -alpha);
