@@ -40,6 +40,7 @@ each rated version keeps its row.
 | ratchet-0.2.0 | 3208 | 21 | 700 | 62.6% | zurichess-neuchatel, stash-25.0, polaris-1.8.1, texel-1.07, stash-30.0, simbelmyne-1.10.0, mantissa-3.7.2 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 20787fb | 2026-11-04 |
 | ratchet-0.3.0 | 3351 | 19 | 700 | 61.2% | stash-30.0, priessnitz-2.0, halogen-10, simbelmyne-1.10.0, weiss-2.0, xiphos-0.6, stash-37.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | cac79b5 | 2026-11-04 |
 | ratchet-0.3.3 | 3351 | 16 | 704 | 47.0% | weiss-2.0, xiphos-0.6, perseus-1.1, stash-37.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 2b6d278 | 2026-11-05 |
+| ratchet-0.3.4 | 3402 | 21 | 400 | 50.0% | xiphos-0.6, perseus-1.1, stash-37.0, blackcore-6.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 392f458 | 2026-11-07 |
 | sargon-1978@1 | 582 | 95 | 100 | 9.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
 | sargon-1978@2 | 785 | 66 | 100 | 21.5% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
 | sargon-1978@3 | 860 | 61 | 100 | 28.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
