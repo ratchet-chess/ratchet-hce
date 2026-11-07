@@ -323,7 +323,9 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   }
 
   // ProbCut, Stash f91e750: a capture that passes SEE by the margin, and whose qsearch and
-  // reduced search both clear beta + PC_MARGIN, cuts the node; PV nodes too, as in Stash
+  // reduced search both clear beta + PC_MARGIN, cuts the node; PV nodes too, as in Stash.
+  // The bar's gap is in the eval's unit, and SEE_VALUE is about half that scale, so the bar is stricter than its
+  // source's. It stands because easing it showed no gain in games
   const pcBeta = beta + PC_MARGIN;
   if (!root && !check && depth >= PC_DEPTH && abs(beta) < MATE_IN_MAX && !(hit && tDepth >= depth - PC_REDUCTION && tScore < pcBeta)) {
     const bar = pcBeta - staticEval;
