@@ -50,7 +50,7 @@ do not say where, ask the user.
 - **The own engine is written in Ratchet's own code.** Ideas come from anywhere; code is not ported.
 - **Cite the origin of each function's form** in its comment: the engine, paper or page it follows.
 - **Read a feature's Chess Programming Wiki page (`vendor/cpw/`) and two other engines before choosing its form.** Its comment names the form it rejected.
-- **Its version is a constant that `id name` reports.** An admitted change bumps the patch version. A stage's end bumps the minor version, and that commit is rated. A version is a commit, not a frozen copy.
+- **Its version is a constant that `id name` reports.** An admitted change to its play or speed bumps the patch version. A change that alters neither keeps the version. A stage's end bumps the minor version, and that commit is rated. A version is a commit, not a frozen copy.
 - **It has no fidelity bar.** It passes the gates a release on the core passes, and the conversion suite.
 - **A search change passes the window gate,** `test/window.ts`: on the plain configuration with the table off, every windowed search is in Fishburn's relation to the full-window value. The plain configuration is every `off` value of the flag map.
 - **The table lookup cuts only.** A stored bound that does not cut is left alone, and the window is never tightened from it. `boundCuts` in `engines/ratchet/search.ts` names the verified form and the rejected one.
