@@ -376,8 +376,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     else {
       if (cm >= 0) cmh = <i32>contHist[cm + pt];
       if (fm >= 0) fmh = <i32>contHist[fm + pt];
+      // three tables, the sum Ethereal's limits and divisor are written for; the 4-ply table orders moves (movepick.ts)
       hist = <i32>butterfly[(side << 12) | (m & 4095)] + cmh + fmh;
-      if (f4 >= 0) hist += <i32>contHist[f4 + pt];
     }
 
     // pruning, once a move has kept the node from a mated score; the root is spared, Ratchet's guard, as in Xiphos, Weiss 2.0 and Koivisto
