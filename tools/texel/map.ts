@@ -52,7 +52,11 @@ export interface Block {
   /** element indices held at their defaults, or true for the whole block */
   fixed?: number[] | true;
   ties?: "files" | number[][];
-  /** the value of every element that turns the block off, for a flag screen (tools/spsa.ts --screen); its defaults are on */
+  /**
+   * the value of every element that turns the block off; its defaults are on. A flag
+   * screen (tools/spsa.ts --screen) plays it unless the block is fixed, and the window
+   * gate's plain configuration (test/window.ts) sets it either way
+   */
   off?: number;
 }
 
@@ -96,7 +100,7 @@ export interface Element {
   type: string;
   fixed: boolean;
   slots: Slot[];
-  /** the value that turns its block off in a flag screen; the default is on */
+  /** the value that turns its block off, in a flag screen or the window gate's plain configuration; the default is on */
   off?: number;
 }
 

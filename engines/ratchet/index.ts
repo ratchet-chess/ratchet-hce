@@ -6,6 +6,7 @@
  * - go() is a fresh search to a depth: every table empty, as a node signature
  *   needs.
  * - goClock() is one `go` of a game: the TT and the histories last until newGame.
+ * - goWindow() is one windowed search from every table empty, for the window gate.
  */
 export { initCore, clear, put, setState, playMove, legalMoves, rootMove, perft, checkedWalk } from "../../core/index";
 import { MAX_MOVES } from "../../core/constants";
@@ -16,12 +17,12 @@ import { UNITS_PER_CP, clearEvalCache, evalWith, evaluateScratch, initEval, scra
 import { clearCorrection } from "./correction";
 import { clearPawns } from "./pawns";
 import { clearHistory } from "./history";
-import { MAX_DEPTH, bestScore, completedDepth, hostScore, initSearch, nodesSearched as searchNodes, pvAt, rootPvLen, think } from "./search";
+import { MAX_DEPTH, bestScore, completedDepth, hostScore, initSearch, nodesSearched as searchNodes, pvAt, rootPvLen, searchWindow, think } from "./search";
 import {
   doMove, majorKey, minorKey, nonPawnKey, pawnKey, psq, refresh, scratchMajorKey, scratchMinorKey, scratchNonPawnKey, scratchPawnKey, setPawnKey, undoMove,
 } from "./state";
 import { noClock, startClock } from "./time";
-import { ttAlloc, ttClear } from "./tt";
+import { ttAlloc, ttClear, ttEnable } from "./tt";
 
 /** the version `id name` reports: major << 16 | minor << 8 | patch; tools/calibrate.sh reads this line to name a rating's row */
 const VERSION = (0 << 16) | (3 << 8) | 4;
@@ -66,6 +67,24 @@ export function goClock(timeMs: f64, incMs: f64, movesToGo: i32, moveTimeMs: f64
   return think(depth > 0 ? min(depth, MAX_DEPTH) : MAX_DEPTH);
 }
 
+/**
+ * One search to `depth` with the window (alpha, beta), from every table empty,
+ * with or without the transposition table, for the window gate (test/window.ts).
+ * Returns the fail-soft score for the side to move, in the engine's unit.
+ */
+export function goWindow(alpha: i32, beta: i32, depth: i32, table: i32): i32 {
+  ttClear();
+  clearHistory();
+  clearCorrection();
+  clearPawns();
+  clearEvalCache();
+  noClock();
+  refresh();
+  ttEnable(table != 0);
+  const v = searchWindow(alpha, beta, min(depth, MAX_DEPTH));
+  ttEnable(true);
+  return v;
+}
 
 export function setHash(mb: i32): void {
   ttAlloc(mb);

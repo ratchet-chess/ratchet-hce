@@ -22,6 +22,7 @@
   { "name": "HP_DEPTH", "size": 2, "layout": "count", "off": -1, "min": -1, "max": 16, "sources": [{ "file": "params.ts", "symbol": "HP_DEPTH" }] },
   { "name": "SEE_DEPTH", "off": 0, "min": 0, "max": 16, "sources": [{ "file": "params.ts", "symbol": "SEE_DEPTH" }] },
   { "name": "LMR_HISTORY_STEP", "off": 0, "min": 0, "max": 4096, "sources": [{ "file": "params.ts", "symbol": "LMR_HISTORY_STEP" }] },
+  { "name": "LMR_MIN_DEPTH", "fixed": true, "off": 200, "min": 1, "max": 200, "sources": [{ "file": "params.ts", "symbol": "LMR_MIN_DEPTH" }] },
   { "name": "QS_DELTA", "off": 100000000, "min": 0, "max": 100000000, "sources": [{ "file": "params.ts", "symbol": "QS_DELTA" }] },
   { "name": "CORR_MAX", "off": 0, "min": 0, "max": 1000, "sources": [{ "file": "params.ts", "symbol": "CORR_MAX" }] }
  ]

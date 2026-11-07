@@ -59,6 +59,8 @@ interface Search {
   unitsPerCp?(): number;
   /** the own engine's incremental-eval mismatches, walking the tree to a depth */
   evalWalk?(depth: number): number;
+  /** the own engine's windowed search for the window gate: one search to a depth with (alpha, beta), fresh, with or without its table */
+  goWindow?(alpha: number, beta: number, depth: number, table: number): number;
   /** the own engine's eval bench: a set of positions, and passes of its eval over them in wasm */
   evalBenchInit?(n: number): void;
   evalBenchAdd?(): void;
@@ -279,6 +281,12 @@ export class Engine {
   evalWalk(depth: number): number {
     if (!this.search.evalWalk) throw new Error("this build keeps no incremental eval to walk");
     return this.search.evalWalk(depth);
+  }
+
+  /** one fresh search of the own engine to `depth` with the window (alpha, beta), with or without its table; the fail-soft score in its own unit */
+  goWindow(alpha: number, beta: number, depth: number, table: boolean): number {
+    if (!this.search.goWindow) throw new Error("this build has no windowed search");
+    return this.search.goWindow(alpha, beta, depth, table ? 1 : 0);
   }
 
   /** fills the eval bench's set from `fens`; the own engine only */

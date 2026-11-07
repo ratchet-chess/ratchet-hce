@@ -38,7 +38,7 @@ is a release here.
 - `host/`: the TypeScript host: the WASM wrapper, FEN, and the UCI front end, which passes each `go`'s limits and a clock to the release.
 - `bin/`: the UCI launcher.
 - `web/`: a browser page to play a release or the own engine, or to watch two play, on a real clock or a node budget, on a chessground board. Each engine searches in a Web Worker, and the core referees.
-- `test/`: the gates: perft, incremental state, each release's own move generator, and the own engine's eval mirror; and the 0x88 board the perft gate checks the core against.
+- `test/`: the gates: perft, incremental state, each release's own move generator, the own engine's eval mirror and its window gate; and the 0x88 board the perft gate checks the core against.
 - `bench/`: the perft benchmark, the search benchmark over the releases' shared position set, and the own engine's eval benchmark.
 - `tools/`: fidelity checks, matches, ratings, the conversion suite, and readers of match PGNs and time logs.
 - `flake.nix` and `nix/`: the containers. The runner plays matches on the workers; the local runner plays them on the host and builds the anchor tree (`nix/anchors.sh`); the workspace is for work on originals. `tools/ws.ts` builds, loads and runs them. `nix/anchor-tree` and `nix/syzygy` pin the anchor tree and the Syzygy tables in the Nix store.
@@ -57,8 +57,9 @@ make -C vendor/fastchess     # build it
 tools/fetch-book.sh          # opening books for matches, into books/
 bun run build:wasm           # compile the core and every release into build/; tests and benches need it
 bun run typecheck
-bun run test                 # the perft, incremental-state, release-generator and eval-mirror gates (`bun test` is Bun's own test runner)
+bun run test                 # the perft, incremental-state, release-generator, eval-mirror and window gates (`bun test` is Bun's own test runner)
 bun test/perft.ts --full     # every perft depth in the suite
+bun test/window.ts --depth 6 # the own engine's window gate deeper than `bun run test` runs it
 bun run bench:all            # perft throughput under Bun, Node and Deno
 bun run bench:search:all     # each engine's node signature and search speed under Bun, Node and Deno
 bun bench/search.ts --engine ratchet --against <ref>  # the build's SPEED over the same engine built from <ref>, for tools/pool.ts

@@ -49,6 +49,13 @@ export function ttClear(): void {
   generation = 0;
 }
 
+/** whether stores are kept; the window gate turns them off, so a cleared table stays empty and never hits */
+let ttEnabled = true;
+
+export function ttEnable(on: bool): void {
+  ttEnabled = on;
+}
+
 /** a new search: older entries age, so they are replaced first */
 export function ttNewSearch(): void {
   generation = (generation + 1) & 31;
@@ -85,6 +92,7 @@ export function ttProbe(key: u64): bool {
  * store without a move keeps the old one (Ethereal tt_store).
  */
 export function ttStore(key: u64, move: i32, score: i32, rawEval: i32, depth: i32, bound: i32, pv: bool): void {
+  if (!ttEnabled) return;
   const b = bucketOf(key);
   const check = <u16>(key >> 48);
   let slot: usize = 0;

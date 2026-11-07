@@ -4,12 +4,13 @@
  * to move, in the engine's unit; a mate in n plies is MATE - n.
  *
  * Every node starts with a TT probe; non-PV nodes cut on a TT bound of enough
- * depth. The static eval is the raw eval plus the correction history
+ * depth, and on nothing less (boundCuts). The static eval is the raw eval plus the correction history
  * (correction.ts); the TT stores the raw one. Before the move loop: reverse
  * futility, razoring, null move and IIR.
  * In it: late move pruning, futility on the reduced depth, history pruning and
  * SEE pruning, then a check extension on the move and late move reductions.
- * Each form's origin is named where it is applied.
+ * Each form's origin is named where it is applied. The window gate (test/window.ts)
+ * reads the search's exact layer through searchWindow.
  */
 import { KING, MAX_MOVES, MAX_PLY, PAWN, movePromo } from "../../core/constants";
 import { generateCaptures, generateMoves } from "../../core/movegen";
@@ -140,7 +141,16 @@ export function hostScore(s: i32): i32 {
   return s;
 }
 
-/** whether a TT bound settles a score against alpha and beta */
+/**
+ * Whether a TT bound settles a score against alpha and beta: an exact bound, a lower
+ * bound at or above beta, or an upper bound at or below alpha. A hit either cuts at
+ * once or is left alone; the window is never tightened from a stored bound. That is
+ * the form Huizing and van de Wetering verified (Formal Verification of Minimax
+ * Algorithms, 2025): the result is an alpha-beta result of some expansion of the
+ * tree, and the table stays valid. Marsland's form, raising alpha from a stored lower
+ * bound, is rejected: with an entry from a deeper search it returns a value no
+ * expansion of the tree has.
+ */
 @inline function boundCuts(bound: i32, s: i32, alpha: i32, beta: i32): bool {
   return bound == BOUND_EXACT || (bound == BOUND_LOWER ? s >= beta : s <= alpha);
 }
@@ -579,12 +589,8 @@ function qsearch(alpha: i32, beta: i32): i32 {
 
 // ---------------------------------------------------------------- iterative deepening
 
-/**
- * Searches the core's position by iterative deepening to `maxDepth`, or until the
- * time rules or the host stop it once an iteration has finished. Returns the best
- * move, or 0 when the position has no legal move.
- */
-export function think(maxDepth: i32): i32 {
+/** the state a search starts from: the counters at zero, the stack empty, the root's moves listed with no nodes spent */
+function startSearch(): void {
   stopped = false;
   nodeCount = 0;
   completed = 0;
@@ -601,6 +607,26 @@ export function think(maxDepth: i32): i32 {
   for (let i = 0; i < MAX_PLY + 1; i++) excludedAt[i] = 0;
   rootCount = generateMoves(rootMoves, 0, true);
   for (let i = 0; i < rootCount; i++) rootNodes[i] = 0;
+}
+
+/**
+ * One search of the root at `depth` with the window (alpha, beta), for the window
+ * gate: no deepening, no aspiration and no clock. Returns the fail-soft score in
+ * the engine's unit; a root with no legal move scores as any such node does.
+ */
+export function searchWindow(alpha: i32, beta: i32, depth: i32): i32 {
+  startSearch();
+  rootDepth = depth;
+  return search(alpha, beta, depth, false);
+}
+
+/**
+ * Searches the core's position by iterative deepening to `maxDepth`, or until the
+ * time rules or the host stop it once an iteration has finished. Returns the best
+ * move, or 0 when the position has no legal move.
+ */
+export function think(maxDepth: i32): i32 {
+  startSearch();
   if (rootCount == 0) return 0;
 
   let score = 0;
