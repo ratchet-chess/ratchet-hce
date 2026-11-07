@@ -80,7 +80,7 @@ Each release keeps its reference in `engines/<release>/fidelity/`.
 
 The match tools play releases with fastchess, each side from a snapshot of its commit. A player is `[ref:]release[@level]` (`tools/player.sh`), such as `phalanx-xii` or `HEAD:sargon-1978@3`:
 
-- `tools/pool.ts`: an SPRT match, or a race of several candidates, over the hosts HOSTS names;
+- `tools/pool.ts`: an SPRT match, or a race of several candidates, over the hosts HOSTS names. Every run has a row in the run index, `<archive>/sprt/index.md`, which `tools/runs.ts` reads, and a run takes its openings from seeds no earlier run played;
 - `tools/calibrate.sh`: a rating on the CCRL Blitz scale, against anchor engines with published ratings;
 - `tools/mate-suite.sh`: the conversion suite, KQK and KRK starts to mate;
 - `tools/depth.ts`: the mean depth of a match's PGNs.
