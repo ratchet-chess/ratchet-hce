@@ -1,0 +1,28 @@
+{
+ "subject": "ratchet-flags",
+ "release": "ratchet",
+ "eval": {
+  "form": "static"
+ },
+ "quirks": [],
+ "defaults": {
+  "type": "i32",
+  "step": 1
+ },
+ "blocks": [
+  { "name": "RFP_DEPTH", "off": 0, "min": 0, "max": 16, "sources": [{ "file": "params.ts", "symbol": "RFP_DEPTH" }] },
+  { "name": "RAZOR_DEPTH", "off": 0, "min": 0, "max": 16, "sources": [{ "file": "params.ts", "symbol": "RAZOR_DEPTH" }] },
+  { "name": "NMP_DEPTH", "off": 200, "min": 1, "max": 200, "sources": [{ "file": "params.ts", "symbol": "NMP_DEPTH" }] },
+  { "name": "PC_DEPTH", "off": 200, "min": 1, "max": 200, "sources": [{ "file": "params.ts", "symbol": "PC_DEPTH" }] },
+  { "name": "IIR_DEPTH", "off": 200, "min": 1, "max": 200, "sources": [{ "file": "params.ts", "symbol": "IIR_DEPTH" }] },
+  { "name": "SE_DEPTH", "off": 200, "min": 1, "max": 200, "sources": [{ "file": "params.ts", "symbol": "SE_DEPTH" }] },
+  { "name": "CHECK_EXT", "off": 0, "min": 0, "max": 1, "sources": [{ "file": "params.ts", "symbol": "CHECK_EXT" }] },
+  { "name": "LMP_DEPTH", "off": 0, "min": 0, "max": 16, "sources": [{ "file": "params.ts", "symbol": "LMP_DEPTH" }] },
+  { "name": "FUT_DEPTH", "off": -1, "min": -1, "max": 16, "sources": [{ "file": "params.ts", "symbol": "FUT_DEPTH" }] },
+  { "name": "HP_DEPTH", "size": 2, "layout": "count", "off": -1, "min": -1, "max": 16, "sources": [{ "file": "params.ts", "symbol": "HP_DEPTH" }] },
+  { "name": "SEE_DEPTH", "off": 0, "min": 0, "max": 16, "sources": [{ "file": "params.ts", "symbol": "SEE_DEPTH" }] },
+  { "name": "LMR_HISTORY_STEP", "off": 0, "min": 0, "max": 4096, "sources": [{ "file": "params.ts", "symbol": "LMR_HISTORY_STEP" }] },
+  { "name": "QS_DELTA", "off": 100000000, "min": 0, "max": 100000000, "sources": [{ "file": "params.ts", "symbol": "QS_DELTA" }] },
+  { "name": "CORR_MAX", "off": 0, "min": 0, "max": 1000, "sources": [{ "file": "params.ts", "symbol": "CORR_MAX" }] }
+ ]
+}

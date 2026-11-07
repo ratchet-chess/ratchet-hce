@@ -52,6 +52,8 @@ export interface Block {
   /** element indices held at their defaults, or true for the whole block */
   fixed?: number[] | true;
   ties?: "files" | number[][];
+  /** the value of every element that turns the block off, for a flag screen (tools/spsa.ts --screen); its defaults are on */
+  off?: number;
 }
 
 export interface EvalForm {
@@ -94,6 +96,8 @@ export interface Element {
   type: string;
   fixed: boolean;
   slots: Slot[];
+  /** the value that turns its block off in a flag screen; the default is on */
+  off?: number;
 }
 
 export interface LoadedMap {
@@ -171,6 +175,9 @@ export function loadMap(path: string): LoadedMap {
       groups.push(g);
     }
     const fixedSet = block.fixed === true ? null : new Set(block.fixed ?? []);
+    if (block.off !== undefined && (block.off < (block.min ?? range[0]) || block.off > (block.max ?? range[1]))) {
+      throw new Error(`${path}: ${block.name}'s off value ${block.off} is outside its bounds`);
+    }
     for (const g of groups) {
       const slots: Slot[] = [];
       let value: number | undefined;
@@ -200,6 +207,7 @@ export function loadMap(path: string): LoadedMap {
         type,
         fixed,
         slots,
+        off: block.off,
       });
     }
   }
