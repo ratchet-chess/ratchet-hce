@@ -256,7 +256,8 @@ export const LMP_COUNT: StaticArray<i32> = [0, 3, 4, 6, 10, 14, 19, 25, 31, 0, 5
 /** futility on the reduced depth, Ethereal 0e47e9b: eval + 77 + 52 per ply <= alpha at its pawn 82; history limits by improving, v12.75 */
 export const FUT_DEPTH = 8;
 export const FUT_BASE = 489;
-export const FUT_PER_DEPTH = 330;
+// the detune screen's value, admitted by SPRT with PRUNE_DIV's: <artifacts>/notes/20261109-detune-screen.md
+export const FUT_PER_DEPTH = 495;
 export const FUT_HISTORY: StaticArray<i32> = [12000, 6000];
 
 /** history pruning, Ethereal v12.75 as the dig note reads it: 1- and 2-ply continuation history below a limit, by improving; one pair where Ethereal keeps a limit and a depth per table */
@@ -289,7 +290,8 @@ export const LMR_HISTORY_MAX = 2;
  * 1024 and the sum in 1/1024 ply. It has its own values, so LMR's can move without moving the pruning. Its seeds are LMR's
  */
 export const PRUNE_BASE = 768;
-export const PRUNE_DIV = 2304;
+// the detune screen's value, admitted by SPRT with FUT_PER_DEPTH's: <artifacts>/notes/20261109-detune-screen.md
+export const PRUNE_DIV = 1400;
 
 /** a capture is tried among the good ones if SEE >= -score / this, Clockwork 641d9f5's divisor 51 at its pawn 112 */
 export const GOOD_CAPTURE_DIV = 14;

@@ -25,7 +25,7 @@ import { noClock, startClock } from "./time";
 import { ttAlloc, ttClear, ttEnable } from "./tt";
 
 /** the version `id name` reports: major << 16 | minor << 8 | patch; tools/calibrate.sh reads this line to name a rating's row */
-const VERSION = (0 << 16) | (3 << 8) | 4;
+const VERSION = (0 << 16) | (3 << 8) | 5;
 
 const HASH_MB = 16;
 
