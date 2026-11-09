@@ -122,6 +122,9 @@ The steps run in this order. Each step's output is the next step's input.
 - **A download enters through `tools/ws.ts fetch`,** pinned by its sha256. Containers have no network, except a fetch phase that runs no downloaded code.
 - **Never edit a tool script while a run of it is live.** Stage the change beside it, and swap it in after the run.
 - **A tool that submits to `tools/queue.ts` runs its work through the queue.** The queue orders the hosts, not the tool.
+- **Local is the user's desktop, so no job on the real clock runs there.** The conversion suite plays on worker3
+  alone, and rating runs play on the workers. A speed read on local is the one exception. Local's runner containers
+  run in the idle CPU class, so the desktop takes the CPU first.
 - **Stop a run by its PID or its process group,** never by a name pattern.
 - **Wait for a run to finish,** rather than polling it in a loop.
 - **A bug found in a tool becomes a tools commit** before the tool is used again. A run that used the bug is repeated, unless the bug cannot change its verdict.
