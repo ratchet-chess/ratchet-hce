@@ -284,6 +284,34 @@ export const LMR_EARLY_STAGE = 1024;
 export const LMR_HISTORY_STEP = 1024;
 export const LMR_HISTORY_DIV = 5000;
 export const LMR_HISTORY_MAX = 2;
+/**
+ * terms that reduce more, in 1/1024 ply, at Clockwork 641d9f5's tuned values: a cut node (Stockfish 11 and Weiss 95b0951 add
+ * two plies); a quiet when the TT move is noisy; a node whose children have failed high more than LMR_FAIL_HIGH_COUNT times;
+ * and each time a move has raised alpha here. 0 turns a term off
+ */
+export const LMR_CUT_NODE = 1258;
+export const LMR_TT_NOISY = 1024;
+export const LMR_FAIL_HIGH = 942;
+export const LMR_FAIL_HIGH_COUNT = 3;
+export const LMR_ALPHA_RAISE = 518;
+/**
+ * late move reductions on noisy moves: their own base and divisor, Weiss 95b0951's 0.38 + ln d ln m / 3.76, restated for a sum
+ * where 1 ply is no reduction and a node neither PV nor improving adds 2. Capture history moves it by whole steps, at Weiss's
+ * divisor 8870 scaled from its table's limit 14387 to 16384. A depth of 200 turns them off
+ */
+export const LMR_NOISY_MIN_DEPTH = 3;
+export const LMR_NOISY_BASE = -635;
+export const LMR_NOISY_DIV = 3850;
+export const LMR_NOISY_HISTORY_DIV = 10100;
+/**
+ * the re-search after a reduced search beats alpha: a ply deeper if it beat the best by more than LMR_DEEPER, Clockwork
+ * 641d9f5's 94 by the middlegame pawn; else a ply shallower if it beat the best by less than LMR_SHALLOWER per ply of depth.
+ * 100000000 and 0 turn them off
+ */
+export const LMR_DEEPER = 258;
+export const LMR_SHALLOWER = 3;
+/** 1: a quiet's continuation history takes the re-search's result; 0 turns it off */
+export const LMR_CONT_UPDATE = 1;
 
 /**
  * the reduced depth futility and history pruning read: depth less base + ln(depth) ln(moves) / div, the logs scaled by

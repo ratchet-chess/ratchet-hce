@@ -8,7 +8,9 @@
  * (correction.ts); the TT stores the raw one. Before the move loop: reverse
  * futility, razoring, null move and IIR.
  * In it: late move pruning, futility on the reduced depth, history pruning and
- * SEE pruning, then a check extension on the move and late move reductions.
+ * SEE pruning, then a check extension on the move and late move reductions on
+ * quiet and noisy moves, whose re-search goes a ply deeper or shallower by how far
+ * the reduced search beat the best.
  * Each form's origin is named where it is applied. The window gate (test/window.ts)
  * reads the search's exact layer through searchWindow.
  */
@@ -23,8 +25,10 @@ import {
   quietScore, resumeAfterTT, selectBest, victimOf,
 } from "./movepick";
 import {
-  ASP_DELTA, ASP_DEPTH, CHECK_EXT, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_COUNT, LMP_DEPTH, LMR_BASE,
-  LMR_DIV, LMR_EARLY_STAGE, LMR_HISTORY_DIV, LMR_HISTORY_MAX, LMR_HISTORY_STEP, LMR_MIN_DEPTH, LMR_NON_PV, LMR_NOT_IMPROVING, MAT_EG, NMP_BASE, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN, SE_DOUBLE_MAX, SE_MARGIN,
+  ASP_DELTA, ASP_DEPTH, CHECK_EXT, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_COUNT, LMP_DEPTH, LMR_ALPHA_RAISE,
+  LMR_BASE, LMR_CONT_UPDATE, LMR_CUT_NODE, LMR_DEEPER, LMR_DIV, LMR_EARLY_STAGE, LMR_FAIL_HIGH, LMR_FAIL_HIGH_COUNT, LMR_HISTORY_DIV, LMR_HISTORY_MAX,
+  LMR_HISTORY_STEP, LMR_MIN_DEPTH, LMR_NOISY_BASE, LMR_NOISY_DIV, LMR_NOISY_HISTORY_DIV, LMR_NOISY_MIN_DEPTH, LMR_NON_PV, LMR_NOT_IMPROVING,
+  LMR_SHALLOWER, LMR_TT_NOISY, MAT_EG, NMP_BASE, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN, SE_DOUBLE_MAX, SE_MARGIN,
   SE_MARGIN_DIV, SE_SEARCH_ADD, SE_TT_DEPTH, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA, RAZOR_DEPTH,
   RAZOR_MARGIN, RAZOR_QS_DEPTH, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, SEE_DEPTH, SEE_NOISY, SEE_QUIET,
 } from "./params";
@@ -60,6 +64,8 @@ const ssStatic = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_P
 const ssRaw = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + SS + 1)));
 /** double extensions on the line to a ply, Stash f91e750 double_extensions */
 const ssDouble = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + SS + 1)));
+/** how many of a ply's nodes have failed high since their parent's move loop began; a node reads its children's count (Clockwork 641d9f5 fail_high_count) */
+const ssFailHigh = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + 2)));
 /** the move a ply's singular search leaves out, 0 for none */
 const excludedAt = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + 1)));
 /** the iteration's depth, which bounds extensions (Stash f91e750) */
@@ -171,11 +177,12 @@ export function hostScore(s: i32): i32 {
  * average of the three, a missing one counted as 0 (Stash 93a6d5f)
  */
 function rewardQuiet(m: i32, bonus: i32, p: i32): void {
-  const pt = pieceTo(m);
-  const cm = ssCont[p + SS - 1];
-  const fm = ssCont[p + SS - 2];
-  const f4 = ssCont[p + SS - 4];
   gravity(butterfly, (side << 12) | (m & 4095), bonus);
+  rewardCont(pieceTo(m), ssCont[p + SS - 1], ssCont[p + SS - 2], ssCont[p + SS - 4], bonus);
+}
+
+/** the continuation part of rewardQuiet, for a piece and square after the moves 1, 2 and 4 plies back */
+function rewardCont(pt: i32, cm: i32, fm: i32, f4: i32, bonus: i32): void {
   let base = 0;
   if (cm >= 0) base += <i32>contHist[cm + pt];
   if (fm >= 0) base += <i32>contHist[fm + pt];
@@ -358,9 +365,12 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   const f4 = ssCont[p + SS - 4];
   const killer = killers[p];
   initPicker(p, tMove, killer, cm, fm, f4);
+  const tNoisy = tMove != 0 && isNoisy(tMove);
+  ssFailHigh[p + 1] = 0;
   let best = -INF;
   let bestMove = 0;
   let played = 0;
+  let raises = 0;
   let quiets = 0;
   let captures = 0;
   let skipQuiets = false;
@@ -421,6 +431,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       resumeAfterTT(p, tMove, killer, cm, fm, f4);
       ssStatic[p + SS] = staticEval;
       ssRaw[p + SS] = raw;
+      // Ratchet's guard: the count is of this move loop's children, not of the singular search's, which Clockwork keeps
+      ssFailHigh[p + 1] = 0;
       if (sv < sBeta) {
         // double extension, Stash f91e750 (its triple is left for the NNUE stage)
         if (!pvNode && sBeta - sv > SE_DOUBLE_MARGIN && ssDouble[p + SS] <= SE_DOUBLE_MAX) {
@@ -447,27 +459,60 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       knownCheckKey = hash;
       if (knownCheck) ext = CHECK_EXT;
     }
-    const newDepth = depth - 1 + ext;
+    let newDepth = depth - 1 + ext;
     let v = 0;
     if (played == 1) {
       v = -search(-beta, -alpha, newDepth, pvNode ? false : !cutNode);
     } else {
       let full = true;
-      // late move reductions on quiets, Ethereal v12.75 Step 15A: R = 1 is no reduction. Its extension and king-evasion
-      // terms and its noisy reductions are left out, so an extension stays in the reduced search, as in Weiss 2.0 and Xiphos
-      if (!noisy && depth >= LMR_MIN_DEPTH) {
-        let sum = LMR_BASE + (LN[min(depth, 63)] * LN[min(played, 63)]) / LMR_DIV;
+      let reSearch = false;
+      // late move reductions, Ethereal v12.75 Step 15A: R = 1 is no reduction. Its extension and king-evasion terms are left
+      // out, so an extension stays in the reduced search, as in Weiss 2.0 and Xiphos. A move that gives check gets no term of
+      // its own (Clockwork, Ethereal fcb6f77), because the check extension already searches it a ply deeper here
+      if (depth >= (noisy ? LMR_NOISY_MIN_DEPTH : LMR_MIN_DEPTH)) {
+        const logs = LN[min(depth, 63)] * LN[min(played, 63)];
+        let sum = 0;
+        if (noisy) {
+          // noisy moves, Weiss 95b0951's table with the quiets' node terms; Ethereal's Step 15B reads capture history alone
+          sum = LMR_NOISY_BASE + logs / LMR_NOISY_DIV;
+          sum -= LMR_HISTORY_STEP * max(-LMR_HISTORY_MAX, min(LMR_HISTORY_MAX, hist / LMR_NOISY_HISTORY_DIV));
+        } else {
+          sum = LMR_BASE + logs / LMR_DIV;
+          if (pickedStage < STAGE_QUIET) sum -= LMR_EARLY_STAGE;
+          // a noisy TT move, Stockfish 11's ttCapture
+          if (tNoisy) sum += LMR_TT_NOISY;
+          sum -= LMR_HISTORY_STEP * max(-LMR_HISTORY_MAX, min(LMR_HISTORY_MAX, hist / LMR_HISTORY_DIV));
+        }
         if (!pvNode) sum += LMR_NON_PV;
         if (!improving) sum += LMR_NOT_IMPROVING;
-        if (pickedStage < STAGE_QUIET) sum -= LMR_EARLY_STAGE;
-        sum -= LMR_HISTORY_STEP * max(-LMR_HISTORY_MAX, min(LMR_HISTORY_MAX, hist / LMR_HISTORY_DIV));
+        if (cutNode) sum += LMR_CUT_NODE;
+        // this node's children keep failing high, Clockwork 641d9f5; Stockfish a32d2086 counts over the parent's whole subtree
+        if (ssFailHigh[p + 1] > LMR_FAIL_HIGH_COUNT) sum += LMR_FAIL_HIGH;
+        // each raise of alpha here, Clockwork 641d9f5; Stockfish 15 and Berserk 5 lower the node's depth instead
+        sum += raises * LMR_ALPHA_RAISE;
         const r = min(depth - 1, max(sum >> 10, 1));
         if (r > 1) {
-          v = -search(-alpha - 1, -alpha, newDepth - r + 1, true);
+          const reduced = newDepth - r + 1;
+          v = -search(-alpha - 1, -alpha, reduced, true);
           full = v > alpha;
+          if (full) {
+            // the re-search's depth follows how far the reduced search beat the best, Stockfish c228f319 in Clockwork 641d9f5's
+            // form: a fixed margin. Weiss 95b0951's margin grows with the reduction, and it has no shallower step
+            if (v > best + LMR_DEEPER) newDepth++;
+            else if (newDepth > 1 && v < best + LMR_SHALLOWER * newDepth) newDepth--;
+            full = reduced < newDepth;
+            reSearch = full;
+          }
         }
       }
-      if (full) v = -search(-alpha - 1, -alpha, newDepth, !cutNode);
+      if (full) {
+        v = -search(-alpha - 1, -alpha, newDepth, !cutNode);
+        // a quiet's continuation history takes a re-search that failed low or high, Clockwork 641d9f5 and Weiss 95b0951
+        if (reSearch && !noisy && LMR_CONT_UPDATE != 0 && !stopped) {
+          if (v <= alpha) rewardCont(pt, cm, fm, f4, -malusAt(newDepth));
+          else if (v >= beta) rewardCont(pt, cm, fm, f4, bonusAt(newDepth));
+        }
+      }
       if (pvNode && v > alpha && v < beta) v = -search(-beta, -alpha, newDepth, false);
     }
     undoMove(m);
@@ -497,8 +542,12 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
           for (let i = p + 1; i < n; i++) pvTable[row + i] = pvTable[child + i];
           pvLen[p] = max(n, p + 1);
         }
-        if (v >= beta) break;
+        if (v >= beta) {
+          ssFailHigh[p]++;
+          break;
+        }
         alpha = v;
+        raises++;
       }
     }
   }
@@ -625,6 +674,7 @@ function startSearch(): void {
     ssDouble[i] = 0;
   }
   for (let i = 0; i < MAX_PLY + 1; i++) excludedAt[i] = 0;
+  for (let i = 0; i < MAX_PLY + 2; i++) ssFailHigh[i] = 0;
   rootCount = generateMoves(rootMoves, 0, true);
   for (let i = 0; i < rootCount; i++) rootNodes[i] = 0;
 }
