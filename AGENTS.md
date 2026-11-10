@@ -125,6 +125,8 @@ The steps run in this order. Each step's output is the next step's input.
 - **Local is the user's desktop, so no job on the real clock runs there.** The conversion suite plays on worker3
   alone, and rating runs play on the workers. A speed read on local is the one exception. Local's runner containers
   run in the idle CPU class, so the desktop takes the CPU first.
+- **Local plays games only inside its hours,** which `bun tools/queue.ts status` shows. A job submitted outside them
+  plays on the workers. Run a null control inside them, because it needs every host.
 - **Stop a run by its PID or its process group,** never by a name pattern.
 - **Wait for a run to finish,** rather than polling it in a loop.
 - **A bug found in a tool becomes a tools commit** before the tool is used again. A run that used the bug is repeated, unless the bug cannot change its verdict.
