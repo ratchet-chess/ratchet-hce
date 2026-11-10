@@ -74,9 +74,14 @@ export function clearHistory(): void {
  * first use and kept while the ply stays at this position, so its singular search and each later move reuse it. 0 when
  * THREAT_HISTORY is off
  */
-export function threatsAt(p: i32): u64 {
+@inline export function threatsAt(p: i32): u64 {
   if (THREAT_HISTORY == 0) return 0;
   if (unchecked(threatKey[p]) == hash) return unchecked(threatSet[p]);
+  return makeThreats(p);
+}
+
+/** makes and keeps the set threatsAt returns; apart from it so that a kept set costs its callers no call */
+function makeThreats(p: i32): u64 {
   const c = (side ^ 1) << 3;
   const occ = unchecked(bb[0] | bb[8]);
   const pawns = unchecked(bb[c | PAWN]);

@@ -385,12 +385,15 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     let cmh = 0;
     let fmh = 0;
     let hist = 0;
-    if (noisy) hist = <i32>captureHist[captureIndex(m)];
-    else {
-      if (cm >= 0) cmh = <i32>contHist[cm + pt];
-      if (fm >= 0) fmh = <i32>contHist[fm + pt];
-      // three tables, the sum Ethereal's limits and divisor are written for; the 4-ply table orders moves (movepick.ts)
-      hist = <i32>butterfly[butterflyIndex(m, threatsAt(p))] + cmh + fmh;
+    // a node's first move is neither pruned nor reduced, so it reads no history; a node that it cuts needs no attacked squares here
+    if (played != 0) {
+      if (noisy) hist = <i32>captureHist[captureIndex(m)];
+      else {
+        if (cm >= 0) cmh = <i32>contHist[cm + pt];
+        if (fm >= 0) fmh = <i32>contHist[fm + pt];
+        // three tables, the sum Ethereal's limits and divisor are written for; the 4-ply table orders moves (movepick.ts)
+        hist = <i32>butterfly[butterflyIndex(m, threatsAt(p))] + cmh + fmh;
+      }
     }
 
     // pruning, once a move has kept the node from a mated score; the root is spared, Ratchet's guard, as in Xiphos, Weiss 2.0 and Koivisto
