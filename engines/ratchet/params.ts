@@ -321,6 +321,20 @@ export const PRUNE_BASE = 768;
 // the detune screen's value, admitted by SPRT with FUT_PER_DEPTH's: <artifacts>/notes/20261109-detune-screen.md
 export const PRUNE_DIV = 1400;
 
+/**
+ * what a quiet's history knows, each part with an off value that gives the play before it.
+ * THREAT_HISTORY 1: the butterfly table is also indexed by whether the move's from and to squares are attacked by the
+ * opponent (Ethereal 341c43f, Clockwork 641d9f5); 0 turns it off.
+ * PAWN_HISTORY 1: a table by pawn structure, piece and square orders quiets beside the others, within HIST_PAWN_MAX
+ * (Stockfish b0658f09's 512 structures and limit 8192, after Seer); 0 turns it off.
+ * HIST_DEEP_MARGIN: a cut that beats beta by this much rewards and penalizes as from one ply deeper, Clockwork 641d9f5's
+ * 100 by the middlegame pawn (Stockfish 11 uses a middlegame pawn); 100000000 turns it off
+ */
+export const THREAT_HISTORY = 1;
+export const PAWN_HISTORY = 1;
+export const HIST_PAWN_MAX = 8192;
+export const HIST_DEEP_MARGIN = 274;
+
 /** a capture is tried among the good ones if SEE >= -score / this, Clockwork 641d9f5's divisor 51 at its pawn 112 */
 export const GOOD_CAPTURE_DIV = 14;
 

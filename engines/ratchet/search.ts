@@ -19,16 +19,16 @@ import { generateCaptures, generateMoves } from "../../core/movegen";
 import { bb, halfmove, hash, inCheck, isRepetition, make, ply, side, unmake } from "../../core/position";
 import { correction, updateCorrection } from "./correction";
 import { UNITS_PER_CP, evalCached } from "./eval";
-import { bonusAt, butterfly, captureHist, contHist, gravity, gravityFrom, killers, malusAt } from "./history";
+import { bonusAt, butterfly, butterflyIndex, captureHist, contHist, gravity, gravityFrom, killers, malusAt, rewardPawn, threatsAt } from "./history";
 import {
   MOVES, SCORES, STAGE_GOOD_NOISY, STAGE_QUIET, captureIndex, captureScore, initPicker, isNoisy, nextMove, pickedStage, pieceTo,
   quietScore, resumeAfterTT, selectBest, victimOf,
 } from "./movepick";
 import {
-  ASP_DELTA, ASP_DEPTH, CHECK_EXT, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_COUNT, LMP_DEPTH, LMR_ALPHA_RAISE,
+  ASP_DELTA, ASP_DEPTH, CHECK_EXT, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HIST_DEEP_MARGIN, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_COUNT, LMP_DEPTH, LMR_ALPHA_RAISE,
   LMR_BASE, LMR_CONT_UPDATE, LMR_CUT_NODE, LMR_DEEPER, LMR_DIV, LMR_EARLY_STAGE, LMR_FAIL_HIGH, LMR_FAIL_HIGH_COUNT, LMR_HISTORY_DIV, LMR_HISTORY_MAX,
   LMR_HISTORY_STEP, LMR_MIN_DEPTH, LMR_NOISY_BASE, LMR_NOISY_DIV, LMR_NOISY_HISTORY_DIV, LMR_NOISY_MIN_DEPTH, LMR_NON_PV, LMR_NOT_IMPROVING,
-  LMR_SHALLOWER, LMR_TT_NOISY, MAT_EG, NMP_BASE, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN, SE_DOUBLE_MAX, SE_MARGIN,
+  LMR_SHALLOWER, LMR_TT_NOISY, MAT_EG, NMP_BASE, PAWN_HISTORY, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN, SE_DOUBLE_MAX, SE_MARGIN,
   SE_MARGIN_DIV, SE_SEARCH_ADD, SE_TT_DEPTH, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA, RAZOR_DEPTH,
   RAZOR_MARGIN, RAZOR_QS_DEPTH, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, SEE_DEPTH, SEE_NOISY, SEE_QUIET,
 } from "./params";
@@ -177,8 +177,11 @@ export function hostScore(s: i32): i32 {
  * average of the three, a missing one counted as 0 (Stash 93a6d5f)
  */
 function rewardQuiet(m: i32, bonus: i32, p: i32): void {
-  gravity(butterfly, (side << 12) | (m & 4095), bonus);
-  rewardCont(pieceTo(m), ssCont[p + SS - 1], ssCont[p + SS - 2], ssCont[p + SS - 4], bonus);
+  const pt = pieceTo(m);
+  gravity(butterfly, butterflyIndex(m, threatsAt(p)), bonus);
+  // pawn history takes what the butterfly table takes, Weiss 20c95ce
+  if (PAWN_HISTORY != 0) rewardPawn(pt, bonus);
+  rewardCont(pt, ssCont[p + SS - 1], ssCont[p + SS - 2], ssCont[p + SS - 4], bonus);
 }
 
 /** the continuation part of rewardQuiet, for a piece and square after the moves 1, 2 and 4 plies back */
@@ -203,9 +206,9 @@ let knownCheck = false;
  * tried before it lose either way. A quiet that cut as the only quiet tried at
  * depth 3 or less leaves the quiet histories alone (Ethereal update_quiet_histories).
  */
-function updateHistories(best: i32, depth: i32, p: i32, quiets: i32, captures: i32): void {
-  const bonus = bonusAt(depth);
-  const malus = -malusAt(depth);
+function updateHistories(best: i32, depth: i32, bonusDepth: i32, p: i32, quiets: i32, captures: i32): void {
+  const bonus = bonusAt(bonusDepth);
+  const malus = -malusAt(bonusDepth);
   if (!isNoisy(best)) {
     killers[p] = best;
     if (depth > 3 || quiets > 1) {
@@ -387,7 +390,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       if (cm >= 0) cmh = <i32>contHist[cm + pt];
       if (fm >= 0) fmh = <i32>contHist[fm + pt];
       // three tables, the sum Ethereal's limits and divisor are written for; the 4-ply table orders moves (movepick.ts)
-      hist = <i32>butterfly[(side << 12) | (m & 4095)] + cmh + fmh;
+      hist = <i32>butterfly[butterflyIndex(m, threatsAt(p))] + cmh + fmh;
     }
 
     // pruning, once a move has kept the node from a mated score; the root is spared, Ratchet's guard, as in Xiphos, Weiss 2.0 and Koivisto
@@ -554,7 +557,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
 
   // with its one move left out, a node with no other move fails low (Stash f91e750)
   if (played == 0) return excl ? alpha : check ? -MATE + p : 0;
-  if (best >= beta) updateHistories(bestMove, depth, p, quiets, captures);
+  // a cut far above beta counts as one from a ply deeper, Clockwork 641d9f5; Stockfish 11 raises the bonus alone
+  if (best >= beta) updateHistories(bestMove, depth, depth + (best - beta >= HIST_DEEP_MARGIN ? 1 : 0), p, quiets, captures);
   const bound = best >= beta ? BOUND_LOWER : bestMove ? BOUND_EXACT : BOUND_UPPER;
   // correction history, Stash 302136d: not in check, no noisy best move, and the bound says the eval was wrong in that direction
   if (
@@ -621,9 +625,11 @@ function qsearch(alpha: i32, beta: i32): i32 {
   const base = p * MAX_MOVES;
   const end = generateMoves(MOVES, base, check);
   if (check && end == base) return -MATE + p;
+  // only a node in check lists quiets, so only it needs the attacked squares
+  const threats = check ? threatsAt(p) : 0;
   for (let i = base; i < end; i++) {
     const m = MOVES[i];
-    SCORES[i] = m == tMove ? 1 << 30 : isNoisy(m) ? captureScore(m) + (1 << 18) : quietScore(m, -1, -1, -1);
+    SCORES[i] = m == tMove ? 1 << 30 : isNoisy(m) ? captureScore(m) + (1 << 18) : quietScore(m, -1, -1, -1, threats);
   }
   let bestMove = 0;
   for (let i = base; i < end; i++) {

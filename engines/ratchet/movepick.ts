@@ -11,8 +11,8 @@
 import { FLAG_EP, MAX_MOVES, MAX_PLY, PAWN, QUEEN, moveFrom, movePromo, moveTo } from "../../core/constants";
 import { generateCaptures, generateQuiets, isLegal } from "../../core/movegen";
 import { board, side } from "../../core/position";
-import { butterfly, captureHist, contHist } from "./history";
-import { GOOD_CAPTURE_DIV, MVV } from "./params";
+import { butterfly, butterflyIndex, captureHist, contHist, pawnHist, pawnHistIndex, threatsAt } from "./history";
+import { GOOD_CAPTURE_DIV, MVV, PAWN_HISTORY } from "./params";
 import { seeGe } from "./see";
 
 export const STAGE_TT = 0;
@@ -73,13 +73,15 @@ export function captureScore(m: i32): i32 {
 
 /**
  * a quiet's order: butterfly plus 1-, 2- and 4-ply continuation history (Stockfish
- * 10 score<QUIETS>); `cm`, `fm` and `f4` are -1 when there is no such move
+ * 10 score<QUIETS>) plus pawn history (Stockfish b0658f09, Weiss 20c95ce); `cm`, `fm`
+ * and `f4` are -1 when there is no such move, and `threats` is the node's attacked squares
  */
-export function quietScore(m: i32, cm: i32, fm: i32, f4: i32): i32 {
+export function quietScore(m: i32, cm: i32, fm: i32, f4: i32, threats: u64): i32 {
   const promo = movePromo(m);
   if (promo) return promo == QUEEN ? PROMO_SCORE : -PROMO_SCORE;
   const pt = pieceTo(m);
-  let s = <i32>butterfly[(side << 12) | (m & 4095)];
+  let s = <i32>butterfly[butterflyIndex(m, threats)];
+  if (PAWN_HISTORY != 0) s += <i32>pawnHist[pawnHistIndex(pt)];
   if (cm >= 0) s += <i32>contHist[cm + pt];
   if (fm >= 0) s += <i32>contHist[fm + pt];
   if (f4 >= 0) s += <i32>contHist[f4 + pt];
@@ -190,7 +192,8 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
         const cm = cmOf[ply];
         const fm = fmOf[ply];
         const f4 = f4Of[ply];
-        for (let i = from; i < e; i++) unchecked((SCORES[i] = quietScore(MOVES[i], cm, fm, f4)));
+        const threats = threatsAt(ply);
+        for (let i = from; i < e; i++) unchecked((SCORES[i] = quietScore(MOVES[i], cm, fm, f4, threats)));
         cur[ply] = from;
         end[ply] = e;
         stage[ply] = STAGE_QUIET;
