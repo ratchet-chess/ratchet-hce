@@ -55,8 +55,7 @@ do not say where, ask the user.
 - **A search change passes the window gate,** `test/window.ts`: on the plain configuration with the table off, every windowed search is in Fishburn's relation to the full-window value. The plain configuration is every `off` value of the flag map.
 - **The table lookup cuts only.** A stored bound that does not cut is left alone, and the window is never tightened from it. `boundCuts` in `engines/ratchet/search.ts` names the verified form and the rejected one.
 - **A change that keeps the node signature is a speed change.** Measure it on Bun and Node.
-- **Read a speed change on worker3 and on local,** because a gain can depend on the CPU.
-- **Read a match's `SPEED` on worker3, with `tools/speed-read.ts`.** Worker3 is quiet and runs the games' Bun, and the other hosts keep playing.
+- **Read a speed change and a match's `SPEED` on worker3, with `tools/speed-read.ts`.** Worker3 is quiet and runs the games' Bun, and the other hosts keep playing.
 - **Any other change is admitted by SPRT against its parent.** Start with cheap tests, and go longer or deeper only when a result needs it.
 - **Tuned values are written into the engine itself,** as a commit, not as a variant.
 
