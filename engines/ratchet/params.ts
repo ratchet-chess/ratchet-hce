@@ -219,6 +219,12 @@ export const RAZOR_DEPTH = 3;
 /** at this depth or less, razoring returns qsearch's score without the null-window test */
 export const RAZOR_QS_DEPTH = 2;
 export const RAZOR_MARGIN = 606;
+/**
+ * 1: the last clause of Stash 13ac9e7's razoring. When the null-window qsearch does not fail low and beats beta by one
+ * ply's margin, the node is searched a ply shallower. 0 turns it off. Clockwork 641d9f5 and Berserk test qsearch at alpha
+ * itself, down to depth 7 or 5 with a wider margin, the form not taken.
+ */
+export const RAZOR_DROP = 1;
 
 /** null move, Ethereal v12.75: R = 4 + depth / 6 + min(3, (eval - beta) / 200), at its pawn 82 */
 export const NMP_DEPTH = 2;
@@ -226,6 +232,17 @@ export const NMP_BASE = 4;
 export const NMP_DEPTH_DIV = 6;
 export const NMP_EVAL_DIV = 1268;
 export const NMP_EVAL_MAX = 3;
+/**
+ * 1: the null move is tried at an expected cut node only (Stash f91e750, Clockwork ca21224); 0 tries it at every non-PV
+ * node, as Ethereal v12.75 and Weiss 2.0 do.
+ */
+export const NMP_CUT_NODE = 1;
+
+/**
+ * 1: at a node not expected to cut, the table cuts on a fail low only (Ethereal 311d110, Berserk d7e1f05); 0 turns it off.
+ * Stockfish 43e100ae's form, the node type equal to the bound's side up to a depth, is not taken.
+ */
+export const TT_CUT_NODE = 1;
 
 /** ProbCut, Stash f91e750: depth >= 6, beta + 152 at its pawn 103, a capture's reduced search at depth - 4 */
 export const PC_DEPTH = 6;
@@ -286,6 +303,14 @@ export const HP_LIMIT: StaticArray<i32> = [-1000, -2500];
 export const SEE_DEPTH = 9;
 export const SEE_QUIET = 312;
 export const SEE_NOISY = 93;
+
+/**
+ * futility for the bad captures, Clockwork 662c568: at depth <= 8, not in check, once the picker reaches them, static eval +
+ * 75 per ply by its middlegame pawn <= alpha ends the move loop, and the score rises to that estimate. A depth of 0 turns
+ * it off. Stockfish 15's test per capture, with the victim and capture history, is the form not taken.
+ */
+export const NF_DEPTH = 8;
+export const NF_MARGIN = 206;
 
 /**
  * late move reductions in 1/1024 ply, the terms summed before the sum is cut to whole plies (Clockwork 641d9f5), where
@@ -360,11 +385,19 @@ export const GOOD_CAPTURE_DIV = 14;
 export const MVV: StaticArray<i32> = [0, 800, 2400, 2400, 4800, 7200, 0];
 
 /**
- * qsearch delta pruning, the per-capture shape of Stockfish 15 and Stash f91e750: a capture that gives no check is skipped if stand pat + its
- * victim's MAT_EG + this cannot reach alpha; CPW "Delta Pruning"'s 200 centipawns. The victim is in the eval's unit, as stand pat and alpha are, so SEE_VALUE,
+ * qsearch futility, the per-capture shape of Stockfish 15 and Stash f91e750: a capture that gives no check is skipped if stand pat + its
+ * victim's MAT_EG + QS_DELTA cannot reach alpha. QS_DELTA is Stash's 98 at its pawn 103, where CPW "Delta Pruning" names
+ * 200 centipawns, which is 1040 here. The victim is in the eval's unit, as stand pat and alpha are, so SEE_VALUE,
  * which is narrower, does not fit this test. Ethereal 12.75's one test per node, on the best capture, is the form rejected.
+ * QS_SEE 1: when stand pat + QS_DELTA alone cannot reach alpha, a capture that wins nothing by SEE is skipped too (Stash
+ * 007850d, Weiss 202280b, Berserk); 0 turns it off.
+ * QS_EVASIONS 1: in check, once a move has a score that is not a mate, only captures and promotions that pass SEE are searched
+ * (Weiss 95b0951, Clockwork d17b3cf); 0 searches every evasion, as Stash and Fruit 2.1 do. Stockfish 15 stops after two quiet
+ * evasions, the form not taken.
  */
-export const QS_DELTA = 1040;
+export const QS_DELTA = 495;
+export const QS_SEE = 1;
+export const QS_EVASIONS = 1;
 
 /** history bonus and malus, Weiss c735b8f: min(2418, 251 d - 267) and min(693, 532 d - 163) */
 export const HIST_BONUS_MUL = 251;

@@ -21,16 +21,16 @@ import { correction, updateCorrection } from "./correction";
 import { UNITS_PER_CP, evalCached } from "./eval";
 import { bonusAt, butterfly, butterflyIndex, captureHist, contHist, gravity, gravityFrom, killers, malusAt, rewardPawn, threatsAt } from "./history";
 import {
-  MOVES, SCORES, STAGE_GOOD_NOISY, STAGE_QUIET, captureIndex, captureScore, initPicker, isNoisy, nextMove, pickedStage, pieceTo,
+  MOVES, SCORES, STAGE_BAD_NOISY, STAGE_GOOD_NOISY, STAGE_QUIET, captureIndex, captureScore, initPicker, isNoisy, nextMove, pickedStage, pieceTo,
   quietScore, resumeAfterTT, selectBest, victimOf,
 } from "./movepick";
 import {
   ASP_DELTA, ASP_DEPTH, CHECK_EXT, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HIST_DEEP_MARGIN, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_COUNT, LMP_DEPTH, LMR_ALPHA_RAISE,
   LMR_BASE, LMR_CONT_UPDATE, LMR_CUT_NODE, LMR_DEEPER, LMR_DIV, LMR_EARLY_STAGE, LMR_FAIL_HIGH, LMR_FAIL_HIGH_COUNT, LMR_HISTORY_DIV, LMR_HISTORY_MAX,
   LMR_HISTORY_STEP, LMR_MIN_DEPTH, LMR_NOISY_BASE, LMR_NOISY_DIV, LMR_NOISY_HISTORY_DIV, LMR_NOISY_MIN_DEPTH, LMR_NON_PV, LMR_NOT_IMPROVING,
-  LMR_SHALLOWER, LMR_TT_NOISY, MAT_EG, NMP_BASE, PAWN_HISTORY, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN, SE_DOUBLE_MAX, SE_MARGIN,
-  SE_MARGIN_DIV, SE_NEG_ALPHA, SE_NEG_CUT, SE_SEARCH_ADD, SE_TRIPLE_MARGIN, SE_TT_DEPTH, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA, RAZOR_DEPTH,
-  RAZOR_MARGIN, RAZOR_QS_DEPTH, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, SEE_DEPTH, SEE_NOISY, SEE_QUIET,
+  LMR_SHALLOWER, LMR_TT_NOISY, MAT_EG, NF_DEPTH, NF_MARGIN, NMP_BASE, NMP_CUT_NODE, PAWN_HISTORY, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN,
+  SE_DOUBLE_MAX, SE_MARGIN, SE_MARGIN_DIV, SE_NEG_ALPHA, SE_NEG_CUT, SE_SEARCH_ADD, SE_TRIPLE_MARGIN, SE_TT_DEPTH, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA,
+  QS_EVASIONS, QS_SEE, RAZOR_DEPTH, RAZOR_DROP, RAZOR_MARGIN, RAZOR_QS_DEPTH, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, SEE_DEPTH, SEE_NOISY, SEE_QUIET, TT_CUT_NODE,
 } from "./params";
 import { seeGe } from "./see";
 import { doMove, doNull, psq, undoMove, undoNull } from "./state";
@@ -263,8 +263,9 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     tBound = ttBound;
     tDepth = ttDepth;
     tPv = ttPv;
-    // no cut at PV nodes (Stockfish 4739037f), nor late in the fifty-move count (Stockfish bae019b5, Alexandria)
-    if (!pvNode && ttDepth >= depth && halfmove < 90 && boundCuts(tBound, tScore, alpha, beta)) {
+    // no cut at PV nodes (Stockfish 4739037f), nor late in the fifty-move count (Stockfish bae019b5, Alexandria);
+    // a node not expected to cut takes a fail low only (Ethereal 311d110)
+    if (!pvNode && ttDepth >= depth && halfmove < 90 && boundCuts(tBound, tScore, alpha, beta) && (TT_CUT_NODE == 0 || cutNode || tScore <= alpha)) {
       // Weiss 5168a50: a quiet TT move that cuts earns its bonus; the killer is Ratchet's addition, as in Xiphos and Stockfish 11
       if (tScore >= beta) {
         const cutMove = fullMove(ttMove);
@@ -302,18 +303,22 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     // reverse futility, Stash f91e750
     if (depth <= RFP_DEPTH && eval < MATE_IN_MAX && eval - (RFP_MARGIN * depth - (improving ? RFP_IMPROVING : 0)) >= beta) return eval;
 
-    // razoring, Stash f91e750: to qsearch at depth 2 or less, a null-window qsearch below alpha at depth 3
+    // razoring, Stash 13ac9e7: to qsearch at depth 2 or less, a null-window qsearch below alpha at depth 3, and a ply
+    // less for the node when that qsearch beats beta by a ply's margin
     if (excl == 0 && depth <= RAZOR_DEPTH && staticEval + RAZOR_MARGIN * depth <= alpha) {
       if (depth <= RAZOR_QS_DEPTH) return qsearch(alpha, beta);
       const ra = alpha - RAZOR_MARGIN * depth;
       const v = qsearch(ra, ra + 1);
       if (v <= ra) return v;
+      if (RAZOR_DROP != 0 && v >= beta + RAZOR_MARGIN) depth = max(1, depth - 1);
     }
 
-    // null move, Ethereal v12.75's R and guards, with the eval >= static eval gate of Stash f91e750 and Stockfish 11;
+    // null move, Ethereal v12.75's R and guards, with the eval >= static eval gate of Stash f91e750 and Stockfish 11,
+    // at an expected cut node only, as Stash and Clockwork ca21224 do;
     // it returns the search's score, as Weiss 2.0, Xiphos and Stash do, where Ethereal returns beta
     if (
       excl == 0 &&
+      (NMP_CUT_NODE == 0 || cutNode) &&
       depth >= NMP_DEPTH &&
       eval >= beta &&
       eval >= staticEval &&
@@ -418,6 +423,13 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       }
       // SEE pruning, Ethereal v12.75: past the good captures
       if (depth <= SEE_DEPTH && pickedStage > STAGE_GOOD_NOISY && !seeGe(m, noisy ? -SEE_NOISY * depth * depth : -SEE_QUIET * depth)) continue;
+      // futility for the bad captures, Clockwork 662c568: they are the picker's last stage, so the loop ends, and the
+      // score rises to the test's estimate
+      if (!check && depth <= NF_DEPTH && pickedStage == STAGE_BAD_NOISY && staticEval + NF_MARGIN * depth <= alpha) {
+        const estimate = staticEval + NF_MARGIN * depth;
+        if (abs(beta) < MATE_IN_MAX && best < estimate) best = estimate;
+        break;
+      }
     }
 
     // extensions, Stash f91e750: none at the root, and none once the line is twice the
@@ -647,12 +659,18 @@ function qsearch(alpha: i32, beta: i32): i32 {
     if (!check) {
       if (!seeGe(m, 0)) continue;
       if (!movePromo(m) && deltaBase > -MATE_IN_MAX) {
-        const estimate = deltaBase + MAT_EG[victimOf(m)] + QS_DELTA;
+        // Stash 007850d's second test: when stand pat is that far below alpha without a victim, only a capture that wins material is searched
+        const low = deltaBase + QS_DELTA;
+        let estimate = low + MAT_EG[victimOf(m)];
+        if (estimate > alpha && QS_SEE != 0 && low <= alpha && !seeGe(m, 1)) estimate = low;
         if (estimate <= alpha && !givesCheck(m)) {
           if (estimate > best) best = estimate;
           continue;
         }
       }
+    } else if (QS_EVASIONS != 0 && best > -MATE_IN_MAX && (!isNoisy(m) || !seeGe(m, 0))) {
+      // Weiss 95b0951, Clockwork d17b3cf: one evasion that is not mated answers the check, and the rest are held to qsearch's moves
+      continue;
     }
     doMove(m);
     const v = -qsearch(-beta, -alpha);
