@@ -232,17 +232,35 @@ export const PC_DEPTH = 6;
 export const PC_MARGIN = 767;
 export const PC_REDUCTION = 4;
 
-/** singular extensions, Stash f91e750: depth >= 7, TT depth >= depth - 3; singular beta = TT score - 10 d / 16 at its pawn 103, searched at d / 2 + 1 */
-export const SE_DEPTH = 7;
-/** the singular search's depth is depth / 2 plus this */
-export const SE_SEARCH_ADD = 1;
+/**
+ * singular extensions, Stash f91e750's gate and margin: TT depth >= depth - 3, singular beta = TT score - 10 d / 16 at its pawn 103.
+ * SE_DEPTH 6: the least depth, Stockfish 11's, Berserk 5's and Clockwork 641d9f5's tuned value; Stash's 7 gives the play before it,
+ * and Weiss c735b8f's 5 is the form not taken
+ */
+export const SE_DEPTH = 6;
+/**
+ * the singular search's depth is depth / 2 plus this. 0 is Weiss, Clockwork 641d9f5, Stockfish 11 and Xiphos; 1 is Stash's and
+ * gives the play before it. Ethereal's and Berserk 5's (depth - 1) / 2 is the form not taken
+ */
+export const SE_SEARCH_ADD = 0;
 export const SE_TT_DEPTH = 3;
 export const SE_MARGIN = 51;
 export const SE_MARGIN_DIV = 16;
 /** a double extension at a non-PV node whose singular search fails low by more than 14 at its pawn 103, while the line has at most 10 */
 export const SE_DOUBLE_MARGIN = 70;
 export const SE_DOUBLE_MAX = 10;
-
+/**
+ * a double extension becomes a triple when the TT move is quiet and the singular search fails low by more than this, Stash
+ * 4f1ccc1's 120 at its pawn 103; 100000000 turns it off. Clockwork 641d9f5 and Stockfish lower the margin by the move's history instead
+ */
+export const SE_TRIPLE_MARGIN = 606;
+/**
+ * plies taken off a TT move that is not singular, where the TT score itself does not reach beta; 0 turns each off.
+ * SE_NEG_CUT: at a cut node, Weiss c735b8f; Berserk takes two.
+ * SE_NEG_ALPHA: when the TT score is at or below alpha, Ethereal f71ac47 and Berserk
+ */
+export const SE_NEG_CUT = 1;
+export const SE_NEG_ALPHA = 1;
 /** the check extension's plies, on the move in the parent (Stash f91e750); 0 turns it off, for the flag screen */
 export const CHECK_EXT = 1;
 

@@ -29,7 +29,7 @@ import {
   LMR_BASE, LMR_CONT_UPDATE, LMR_CUT_NODE, LMR_DEEPER, LMR_DIV, LMR_EARLY_STAGE, LMR_FAIL_HIGH, LMR_FAIL_HIGH_COUNT, LMR_HISTORY_DIV, LMR_HISTORY_MAX,
   LMR_HISTORY_STEP, LMR_MIN_DEPTH, LMR_NOISY_BASE, LMR_NOISY_DIV, LMR_NOISY_HISTORY_DIV, LMR_NOISY_MIN_DEPTH, LMR_NON_PV, LMR_NOT_IMPROVING,
   LMR_SHALLOWER, LMR_TT_NOISY, MAT_EG, NMP_BASE, PAWN_HISTORY, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN, SE_DOUBLE_MAX, SE_MARGIN,
-  SE_MARGIN_DIV, SE_SEARCH_ADD, SE_TT_DEPTH, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA, RAZOR_DEPTH,
+  SE_MARGIN_DIV, SE_NEG_ALPHA, SE_NEG_CUT, SE_SEARCH_ADD, SE_TRIPLE_MARGIN, SE_TT_DEPTH, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA, RAZOR_DEPTH,
   RAZOR_MARGIN, RAZOR_QS_DEPTH, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, SEE_DEPTH, SEE_NOISY, SEE_QUIET,
 } from "./params";
 import { seeGe } from "./see";
@@ -440,9 +440,9 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       // Ratchet's guard: the count is of this move loop's children, not of the singular search's, which Clockwork keeps
       ssFailHigh[p + 1] = 0;
       if (sv < sBeta) {
-        // double extension, Stash f91e750 (its triple is left for the NNUE stage)
+        // double extension, Stash f91e750, and its triple for a quiet TT move (Stash 4f1ccc1), which counts once against the line's limit
         if (!pvNode && sBeta - sv > SE_DOUBLE_MARGIN && ssDouble[p + SS] <= SE_DOUBLE_MAX) {
-          ext = 2;
+          ext = !tNoisy && sBeta - sv > SE_TRIPLE_MARGIN ? 3 : 2;
           ssDouble[p + SS]++;
         } else ext = 1;
       } else if (sBeta >= beta) {
@@ -451,6 +451,12 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       } else if (tScore >= beta) {
         // negative extension
         ext = -1;
+      } else if (cutNode) {
+        // another move does as well at a node expected to cut, Weiss c735b8f
+        ext = -SE_NEG_CUT;
+      } else if (tScore <= alpha) {
+        // another move does as well and the TT move is not expected to raise alpha, Ethereal f71ac47
+        ext = -SE_NEG_ALPHA;
       }
     }
 
