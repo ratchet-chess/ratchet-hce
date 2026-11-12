@@ -15,13 +15,16 @@ import { KING_ATT, KNIGHT_ATT, bishopAttacks, bit, rookAttacks } from "../../cor
 import { S, egOf, mgOf } from "./eval";
 import {
   BEHIND_BISHOP_EG, BEHIND_BISHOP_MG, BEHIND_KNIGHT_EG, BEHIND_KNIGHT_MG, BISHOP_LONG_EG, BISHOP_LONG_MG, BISHOP_PAIR_EG, BISHOP_PAIR_MG,
-  BISHOP_PAWNS_EG, BISHOP_PAWNS_MG, BISHOP_RAMMED_EG, BISHOP_RAMMED_MG, FAR_KNIGHT_EG, FAR_KNIGHT_MG, MOB_BISHOP_EG, MOB_BISHOP_MG,
+  BISHOP_PAWNS_EG, BISHOP_PAWNS_MG, BISHOP_RAMMED_EG, BISHOP_RAMMED_MG, FAR_KNIGHT_EG, FAR_KNIGHT_MG, FLANK_ATTACK_EG, FLANK_ATTACK_MG,
+  MOB_BISHOP_EG, MOB_BISHOP_MG,
   MOB_KNIGHT_EG, MOB_KNIGHT_MG, MOB_QUEEN_EG, MOB_QUEEN_MG, MOB_ROOK_EG, MOB_ROOK_MG, OUTPOST_BISHOP_EG, OUTPOST_BISHOP_MG,
   OUTPOST_KNIGHT_EG, OUTPOST_KNIGHT_MG, PASSED_ADVANCE_EG, PASSED_ADVANCE_MG, PASSED_ROOK_BEHIND_EG, PASSED_ROOK_BEHIND_MG,
   PASSED_SAFE_PATH_EG, PASSED_SAFE_PATH_MG, ROOK_BURIED_EG, ROOK_BURIED_MG, ROOK_FILE_EG, ROOK_FILE_MG, ROOK_QUEEN_FILE_EG, ROOK_QUEEN_FILE_MG,
   ROOK_TRAPPED_EG, ROOK_TRAPPED_MG, SAFETY_ATTACK_EG, SAFETY_ATTACK_MG, SAFETY_BISHOP_EG, SAFETY_BISHOP_MG, SAFETY_CHECK_BISHOP_EG,
   SAFETY_CHECK_BISHOP_MG, SAFETY_CHECK_KNIGHT_EG, SAFETY_CHECK_KNIGHT_MG, SAFETY_CHECK_QUEEN_EG, SAFETY_CHECK_QUEEN_MG, SAFETY_CHECK_ROOK_EG,
-  SAFETY_CHECK_ROOK_MG, SAFETY_KNIGHT_EG, SAFETY_KNIGHT_MG, SAFETY_NO_QUEEN_EG, SAFETY_NO_QUEEN_MG, SAFETY_OFFSET_EG, SAFETY_OFFSET_MG,
+  SAFETY_CHECK_ROOK_MG, SAFETY_FLANK_ATTACK2_EG, SAFETY_FLANK_ATTACK2_MG, SAFETY_FLANK_ATTACK_EG, SAFETY_FLANK_ATTACK_MG,
+  SAFETY_FLANK_DEFENSE2_EG, SAFETY_FLANK_DEFENSE2_MG, SAFETY_FLANK_DEFENSE_EG, SAFETY_FLANK_DEFENSE_MG,
+  SAFETY_KNIGHT_EG, SAFETY_KNIGHT_MG, SAFETY_NO_QUEEN_EG, SAFETY_NO_QUEEN_MG, SAFETY_OFFSET_EG, SAFETY_OFFSET_MG,
   SAFETY_QUEEN_EG, SAFETY_QUEEN_MG, SAFETY_ROOK_EG, SAFETY_ROOK_MG, SAFETY_UNSAFE_EG, SAFETY_UNSAFE_MG, SAFETY_WEAK_EG, SAFETY_WEAK_MG,
   THREAT_MINOR_BY_KING_EG, THREAT_MINOR_BY_KING_MG, THREAT_MINOR_BY_MAJOR_EG, THREAT_MINOR_BY_MAJOR_MG, THREAT_MINOR_BY_MINOR_EG,
   THREAT_MINOR_BY_MINOR_MG, THREAT_MINOR_BY_PAWN_EG, THREAT_MINOR_BY_PAWN_MG, THREAT_OVERLOADED_EG, THREAT_OVERLOADED_MG, THREAT_PUSH_EG,
@@ -40,12 +43,24 @@ const LONG_DIAGONALS: u64 = 0x8142241818244281;
 
 /** by color and square: the king's area, Ethereal's kingAreaMasks: its moves, its square and the rank ahead, a file wider on the edge */
 const KING_AREA = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 128));
+/**
+ * by color and its king's file: the king's flank, files a to d, c to f or e to h, on the color's first five ranks
+ * (Clockwork king_flank, Sirius kingFlanks). Not taken: Stockfish 11's KingFlank, three files wide for a king on
+ * an edge file.
+ */
+const KING_FLANK = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 16));
 
 /** the safety sum's divisors, Ethereal's 720 and 20: the square's scales by the seeds' conversion, so its output converts too */
 const KS_DIV_MG = 3512;
 const KS_DIV_EG = 20;
 
 export function initPieces(): void {
+  for (let f = 0; f < 8; f++) {
+    const first = f <= 2 ? 0 : f <= 4 ? 2 : 4;
+    const files = (FILE_A | (FILE_A << 1) | (FILE_A << 2) | (FILE_A << 3)) << <u64>first;
+    KING_FLANK[f] = files & 0x000000ffffffffff;
+    KING_FLANK[8 + f] = files & 0xffffffffff000000;
+  }
   for (let s = 0; s < 64; s++) {
     const around = KING_ATT[s] | bit(s);
     let w = around | (KING_ATT[s] << 8);
@@ -257,18 +272,25 @@ export let kingSafetyEg = 0;
  * The penalty on a color's king, its own view, added to kingSafetyMg and
  * kingSafetyEg: Ethereal 12.75 evaluateKings's sum, without its count rescale, and
  * Stash 37's unsafe checks. It counts from two attackers, or one with an enemy queen.
+ * The king's flank adds four counts to the sum (Clockwork bedb1e8) and returns a
+ * penalty that needs no attacker on the area, packed, the color's own view
+ * (Stockfish 11 FlankAttacks).
  */
-@inline function kingSafety(us: i32, occ: u64): void {
+@inline function kingSafety(us: i32, occ: u64): i32 {
   const them = us ^ 1;
   const o = us << 3;
   const t = them << 3;
   const enemyQueens = bb[t | QUEEN];
-  if (unchecked(zoneAttackers[us]) <= 1 - <i32>popcnt(enemyQueens)) return;
   const kingSq = <i32>ctz(bb[o | KING]);
   const ours1 = unchecked(attacked[us]);
   const ours2 = unchecked(attacked2[us]);
   const theirs1 = unchecked(attacked[them]);
   const theirs2 = unchecked(attacked2[them]);
+  const flank = unchecked(KING_FLANK[o + (kingSq & 7)]);
+  const flankAttacks = <i32>popcnt(theirs1 & flank);
+  const flankAttacks2 = <i32>popcnt(theirs2 & flank);
+  const flankValue = -S(FLANK_ATTACK_MG, FLANK_ATTACK_EG) * (flankAttacks + flankAttacks2);
+  if (unchecked(zoneAttackers[us]) <= 1 - <i32>popcnt(enemyQueens)) return flankValue;
   const weak = theirs1 & ~ours2 & (~ours1 | unchecked(attackedBy[o | QUEEN]) | unchecked(attackedBy[o | KING]));
   const safe = ~bb[t] & (~ours1 | (weak & theirs2));
   const bishopRays = bishopAttacks(kingSq, occ);
@@ -287,6 +309,9 @@ export let kingSafetyEg = 0;
   sum += S(SAFETY_CHECK_BISHOP_MG, SAFETY_CHECK_BISHOP_EG) * <i32>popcnt(bishopChecks & safe);
   sum += S(SAFETY_CHECK_KNIGHT_MG, SAFETY_CHECK_KNIGHT_EG) * <i32>popcnt(knightChecks & safe);
   sum += S(SAFETY_UNSAFE_MG, SAFETY_UNSAFE_EG) * <i32>popcnt((knightChecks | bishopChecks | rookChecks | queenChecks) & ~safe);
+  sum += S(SAFETY_FLANK_ATTACK_MG, SAFETY_FLANK_ATTACK_EG) * flankAttacks + S(SAFETY_FLANK_ATTACK2_MG, SAFETY_FLANK_ATTACK2_EG) * flankAttacks2;
+  sum += S(SAFETY_FLANK_DEFENSE_MG, SAFETY_FLANK_DEFENSE_EG) * <i32>popcnt(ours1 & flank);
+  sum += S(SAFETY_FLANK_DEFENSE2_MG, SAFETY_FLANK_DEFENSE2_EG) * <i32>popcnt(ours2 & flank);
 
   const mg = mgOf(sum);
   const eg = egOf(sum);
@@ -294,6 +319,7 @@ export let kingSafetyEg = 0;
   const penaltyEg = -max(eg, 0) / KS_DIV_EG;
   kingSafetyMg += us == 0 ? penaltyMg : -penaltyMg;
   kingSafetyEg += us == 0 ? penaltyEg : -penaltyEg;
+  return flankValue;
 }
 
 // ---------------------------------------------------------------- passed pawns
@@ -385,7 +411,6 @@ export function pieceTerms(): i32 {
   v += threats(0, occ) - threats(1, occ);
   kingSafetyMg = 0;
   kingSafetyEg = 0;
-  kingSafety(0, occ);
-  kingSafety(1, occ);
+  v += kingSafety(0, occ) - kingSafety(1, occ);
   return v;
 }

@@ -1188,6 +1188,96 @@
    ]
   },
   {
+   "name": "SAFETY_FLANK_ATTACK_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_FLANK_ATTACK_MG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_FLANK_ATTACK_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_FLANK_ATTACK_EG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_FLANK_ATTACK2_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_FLANK_ATTACK2_MG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_FLANK_ATTACK2_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_FLANK_ATTACK2_EG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_FLANK_DEFENSE_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_FLANK_DEFENSE_MG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_FLANK_DEFENSE_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_FLANK_DEFENSE_EG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_FLANK_DEFENSE2_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_FLANK_DEFENSE2_MG"
+    }
+   ]
+  },
+  {
+   "name": "SAFETY_FLANK_DEFENSE2_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "SAFETY_FLANK_DEFENSE2_EG"
+    }
+   ]
+  },
+  {
+   "name": "FLANK_ATTACK_MG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "FLANK_ATTACK_MG"
+    }
+   ]
+  },
+  {
+   "name": "FLANK_ATTACK_EG",
+   "sources": [
+    {
+     "file": "params.ts",
+     "symbol": "FLANK_ATTACK_EG"
+    }
+   ]
+  },
+  {
    "name": "PASSED_ADVANCE_MG",
    "size": 32,
    "layout": "count",

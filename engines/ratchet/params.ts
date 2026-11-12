@@ -702,6 +702,29 @@ export const SAFETY_UNSAFE_EG = 102;
 export const SAFETY_OFFSET_MG = -149;
 export const SAFETY_OFFSET_EG = -188;
 
+// The king's flank: its wing, four files wide, on its side's first five ranks (pieces.ts KING_FLANK). 0 turns a value off.
+// Values: fit alone with every other value fixed, results/tuning.md, 2026-11-12.
+/**
+ * per flank square the enemy attacks, and per one it attacks twice, in the safety sum; Clockwork bedb1e8's four
+ * weights in its sum, which Sirius holds too. Not taken: Stockfish 11's one count, squared, inside its king
+ * danger, since this sum is squared whole.
+ */
+export const SAFETY_FLANK_ATTACK_MG = 26;
+export const SAFETY_FLANK_ATTACK_EG = -4;
+export const SAFETY_FLANK_ATTACK2_MG = 34;
+export const SAFETY_FLANK_ATTACK2_EG = -8;
+/** per flank square the king's side defends, and per one it defends twice */
+export const SAFETY_FLANK_DEFENSE_MG = -9;
+export const SAFETY_FLANK_DEFENSE_EG = -4;
+export const SAFETY_FLANK_DEFENSE2_MG = -25;
+export const SAFETY_FLANK_DEFENSE2_EG = 32;
+/**
+ * a penalty outside the sum, so it counts before two attackers reach the king's area: per attacked flank square,
+ * with a square attacked twice counted twice; Stockfish 11's FlankAttacks. The fit put its middlegame half at 0.
+ */
+export const FLANK_ATTACK_MG = 0;
+export const FLANK_ATTACK_EG = -8;
+
 // Passed pawns outside the king-pawn table, Ethereal 12.75 and Weiss c735b8f.
 /** by [can advance][safe to advance][rank]; each cell is Ethereal's less its blocked and unsafe cell, since pawns.ts has the rank's base value */
 export const PASSED_ADVANCE_MG: StaticArray<i32> = [
