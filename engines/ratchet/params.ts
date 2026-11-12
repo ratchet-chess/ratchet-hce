@@ -237,12 +237,38 @@ export const NMP_EVAL_MAX = 3;
  * node, as Ethereal v12.75 and Weiss 2.0 do.
  */
 export const NMP_CUT_NODE = 1;
+/**
+ * The null move needs the eval at or above beta by this much: Stash 8546bfe's 30 at its pawn 103, as Clockwork 212fb9e
+ * and Sirius also ask. 0 gives the plain test, eval >= beta.
+ */
+export const NMP_EVAL_MARGIN = 151;
+/**
+ * 1: the null move also needs the static eval at or above beta + NMP_STATIC_BASE - NMP_STATIC_PER * depth, Weiss ac11d26
+ * and 6189645: 138 and 13 at its pawn 104, a gate that eases with depth (Sirius holds the same form). 0 turns it off.
+ * Stockfish 11's gate also eases when improving, the form not taken.
+ */
+export const NMP_STATIC = 1;
+export const NMP_STATIC_BASE = 690;
+export const NMP_STATIC_PER = 65;
 
 /**
  * 1: at a node not expected to cut, the table cuts on a fail low only (Ethereal 311d110, Berserk d7e1f05); 0 turns it off.
  * Stockfish 43e100ae's form, the node type equal to the bound's side up to a depth, is not taken.
  */
 export const TT_CUT_NODE = 1;
+/**
+ * 1: a result for a key the table already holds overwrites an entry left by an earlier search, however deep that entry is
+ * (Berserk fe1363a, Igel 07f86c2). 0 keeps a deeper entry of any age against a result that is not exact. A probe does
+ * not refresh an entry's age, as in Berserk: with a refresh, the entry a node stores over would always be of this search.
+ */
+export const TT_AGE_STORE = 1;
+/**
+ * A draw by repetition or the fifty-move rule scores +DRAW_JITTER or -DRAW_JITTER by a bit of the node count, so drawn
+ * lines do not all look equal to the search: Stash 767fdb1's (nodes & 2) - 1 at its pawn 103, as in Ethereal 37ccbfe
+ * and Stockfish 97d2cc9a. 0 scores every draw 0. Weiss e9021fb's 8 - (nodes & 7) leans every draw toward the side to
+ * move, the form not taken.
+ */
+export const DRAW_JITTER = 5;
 
 /** ProbCut, Stash f91e750: depth >= 6, beta + 152 at its pawn 103, a capture's reduced search at depth - 4 */
 export const PC_DEPTH = 6;
@@ -322,6 +348,12 @@ export const LMR_MIN_DEPTH = 3;
 export const LMR_BASE = 768;
 export const LMR_DIV = 2304;
 export const LMR_NON_PV = 1024;
+/**
+ * 1: the non-PV term skips a node whose TT entry has the PV bit, a node that is or was on a PV (Berserk f05f9dc,
+ * Stockfish 70880b8e); qsearch then keeps the bit when it stores. 0 turns it off. Clockwork 04f2f0e takes a ply off at
+ * every such node and adds one when the TT score is at or below alpha, the form not taken.
+ */
+export const LMR_TT_PV = 1;
 export const LMR_NOT_IMPROVING = 1024;
 export const LMR_EARLY_STAGE = 1024;
 export const LMR_HISTORY_STEP = 1024;
@@ -417,6 +449,17 @@ export const HIST_BONUS_MAX = 2418;
 export const HIST_MALUS_MUL = 532;
 export const HIST_MALUS_SUB = 163;
 export const HIST_MALUS_MAX = 693;
+/**
+ * 1: a fail high, or a TT cut on a lower bound, takes the malus of depth + 1 from the continuation entries of the parent's
+ * move, when that move is quiet and was the first one played at its node (at a TT cut: the first or second). Stockfish 11's
+ * "extra penalty" (e51965aa, a2410227, 0f2df4e4). 0 turns it off. Stockfish also counts the parent's first killer.
+ */
+export const HIST_PRIOR_MALUS = 1;
+/**
+ * From this depth, or at any depth at a PV node, a node where no move raised alpha gives the bonus to the continuation
+ * entries of the parent's quiet move, which caused the fail low (Stockfish 8fd34d77; Stockfish 11's depth 3). 0 turns it off.
+ */
+export const HIST_PRIOR_BONUS_DEPTH = 3;
 
 /** correction history, Stash 302136d, dcc25ed, ba73642 and ea9fd72: each table's entry within 32 at its pawn 103; an update weighs 1 + depth, at most 16, of 256 */
 export const CORR_MAX = 161;

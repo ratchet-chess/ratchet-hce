@@ -25,10 +25,10 @@ import {
   quietScore, resumeAfterTT, selectBest, victimOf,
 } from "./movepick";
 import {
-  ASP_DELTA, ASP_DEPTH, CHECK_EXT, CONT6, CORR_CONT, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HIST_DEEP_MARGIN, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_COUNT, LMP_DEPTH, LMR_ALPHA_RAISE,
+  ASP_DELTA, ASP_DEPTH, CHECK_EXT, CONT6, CORR_CONT, DRAW_JITTER, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HIST_DEEP_MARGIN, HIST_PRIOR_BONUS_DEPTH, HIST_PRIOR_MALUS, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_COUNT, LMP_DEPTH, LMR_ALPHA_RAISE,
   LMR_BASE, LMR_CONT_UPDATE, LMR_CUT_NODE, LMR_DEEPER, LMR_DIV, LMR_EARLY_STAGE, LMR_FAIL_HIGH, LMR_FAIL_HIGH_COUNT, LMR_HISTORY_DIV, LMR_HISTORY_MAX,
   LMR_HISTORY_STEP, LMR_MIN_DEPTH, LMR_NOISY_BASE, LMR_NOISY_DIV, LMR_NOISY_HISTORY_DIV, LMR_NOISY_MIN_DEPTH, LMR_NON_PV, LMR_NOT_IMPROVING,
-  LMR_SHALLOWER, LMR_TT_NOISY, MAT_EG, NF_DEPTH, NF_MARGIN, NMP_BASE, NMP_CUT_NODE, PAWN_HISTORY, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN,
+  LMR_SHALLOWER, LMR_TT_NOISY, LMR_TT_PV, MAT_EG, NF_DEPTH, NF_MARGIN, NMP_BASE, NMP_CUT_NODE, NMP_EVAL_MARGIN, NMP_STATIC, NMP_STATIC_BASE, NMP_STATIC_PER, PAWN_HISTORY, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN,
   SE_DOUBLE_MAX, SE_MARGIN, SE_MARGIN_DIV, SE_NEG_ALPHA, SE_NEG_CUT, SE_SEARCH_ADD, SE_TRIPLE_MARGIN, SE_TT_DEPTH, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA,
   QS_EVASIONS, QS_SEE, RAZOR_DEPTH, RAZOR_DROP, RAZOR_MARGIN, RAZOR_QS_DEPTH, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, SEE_DEPTH, SEE_NOISY, SEE_QUIET, TT_CUT_NODE,
 } from "./params";
@@ -64,6 +64,8 @@ const ssStatic = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_P
 const ssRaw = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + SS + 1)));
 /** double extensions on the line to a ply, Stash f91e750 double_extensions */
 const ssDouble = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + SS + 1)));
+/** per ply, the count of moves played at the node when its current move is quiet, else 0: what the child reads of its parent's move */
+const ssQuietCount = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + SS + 1)));
 /** how many of a ply's nodes have failed high since their parent's move loop began; a node reads its children's count (Clockwork 641d9f5 fail_high_count) */
 const ssFailHigh = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + 2)));
 /** the move a ply's singular search leaves out, 0 for none */
@@ -197,6 +199,19 @@ function rewardCont(pt: i32, cm: i32, fm: i32, f4: i32, f6: i32, bonus: i32): vo
   if (f6 >= 0) gravityFrom(contHist, f6 + pt, base, bonus);
 }
 
+/**
+ * moves the continuation entries of the parent's move by `bonus`: the rows are the moves 1, 2, 4 and 6 plies before
+ * that move (Stockfish 11 update_continuation_histories on ss-1). The caller has checked that the parent's move is quiet.
+ */
+function rewardPrior(p: i32, bonus: i32): void {
+  rewardCont(ssCont[p + SS - 1] >> 10, ssCont[p + SS - 2], ssCont[p + SS - 3], ssCont[p + SS - 5], CONT6 != 0 ? ssCont[p + SS - 7] : -1, bonus);
+}
+
+/** a draw's score, DRAW_JITTER above or below zero by a bit of the node count (Stash worker_draw_score) */
+@inline function drawScore(): i32 {
+  return DRAW_JITTER == 0 ? 0 : (nodeCount & 2) != 0 ? DRAW_JITTER : -DRAW_JITTER;
+}
+
 /** the last check test made after a move, keyed by the position, so the child need not repeat it */
 let knownCheckKey: u64 = 0;
 let knownCheck = false;
@@ -242,7 +257,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
 
   if (!root) {
     // Ratchet's guard: a fifty-move draw is returned before a mate on the hundredth ply is found
-    if (halfmove >= 100 || isRepetition()) return 0;
+    if (halfmove >= 100 || isRepetition()) return drawScore();
     if (p >= PLY_GUARD) return inCheck() ? 0 : evaluate();
     // mate distance pruning (Fruit 1.0)
     alpha = max(alpha, -MATE + p);
@@ -274,6 +289,9 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
           rewardQuiet(cutMove, bonusAt(depth), p);
           killers[p] = cutMove;
         }
+        // the parent's early quiet move is refuted from the table, Stockfish 11
+        const prior = ssQuietCount[p + SS - 1];
+        if (HIST_PRIOR_MALUS != 0 && prior >= 1 && prior <= 2) rewardPrior(p, -malusAt(depth + 1));
       }
       return tScore;
     }
@@ -322,8 +340,9 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       excl == 0 &&
       (NMP_CUT_NODE == 0 || cutNode) &&
       depth >= NMP_DEPTH &&
-      eval >= beta &&
+      eval >= beta + NMP_EVAL_MARGIN &&
       eval >= staticEval &&
+      (NMP_STATIC == 0 || staticEval >= beta + NMP_STATIC_BASE - NMP_STATIC_PER * depth) &&
       ssMove[p + SS - 1] != NULL_MOVE &&
       ssMove[p + SS - 2] != NULL_MOVE &&
       hasPieces()
@@ -331,6 +350,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       const r = NMP_BASE + depth / NMP_DEPTH_DIV + min(NMP_EVAL_MAX, (eval - beta) / NMP_EVAL_DIV);
       ssMove[p + SS] = NULL_MOVE;
       ssCont[p + SS] = -1;
+      ssQuietCount[p + SS] = 0;
       doNull();
       const v = -search(-beta, -beta + 1, depth - r, !cutNode);
       undoNull();
@@ -355,6 +375,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       if (m == excl || !seeGe(m, bar)) continue;
       ssMove[p + SS] = m;
       ssCont[p + SS] = pieceTo(m) << 10;
+      ssQuietCount[p + SS] = 0;
       doMove(m);
       let v = -qsearch(-pcBeta, -pcBeta + 1);
       if (v >= pcBeta) v = -search(-pcBeta, -pcBeta + 1, depth - PC_REDUCTION, !cutNode);
@@ -480,6 +501,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     const before = nodeCount;
     doMove(m);
     played++;
+    ssQuietCount[p + SS] = noisy ? 0 : played;
     // the check extension, on the move in the parent, under the same limits
     if (mayExtend && !singular) {
       knownCheck = inCheck();
@@ -510,7 +532,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
           if (tNoisy) sum += LMR_TT_NOISY;
           sum -= LMR_HISTORY_STEP * max(-LMR_HISTORY_MAX, min(LMR_HISTORY_MAX, hist / LMR_HISTORY_DIV));
         }
-        if (!pvNode) sum += LMR_NON_PV;
+        // a node that is or was on a PV is spared the non-PV term, Berserk f05f9dc
+        if (!pvNode && !(LMR_TT_PV != 0 && tPv)) sum += LMR_NON_PV;
         if (!improving) sum += LMR_NOT_IMPROVING;
         if (cutNode) sum += LMR_CUT_NODE;
         // this node's children keep failing high, Clockwork 641d9f5; Stockfish a32d2086 counts over the parent's whole subtree
@@ -582,7 +605,14 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   // with its one move left out, a node with no other move fails low (Stash f91e750)
   if (played == 0) return excl ? alpha : check ? -MATE + p : 0;
   // a cut far above beta counts as one from a ply deeper, Clockwork 641d9f5; Stockfish 11 raises the bonus alone
-  if (best >= beta) updateHistories(bestMove, depth, depth + (best - beta >= HIST_DEEP_MARGIN ? 1 : 0), p, quiets, captures);
+  if (best >= beta) {
+    updateHistories(bestMove, depth, depth + (best - beta >= HIST_DEEP_MARGIN ? 1 : 0), p, quiets, captures);
+    // the parent's first move, a quiet, is refuted here, Stockfish 11
+    if (HIST_PRIOR_MALUS != 0 && ssQuietCount[p + SS - 1] == 1) rewardPrior(p, -malusAt(depth + 1));
+  } else if (!bestMove && HIST_PRIOR_BONUS_DEPTH != 0 && (depth >= HIST_PRIOR_BONUS_DEPTH || pvNode) && ssQuietCount[p + SS - 1] != 0) {
+    // no move raised alpha: the parent's quiet move caused the fail low, Stockfish 8fd34d77
+    rewardPrior(p, bonusAt(depth));
+  }
   const bound = best >= beta ? BOUND_LOWER : bestMove ? BOUND_EXACT : BOUND_UPPER;
   // correction history, Stash 302136d: not in check, no noisy best move, and the bound says the eval was wrong in that direction
   if (
@@ -618,7 +648,7 @@ function qsearch(alpha: i32, beta: i32): i32 {
   checkStop();
   if (stopped) return 0;
   const pvNode = beta - alpha > 1;
-  if (halfmove >= 100 || isRepetition()) return 0;
+  if (halfmove >= 100 || isRepetition()) return drawScore();
   const check = hash == knownCheckKey ? knownCheck : inCheck();
   if (p >= PLY_GUARD) return check ? 0 : evaluate();
 
@@ -627,9 +657,11 @@ function qsearch(alpha: i32, beta: i32): i32 {
   let tMove = 0;
   let tScore = 0;
   let tBound = 0;
+  let tPv = false;
   if (hit) {
     tScore = scoreFromTT(ttScore, p);
     tBound = ttBound;
+    tPv = LMR_TT_PV != 0 && ttPv;
     if (!pvNode && halfmove < 90 && boundCuts(tBound, tScore, alpha, beta)) return tScore;
     tMove = fullMove(ttMove);
   }
@@ -690,7 +722,7 @@ function qsearch(alpha: i32, beta: i32): i32 {
       }
     }
   }
-  ttStore(key, bestMove, scoreToTT(best, p), raw, 0, best >= beta ? BOUND_LOWER : BOUND_UPPER, pvNode);
+  ttStore(key, bestMove, scoreToTT(best, p), raw, 0, best >= beta ? BOUND_LOWER : BOUND_UPPER, pvNode || tPv);
   return best;
 }
 
@@ -710,6 +742,7 @@ function startSearch(): void {
     ssStatic[i] = EVAL_NONE;
     ssRaw[i] = EVAL_NONE;
     ssDouble[i] = 0;
+    ssQuietCount[i] = 0;
   }
   for (let i = 0; i < MAX_PLY + 1; i++) excludedAt[i] = 0;
   for (let i = 0; i < MAX_PLY + 2; i++) ssFailHigh[i] = 0;

@@ -11,6 +11,7 @@
 import { FLAG_CASTLE, FLAG_DOUBLE, FLAG_EP, KING, PAWN, moveFrom, moveTo } from "../../core/constants";
 import { board, ep } from "../../core/position";
 import { isLegal } from "../../core/movegen";
+import { TT_AGE_STORE } from "./params";
 
 export const BOUND_UPPER = 1;
 export const BOUND_LOWER = 2;
@@ -101,7 +102,7 @@ export function ttStore(key: u64, move: i32, score: i32, rawEval: i32, depth: i3
     const e = b + <usize>i * ENTRY_BYTES;
     const flags = <i32>load<u8>(e, 9);
     if (load<u16>(e) == check && flags & 3) {
-      if (bound != BOUND_EXACT && depth < <i32>load<u8>(e, 8) - 2) return;
+      if (bound != BOUND_EXACT && depth < <i32>load<u8>(e, 8) - 2 && (TT_AGE_STORE == 0 || flags >> 3 == generation)) return;
       if (!move) move = <i32>load<u16>(e, 2);
       slot = e;
       break;
