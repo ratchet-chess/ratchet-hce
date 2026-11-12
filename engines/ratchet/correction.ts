@@ -7,10 +7,14 @@
  * The search adds the five entries to the raw eval; the TT keeps the raw one, so
  * a probe corrects it again with the tables as they stand.
  *
+ * A sixth table is by the last two moves (Clockwork e774be4): the continuation
+ * row of the move two plies back, then the piece and square of the last move.
+ * A null move or the root's edge on either ply leaves it out.
+ *
  * The tables last between moves of a game and are emptied by newGame; a fresh
  * go() empties them too, so a node signature starts clean.
  */
-import { CORR_MAX, CORR_WEIGHT_MAX } from "./params";
+import { CORR_CONT, CORR_MAX, CORR_WEIGHT_MAX } from "./params";
 import { majorKey, minorKey, nonPawnKey, pawnKey } from "./state";
 
 const SIZE = 16384;
@@ -23,8 +27,20 @@ const WEIGHT_SCALE = 256;
  */
 const corr = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 5 * 2 * SIZE));
 
+/** by the last two moves: a continuation row (piece and square, times 1024) plus the last move's piece and square */
+const contCorr = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 1024 * 1024));
+
 export function clearCorrection(): void {
   for (let i = 0; i < 5 * 2 * SIZE; i++) unchecked((corr[i] = 0));
+  if (CORR_CONT != 0) for (let i = 0; i < 1024 * 1024; i++) unchecked((contCorr[i] = 0));
+}
+
+/**
+ * the sixth table's entry for a node, or -1 for none: `fm` and `cm` are the continuation rows of the moves two plies and
+ * one ply back, -1 where there is no such move
+ */
+@inline export function contSlot(fm: i32, cm: i32): i32 {
+  return CORR_CONT != 0 && fm >= 0 && cm >= 0 ? fm + (cm >> 10) : -1;
 }
 
 @inline function slot(table: i32, stm: i32, key: u64): i32 {
@@ -32,8 +48,9 @@ export function clearCorrection(): void {
 }
 
 /** the summed correction for the side to move, in the engine's unit (Stash correction_hist_score, once per table) */
-@inline export function correction(stm: i32): i32 {
+@inline export function correction(stm: i32, cont: i32): i32 {
   return (
+    (cont >= 0 ? unchecked(contCorr[cont]) / GRAIN : 0) +
     unchecked(corr[slot(0, stm, pawnKey)]) / GRAIN +
     unchecked(corr[slot(1, stm, unchecked(nonPawnKey[0]))]) / GRAIN +
     unchecked(corr[slot(2, stm, unchecked(nonPawnKey[1]))]) / GRAIN +
@@ -43,17 +60,18 @@ export function clearCorrection(): void {
 }
 
 /** moves one entry toward `diff`, weighted by depth, within CORR_MAX (Stash correction_hist_update) */
-@inline function update(i: i32, w: i32, diff: i32): void {
-  const v = (unchecked(corr[i]) * (WEIGHT_SCALE - w) + diff * GRAIN * w) / WEIGHT_SCALE;
-  unchecked((corr[i] = max(-CORR_MAX * GRAIN, min(CORR_MAX * GRAIN, v))));
+@inline function update(table: StaticArray<i32>, i: i32, w: i32, diff: i32): void {
+  const v = (unchecked(table[i]) * (WEIGHT_SCALE - w) + diff * GRAIN * w) / WEIGHT_SCALE;
+  unchecked((table[i] = max(-CORR_MAX * GRAIN, min(CORR_MAX * GRAIN, v))));
 }
 
-/** moves the side to move's entry in every table toward `diff`, the score less the static eval */
-export function updateCorrection(stm: i32, depth: i32, diff: i32): void {
+/** moves the side to move's entry in every table toward `diff`, the score less the static eval; `cont` is contSlot's */
+export function updateCorrection(stm: i32, depth: i32, diff: i32, cont: i32): void {
   const w = min(CORR_WEIGHT_MAX, 1 + depth);
-  update(slot(0, stm, pawnKey), w, diff);
-  update(slot(1, stm, unchecked(nonPawnKey[0])), w, diff);
-  update(slot(2, stm, unchecked(nonPawnKey[1])), w, diff);
-  update(slot(3, stm, minorKey), w, diff);
-  update(slot(4, stm, majorKey), w, diff);
+  update(corr, slot(0, stm, pawnKey), w, diff);
+  update(corr, slot(1, stm, unchecked(nonPawnKey[0])), w, diff);
+  update(corr, slot(2, stm, unchecked(nonPawnKey[1])), w, diff);
+  update(corr, slot(3, stm, minorKey), w, diff);
+  update(corr, slot(4, stm, majorKey), w, diff);
+  if (cont >= 0) update(contCorr, cont, w, diff);
 }

@@ -1,7 +1,8 @@
 /**
  * The main search's staged move picker (Fruit 2.0's stages; Weiss and Clockwork's
  * order): the TT move, captures that pass SEE, the killer, quiets by history,
- * then the captures that failed SEE. The core generates legal moves only, so a
+ * then the captures that failed SEE. A queen promotion without a capture is
+ * picked among the captures. The core generates legal moves only, so a
  * stage's moves need no legality test; the TT move and the killer, which come
  * from elsewhere in the tree, are tested before they are picked.
  *
@@ -10,9 +11,9 @@
  */
 import { FLAG_EP, MAX_MOVES, MAX_PLY, PAWN, QUEEN, moveFrom, movePromo, moveTo } from "../../core/constants";
 import { generateCaptures, generateQuiets, isLegal } from "../../core/movegen";
-import { board, side } from "../../core/position";
+import { bb, board, side } from "../../core/position";
 import { butterfly, butterflyIndex, captureHist, contHist, pawnHist, pawnHistIndex, threatsAt } from "./history";
-import { GOOD_CAPTURE_DIV, MVV, PAWN_HISTORY } from "./params";
+import { GOOD_CAPTURE_DIV, MVV, PAWN_HISTORY, PROMO_NOISY } from "./params";
 import { seeGe } from "./see";
 
 export const STAGE_TT = 0;
@@ -26,6 +27,9 @@ export const STAGE_DONE = 7;
 
 /** a quiet promotion sorts first among quiets, an underpromotion last */
 const PROMO_SCORE = 1 << 20;
+/** the ranks a pawn promotes from, White's then Black's */
+const RANK_7: u64 = 0xff000000000000;
+const RANK_2: u64 = 0xff00;
 
 export const MOVES = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY * MAX_MOVES));
 export const SCORES = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY * MAX_MOVES));
@@ -38,6 +42,7 @@ const killerOf = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PL
 const cmOf = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
 const fmOf = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
 const f4Of = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
+const f6Of = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
 
 /** the stage that gave the last move picked */
 export let pickedStage = 0;
@@ -73,10 +78,11 @@ export function captureScore(m: i32): i32 {
 
 /**
  * a quiet's order: butterfly plus 1-, 2- and 4-ply continuation history (Stockfish
- * 10 score<QUIETS>) plus pawn history (Stockfish b0658f09, Weiss 20c95ce); `cm`, `fm`
- * and `f4` are -1 when there is no such move, and `threats` is the node's attacked squares
+ * 10 score<QUIETS>) plus the 6-ply (Clockwork 3dd022c) plus pawn history (Stockfish b0658f09,
+ * Weiss 20c95ce); `cm`, `fm`, `f4` and `f6` are -1 when there is no such move, and `threats` is
+ * the node's attacked squares
  */
-export function quietScore(m: i32, cm: i32, fm: i32, f4: i32, threats: u64): i32 {
+export function quietScore(m: i32, cm: i32, fm: i32, f4: i32, f6: i32, threats: u64): i32 {
   const promo = movePromo(m);
   if (promo) return promo == QUEEN ? PROMO_SCORE : -PROMO_SCORE;
   const pt = pieceTo(m);
@@ -85,16 +91,18 @@ export function quietScore(m: i32, cm: i32, fm: i32, f4: i32, threats: u64): i32
   if (cm >= 0) s += <i32>contHist[cm + pt];
   if (fm >= 0) s += <i32>contHist[fm + pt];
   if (f4 >= 0) s += <i32>contHist[f4 + pt];
+  if (f6 >= 0) s += <i32>contHist[f6 + pt];
   return s;
 }
 
-export function initPicker(ply: i32, ttMove: i32, killer: i32, cm: i32, fm: i32, f4: i32): void {
+export function initPicker(ply: i32, ttMove: i32, killer: i32, cm: i32, fm: i32, f4: i32, f6: i32): void {
   stage[ply] = ttMove ? STAGE_TT : STAGE_GEN_NOISY;
   ttOf[ply] = ttMove;
   killerOf[ply] = killer != ttMove ? killer : 0;
   cmOf[ply] = cm;
   fmOf[ply] = fm;
   f4Of[ply] = f4;
+  f6Of[ply] = f6;
 }
 
 /** moves the best-scored move of [from, to) to `from` */
@@ -103,8 +111,8 @@ export function initPicker(ply: i32, ttMove: i32, killer: i32, cm: i32, fm: i32,
  * the node at the same ply, and it starts while the TT move is the only move the
  * ply's picker has given, before it has generated any
  */
-export function resumeAfterTT(ply: i32, ttMove: i32, killer: i32, cm: i32, fm: i32, f4: i32): void {
-  initPicker(ply, ttMove, killer, cm, fm, f4);
+export function resumeAfterTT(ply: i32, ttMove: i32, killer: i32, cm: i32, fm: i32, f4: i32, f6: i32): void {
+  initPicker(ply, ttMove, killer, cm, fm, f4, f6);
   stage[ply] = STAGE_GEN_NOISY;
   pickedStage = STAGE_TT;
 }
@@ -140,7 +148,16 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
         return tt;
       }
       case STAGE_GEN_NOISY: {
-        const e = generateCaptures(MOVES, base);
+        let e = generateCaptures(MOVES, base);
+        // the core lists a queen promotion without a capture among the quiets; a pawn that can promote is rare, so the
+        // quiets are listed here only then, and those promotions are kept (Stockfish 10 make_promotions, Stash e1381ca)
+        if (PROMO_NOISY != 0 && (unchecked(bb[(side << 3) | PAWN]) & (side == 0 ? RANK_7 : RANK_2)) != 0) {
+          const q = generateQuiets(MOVES, e);
+          for (let i = e; i < q; i++) {
+            const m = unchecked(MOVES[i]);
+            if (movePromo(m) == QUEEN) unchecked((MOVES[e++] = m));
+          }
+        }
         for (let i = base; i < e; i++) unchecked((SCORES[i] = captureScore(MOVES[i])));
         cur[ply] = base;
         end[ply] = e;
@@ -192,8 +209,9 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
         const cm = cmOf[ply];
         const fm = fmOf[ply];
         const f4 = f4Of[ply];
+        const f6 = f6Of[ply];
         const threats = threatsAt(ply);
-        for (let i = from; i < e; i++) unchecked((SCORES[i] = quietScore(MOVES[i], cm, fm, f4, threats)));
+        for (let i = from; i < e; i++) unchecked((SCORES[i] = quietScore(MOVES[i], cm, fm, f4, f6, threats)));
         cur[ply] = from;
         end[ply] = e;
         stage[ply] = STAGE_QUIET;
@@ -208,7 +226,7 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
             selectBest(c, e);
             const m = unchecked(MOVES[c]);
             c++;
-            if (m == tt || m == k) continue;
+            if (m == tt || m == k || (PROMO_NOISY != 0 && movePromo(m) == QUEEN)) continue;
             cur[ply] = c;
             pickedStage = STAGE_QUIET;
             return m;

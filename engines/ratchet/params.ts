@@ -381,6 +381,17 @@ export const HIST_DEEP_MARGIN = 274;
 /** a capture is tried among the good ones if SEE >= -score / this, Clockwork 641d9f5's divisor 51 at its pawn 112 */
 export const GOOD_CAPTURE_DIV = 14;
 
+/**
+ * 1: a queen promotion without a capture is picked among the captures, as Stockfish 10 make_promotions and Stash e1381ca
+ * list it, so a node that skips its quiets still tries it; 0 leaves it first among the quiets
+ */
+export const PROMO_NOISY = 1;
+/**
+ * 1: the move six plies back orders quiets and takes their bonus, Clockwork 3dd022c; 0 turns it off. It stays out of the
+ * history sum that pruning and reductions read, as the 4-ply table does. Stockfish gives this table a smaller bonus, the form not taken
+ */
+export const CONT6 = 1;
+
 /** most valuable victim by piece type, Clockwork 641d9f5 score_move */
 export const MVV: StaticArray<i32> = [0, 800, 2400, 2400, 4800, 7200, 0];
 
@@ -409,6 +420,11 @@ export const HIST_MALUS_MAX = 693;
 
 /** correction history, Stash 302136d, dcc25ed, ba73642 and ea9fd72: each table's entry within 32 at its pawn 103; an update weighs 1 + depth, at most 16, of 256 */
 export const CORR_MAX = 161;
+/**
+ * 1: a sixth table, by the last two moves, corrects the static eval with the other five's weight and update,
+ * Clockwork e774be4; 0 turns it off. Weiss 3f9eb09 gives it its own divisor, the form not taken
+ */
+export const CORR_CONT = 1;
 export const CORR_WEIGHT_MAX = 16;
 
 // ---------------------------------------------------------------- time

@@ -17,7 +17,7 @@
 import { KING, MAX_MOVES, MAX_PLY, PAWN, movePromo } from "../../core/constants";
 import { generateCaptures, generateMoves } from "../../core/movegen";
 import { bb, halfmove, hash, inCheck, isRepetition, make, ply, side, unmake } from "../../core/position";
-import { correction, updateCorrection } from "./correction";
+import { contSlot, correction, updateCorrection } from "./correction";
 import { UNITS_PER_CP, evalCached } from "./eval";
 import { bonusAt, butterfly, butterflyIndex, captureHist, contHist, gravity, gravityFrom, killers, malusAt, rewardPawn, threatsAt } from "./history";
 import {
@@ -25,7 +25,7 @@ import {
   quietScore, resumeAfterTT, selectBest, victimOf,
 } from "./movepick";
 import {
-  ASP_DELTA, ASP_DEPTH, CHECK_EXT, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HIST_DEEP_MARGIN, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_COUNT, LMP_DEPTH, LMR_ALPHA_RAISE,
+  ASP_DELTA, ASP_DEPTH, CHECK_EXT, CONT6, CORR_CONT, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HIST_DEEP_MARGIN, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_COUNT, LMP_DEPTH, LMR_ALPHA_RAISE,
   LMR_BASE, LMR_CONT_UPDATE, LMR_CUT_NODE, LMR_DEEPER, LMR_DIV, LMR_EARLY_STAGE, LMR_FAIL_HIGH, LMR_FAIL_HIGH_COUNT, LMR_HISTORY_DIV, LMR_HISTORY_MAX,
   LMR_HISTORY_STEP, LMR_MIN_DEPTH, LMR_NOISY_BASE, LMR_NOISY_DIV, LMR_NOISY_HISTORY_DIV, LMR_NOISY_MIN_DEPTH, LMR_NON_PV, LMR_NOT_IMPROVING,
   LMR_SHALLOWER, LMR_TT_NOISY, MAT_EG, NF_DEPTH, NF_MARGIN, NMP_BASE, NMP_CUT_NODE, PAWN_HISTORY, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN,
@@ -52,8 +52,8 @@ const PLY_GUARD = MAX_PLY - 8;
 
 // ---------------------------------------------------------------- search stack
 
-/** the stack is indexed by ply + SS, so a node reads the four plies above the root */
-const SS = 4;
+/** the stack is indexed by ply + SS, so a node reads the six plies above the root */
+const SS = 6;
 /** the move made at a ply, NULL_MOVE for a null move, 0 above the root */
 const ssMove = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + SS + 1)));
 /** the continuation-history row of the move made at a ply, -1 for none */
@@ -172,20 +172,20 @@ export function hostScore(s: i32): i32 {
 }
 
 /**
- * moves a quiet's butterfly and 1-, 2- and 4-ply continuation history by `bonus`
- * (Stash 660df34 adds the 4-ply); each continuation entry decays against the
- * average of the three, a missing one counted as 0 (Stash 93a6d5f)
+ * moves a quiet's butterfly and 1-, 2-, 4- and 6-ply continuation history by `bonus`
+ * (Stash 660df34 adds the 4-ply, Clockwork 3dd022c the 6-ply); each continuation entry decays
+ * against the average of the first three, a missing one counted as 0 (Stash 93a6d5f)
  */
 function rewardQuiet(m: i32, bonus: i32, p: i32): void {
   const pt = pieceTo(m);
   gravity(butterfly, butterflyIndex(m, threatsAt(p)), bonus);
   // pawn history takes what the butterfly table takes, Weiss 20c95ce
   if (PAWN_HISTORY != 0) rewardPawn(pt, bonus);
-  rewardCont(pt, ssCont[p + SS - 1], ssCont[p + SS - 2], ssCont[p + SS - 4], bonus);
+  rewardCont(pt, ssCont[p + SS - 1], ssCont[p + SS - 2], ssCont[p + SS - 4], CONT6 != 0 ? ssCont[p + SS - 6] : -1, bonus);
 }
 
-/** the continuation part of rewardQuiet, for a piece and square after the moves 1, 2 and 4 plies back */
-function rewardCont(pt: i32, cm: i32, fm: i32, f4: i32, bonus: i32): void {
+/** the continuation part of rewardQuiet, for a piece and square after the moves 1, 2, 4 and 6 plies back */
+function rewardCont(pt: i32, cm: i32, fm: i32, f4: i32, f6: i32, bonus: i32): void {
   let base = 0;
   if (cm >= 0) base += <i32>contHist[cm + pt];
   if (fm >= 0) base += <i32>contHist[fm + pt];
@@ -194,6 +194,7 @@ function rewardCont(pt: i32, cm: i32, fm: i32, f4: i32, bonus: i32): void {
   if (cm >= 0) gravityFrom(contHist, cm + pt, base, bonus);
   if (fm >= 0) gravityFrom(contHist, fm + pt, base, bonus);
   if (f4 >= 0) gravityFrom(contHist, f4 + pt, base, bonus);
+  if (f6 >= 0) gravityFrom(contHist, f6 + pt, base, bonus);
 }
 
 /** the last check test made after a move, keyed by the position, so the child need not repeat it */
@@ -284,9 +285,10 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   let raw = EVAL_NONE;
   let eval = EVAL_NONE;
   let improving = false;
+  const corrCont = contSlot(ssCont[p + SS - 2], ssCont[p + SS - 1]);
   if (!check) {
     raw = hit && ttEval != EVAL_NONE ? ttEval : evaluate();
-    staticEval = raw + correction(side);
+    staticEval = raw + correction(side, corrCont);
     eval = staticEval;
     if (hit && (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > eval : tScore < eval))) eval = tScore;
     // improving, Alexandria 829daf4: against two plies up, else four, else true
@@ -371,8 +373,9 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   const cm = ssCont[p + SS - 1];
   const fm = ssCont[p + SS - 2];
   const f4 = ssCont[p + SS - 4];
+  const f6 = CONT6 != 0 ? ssCont[p + SS - 6] : -1;
   const killer = killers[p];
-  initPicker(p, tMove, killer, cm, fm, f4);
+  initPicker(p, tMove, killer, cm, fm, f4, f6);
   const tNoisy = tMove != 0 && isNoisy(tMove);
   ssFailHigh[p + 1] = 0;
   let best = -INF;
@@ -446,7 +449,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       excludedAt[p] = 0;
       if (stopped) return 0;
       // the singular search reran this ply: put back its picker and its stack entries
-      resumeAfterTT(p, tMove, killer, cm, fm, f4);
+      resumeAfterTT(p, tMove, killer, cm, fm, f4, f6);
       ssStatic[p + SS] = staticEval;
       ssRaw[p + SS] = raw;
       // Ratchet's guard: the count is of this move loop's children, not of the singular search's, which Clockwork keeps
@@ -533,8 +536,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
         v = -search(-alpha - 1, -alpha, newDepth, !cutNode);
         // a quiet's continuation history takes a re-search that failed low or high, Clockwork 641d9f5 and Weiss 95b0951
         if (reSearch && !noisy && LMR_CONT_UPDATE != 0 && !stopped) {
-          if (v <= alpha) rewardCont(pt, cm, fm, f4, -malusAt(newDepth));
-          else if (v >= beta) rewardCont(pt, cm, fm, f4, bonusAt(newDepth));
+          if (v <= alpha) rewardCont(pt, cm, fm, f4, f6, -malusAt(newDepth));
+          else if (v >= beta) rewardCont(pt, cm, fm, f4, f6, bonusAt(newDepth));
         }
       }
       if (pvNode && v > alpha && v < beta) v = -search(-beta, -alpha, newDepth, false);
@@ -587,7 +590,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     !(bestMove && isNoisy(bestMove)) &&
     !(bound == BOUND_LOWER && best <= staticEval) &&
     !(bound == BOUND_UPPER && best >= staticEval)
-  ) updateCorrection(side, depth, best - staticEval);
+  ) updateCorrection(side, depth, best - staticEval, corrCont);
   ttStore(key, bestMove, scoreToTT(best, p), raw, depth, bound, pvNode || tPv);
   return best;
 }
@@ -635,7 +638,7 @@ function qsearch(alpha: i32, beta: i32): i32 {
   let raw = EVAL_NONE;
   if (!check) {
     raw = hit && ttEval != EVAL_NONE ? ttEval : evaluate();
-    best = raw + correction(side);
+    best = raw + correction(side, contSlot(ssCont[p + SS - 2], ssCont[p + SS - 1]));
     if (hit && (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > best : tScore < best))) best = tScore;
     if (best >= beta) return best;
     if (best > alpha) alpha = best;
@@ -650,7 +653,7 @@ function qsearch(alpha: i32, beta: i32): i32 {
   const threats = check ? threatsAt(p) : 0;
   for (let i = base; i < end; i++) {
     const m = MOVES[i];
-    SCORES[i] = m == tMove ? 1 << 30 : isNoisy(m) ? captureScore(m) + (1 << 18) : quietScore(m, -1, -1, -1, threats);
+    SCORES[i] = m == tMove ? 1 << 30 : isNoisy(m) ? captureScore(m) + (1 << 18) : quietScore(m, -1, -1, -1, -1, threats);
   }
   let bestMove = 0;
   for (let i = base; i < end; i++) {
@@ -672,6 +675,8 @@ function qsearch(alpha: i32, beta: i32): i32 {
       // Weiss 95b0951, Clockwork d17b3cf: one evasion that is not mated answers the check, and the rest are held to qsearch's moves
       continue;
     }
+    // the main search's rows end at the horizon; the sixth correction table reads on through qsearch
+    if (CORR_CONT != 0) ssCont[p + SS] = pieceTo(m) << 10;
     doMove(m);
     const v = -qsearch(-beta, -alpha);
     undoMove(m);
