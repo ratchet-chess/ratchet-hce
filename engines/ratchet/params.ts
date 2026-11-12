@@ -480,6 +480,8 @@ export const TM_MTG_SHARE = 0.7;
 export const TM_MTG_CAP = 50;
 /** the increments counted ahead (Weiss's 50) */
 export const TM_INC_MOVES = 50.0;
+/** with an increment under the overhead, the moves counted ahead per millisecond of clock: Stockfish 23493de0's one per 20 ms, so the count falls under one second */
+export const TM_INC_MOVES_PER_MS = 0.05;
 /** hard limit: 5 times the soft one, at most 0.8 of the clock (Weiss) */
 export const TM_HARD_MUL = 5.0;
 export const TM_HARD_CAP = 0.8;

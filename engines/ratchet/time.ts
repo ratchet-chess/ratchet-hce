@@ -10,11 +10,17 @@
  * long the best move has held is left out, as in Polaris and Weiss: its first row
  * could not act behind `uncertain`, and the node share already reads a settled move.
  *
+ * In sudden death with an increment under the overhead, the moves counted ahead fall
+ * with a low clock (Stockfish 23493de0, one move per 20 ms). Two forms are rejected.
+ * Stockfish applies the fall at every increment, which also drops the increments counted
+ * and so changes play on a clock that pays its overhead. Ethereal's `tm_init` takes the
+ * overhead once from the clock, which changes the limits on every clock.
+ *
  * Every limit is in the host clock's milliseconds. Under the node clock the host
  * counts nodes as time, so these rules stay deterministic there.
  */
 import {
-  TM_HARD_CAP, TM_HARD_MUL, TM_INC_MOVES, TM_MTG_CAP, TM_MTG_SHARE, TM_NODE_BASE, TM_NODE_MUL, TM_ONE_MOVE, TM_OVERHEAD, TM_SHARE,
+  TM_HARD_CAP, TM_HARD_MUL, TM_INC_MOVES, TM_INC_MOVES_PER_MS, TM_MTG_CAP, TM_MTG_SHARE, TM_NODE_BASE, TM_NODE_MUL, TM_ONE_MOVE, TM_OVERHEAD, TM_SHARE,
   TM_FALL_BASE, TM_FALL_MAX, TM_FALL_MIN, TM_FALL_PER, TM_SHARE_CAP,
 } from "./params";
 
@@ -51,7 +57,11 @@ export function startClock(timeMs: f64, incMs: f64, movesToGo: i32, moveTimeMs: 
       const left = max<f64>(1, timeMs + mtg * (inc - TM_OVERHEAD));
       soft = min<f64>(left * TM_MTG_SHARE / mtg, TM_HARD_CAP * timeMs);
     } else {
-      const left = max<f64>(1, timeMs + TM_INC_MOVES * (inc - TM_OVERHEAD));
+      // Each move counted ahead brings one increment and costs one overhead. An increment under
+      // the overhead leaves a net cost, and at the full count that cost is the whole of a low clock.
+      // So the count then falls with the clock, and the cost is at most half of the clock.
+      const ahead = inc < TM_OVERHEAD ? min<f64>(TM_INC_MOVES, timeMs * TM_INC_MOVES_PER_MS) : TM_INC_MOVES;
+      const left = max<f64>(1, timeMs + ahead * (inc - TM_OVERHEAD));
       soft = min<f64>(left * TM_SHARE, TM_SHARE_CAP * timeMs);
     }
     hard = max<f64>(1, min<f64>(TM_HARD_MUL * soft, TM_HARD_CAP * timeMs - TM_OVERHEAD));
