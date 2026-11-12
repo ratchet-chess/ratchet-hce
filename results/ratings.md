@@ -45,6 +45,7 @@ each rated version keeps its row.
 | ratchet-0.3.6 | 3414 | 14 | 800 | 51.7% | xiphos-0.6, perseus-1.1, stash-37.0, blackcore-6.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 45dd228 | 2026-11-11 |
 | ratchet-0.3.7 | 3424 | 13 | 800 | 50.6% | perseus-1.1, stash-37.0, ethereal-12.75, blackcore-6.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 5e3ffab | 2026-11-11 |
 | ratchet-0.3.9 | 3436 | 14 | 800 | 52.4% | perseus-1.1, stash-37.0, ethereal-12.75, blackcore-6.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | a05adac | 2026-11-11 |
+| ratchet-0.3.11 | 3441 | 13 | 800 | 53.2% | perseus-1.1, stash-37.0, ethereal-12.75, blackcore-6.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 9b527cd | 2026-11-12 |
 | sargon-1978@1 | 582 | 95 | 100 | 9.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
 | sargon-1978@2 | 785 | 66 | 100 | 21.5% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
 | sargon-1978@3 | 860 | 61 | 100 | 28.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
