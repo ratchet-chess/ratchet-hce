@@ -329,6 +329,11 @@ export const HP_LIMIT: StaticArray<i32> = [-1000, -2500];
 export const SEE_DEPTH = 9;
 export const SEE_QUIET = 312;
 export const SEE_NOISY = 93;
+/**
+ * a quiet's bar moves by its history, in 1/1024 of SEE's unit per point: Clockwork f236181's 17 at its pawn 100, on a sum of
+ * tables with this limit; 0 turns it off. Stockfish moves a capture's bar by its capture history, the form not taken
+ */
+export const SEE_HISTORY = 68;
 
 /**
  * futility for the bad captures, Clockwork 662c568: at depth <= 8, not in check, once the picker reaches them, static eval +
