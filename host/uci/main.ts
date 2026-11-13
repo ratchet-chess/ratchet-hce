@@ -14,6 +14,10 @@
  * `eval` (not UCI; Stockfish has one) prints `eval cp <n>`: the release's static
  * eval of the current position for the side to move, as the host reports it.
  *
+ * `debug on` makes the own engine report its time use after each search, as
+ * `info string time ...`: the rule that ended the search, the time taken, the two
+ * limits and the soft limit's factors (engines/ratchet/time.ts timeTrace).
+ *
  * --level N sets the level of every game, for a release whose original has
  * levels and no clock, such as Sargon (1978): one level per match, as its
  * operator chose one, so its time controls are ignored.
@@ -134,6 +138,9 @@ for await (const raw of rl) {
       break;
     case "eval":
       send({ cmd: "eval" });
+      break;
+    case "debug":
+      send({ cmd: "debug", on: tokens[1] !== "off" });
       break;
     case "stop":
       Atomics.store(stop, 0, 1);

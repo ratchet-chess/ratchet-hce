@@ -14,7 +14,8 @@ export type WorkerCommand =
   | { cmd: "newgame" }
   | { cmd: "hash"; mb: number }
   | { cmd: "tune"; id: number; value: number }
-  | { cmd: "eval" };
+  | { cmd: "eval" }
+  | { cmd: "debug"; on: boolean };
 
 const port = parentPort!;
 const stop: Int32Array = workerData.stop;
@@ -22,6 +23,8 @@ const engine = await Engine.load(workerData.release);
 if (!engine.clocked) throw new Error(`${workerData.release} does not time itself, so it cannot play`);
 if (workerData.level) engine.setGameLevel(workerData.level);
 let sideToMove = 0;
+/** UCI's debug mode: each search then reports the engine's record of its time use, if the build keeps one */
+let debug = false;
 
 /**
  * Nodes per millisecond of the engine's own clock when the launcher is given
@@ -98,6 +101,11 @@ function go(limits: GoLimits): void {
     const wait = MIN_REPLY_MS - (performance.now() - t0);
     if (wait > 0) Atomics.wait(pause, 0, 0, wait);
   }
+  const t = debug ? engine.timeTrace() : undefined;
+  if (t) {
+    const f = (x: number) => (x > 1e15 ? "none" : String(Math.round(x * 1000) / 1000));
+    port.postMessage(`info string time rule ${t.rule} elapsed ${f(t.elapsed)} soft ${f(t.soft)} hard ${f(t.hard)} score ${f(t.score)} node ${f(t.node)} veto ${t.veto}`);
+  }
   port.postMessage(`bestmove ${best ? moveToUci(best) : "0000"}`);
 }
 
@@ -122,6 +130,9 @@ port.on("message", (c: WorkerCommand) => {
       break;
     case "eval":
       port.postMessage(`eval cp ${engine.evaluate()}`);
+      break;
+    case "debug":
+      debug = c.on;
       break;
   }
 });

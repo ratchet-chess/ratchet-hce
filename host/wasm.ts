@@ -57,6 +57,8 @@ interface Search {
   evaluateUnits?(): number;
   /** the own engine's units per centipawn */
   unitsPerCp?(): number;
+  /** one field of the own engine's record of its last timed search */
+  timeTrace?(field: number): number;
   /** the own engine's incremental-eval mismatches, walking the tree to a depth */
   evalWalk?(depth: number): number;
   /** the own engine's windowed search for the window gate: one search to a depth with (alpha, beta), fresh, with or without its table */
@@ -93,6 +95,13 @@ interface ReleasePerft {
 
 /** Called by a release where its original read its input; non-zero means input is waiting, so the search stops. */
 export type Poll = () => number;
+
+/** The own engine's record of one timed search. `veto` counts iterations that ran on past the soft limit because the best move had just changed. */
+export interface TimeTrace {
+  rule: "none" | "soft" | "hard-between" | "hard-inside" | "host";
+  elapsed: number; soft: number; hard: number;
+  score: number; node: number; veto: number;
+}
 
 /** Called after each finished iteration with its score and the nodes so far; a report only. */
 export type OnIteration = (depth: number, score: number, nodes: number) => number;
@@ -254,6 +263,17 @@ export class Engine {
   /** the score of the last search's move, for the side to move */
   score(): number {
     return this.search.searchScore();
+  }
+
+  /**
+   * The own engine's record of its last timed search, or undefined for a build without one: which rule ended it, the
+   * time it took against its two limits, and the soft limit's factors. engines/ratchet/time.ts timeTrace names the fields.
+   */
+  timeTrace(): TimeTrace | undefined {
+    const t = this.search.timeTrace;
+    if (!t) return undefined;
+    const rule = (["none", "soft", "hard-between", "hard-inside", "host"] as const)[t(0)] ?? "none";
+    return { rule, elapsed: t(1), soft: t(2), hard: t(3), score: t(4), node: t(5), veto: t(6) };
   }
 
   /** the deepest iteration the last search finished */

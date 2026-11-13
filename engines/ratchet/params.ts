@@ -492,7 +492,10 @@ export const TM_HARD_MUL = 5.0;
 export const TM_HARD_CAP = 0.8;
 /** clock milliseconds held back per move for the host and the match runner */
 export const TM_OVERHEAD = 10.0;
-/** node share of the best move, Weiss 1401211: stop past soft * (0.52 + 3.73 * (1 - share)) */
+/**
+ * node share of the best move, Weiss 1401211's form with Weiss 693b322's values: stop past soft * (0.52 + 3.73 * (1 - share)).
+ * 1401211 measured 0.5 + 2.5 beside its live `uncertain` veto; 693b322 tuned these after 7608ca3 left that veto always false
+ */
 export const TM_NODE_BASE = 0.52;
 export const TM_NODE_MUL = 3.73;
 /** score fall over three iterations, Berserk 787b2e1b: the soft limit times 0.1127 + 0.0262 per centipawn, within 0.5028 and 1.6561; an NNUE-era value, read as 4 units per centipawn */

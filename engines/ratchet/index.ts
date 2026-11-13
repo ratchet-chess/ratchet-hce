@@ -21,7 +21,7 @@ import { MAX_DEPTH, bestScore, completedDepth, hostScore, initSearch, nodesSearc
 import {
   doMove, majorKey, minorKey, nonPawnKey, pawnKey, psq, refresh, scratchMajorKey, scratchMinorKey, scratchNonPawnKey, scratchPawnKey, setPawnKey, undoMove,
 } from "./state";
-import { noClock, startClock } from "./time";
+import { noClock, startClock, timeTrace as clockTrace } from "./time";
 import { ttAlloc, ttClear, ttEnable } from "./tt";
 
 /** the version `id name` reports: major << 16 | minor << 8 | patch; tools/calibrate.sh reads this line to name a rating's row */
@@ -96,6 +96,11 @@ export function newGame(): void {
   clearCorrection();
   clearPawns();
   clearEvalCache();
+}
+
+/** one field of the last timed search's record; time.ts timeTrace names the fields */
+export function timeTrace(field: i32): f64 {
+  return clockTrace(field);
 }
 
 export function nodesSearched(): f64 {
