@@ -126,9 +126,9 @@ The steps run in this order. Each step's output is the next step's input.
   local is the other exception. Local's runner containers run in the idle CPU class, so the desktop takes the CPU
   first.
 - **Local plays games only inside its hours,** which `bun tools/queue.ts status` shows. A job submitted outside them
-  plays on the workers. Run a null control inside them, because it needs every host.
+  plays on the workers.
 - **Stop a run by its PID or its process group,** never by a name pattern.
 - **Wait for a run to finish,** rather than polling it in a loop.
 - **A bug found in a tool becomes a tools commit** before the tool is used again. A run that used the bug is repeated, unless the bug cannot change its verdict.
-- **A change to a match tool is checked by a null control before its commit:** `GAMES=1000 SPEED=1.001 bun tools/pool.ts <ref>:ratchet <ref>:ratchet`, the base against itself on the node clock. It passes when the read is within noise of zero, no game is forfeited, and every host played. The match tools are `tools/pool.ts`, `tools/llr.ts` and the queue.
+- **A change to a match tool is checked by a null control before its commit:** `GAMES=1000 SPEED=1.001 bun tools/pool.ts <ref>:ratchet <ref>:ratchet`, the base against itself on the node clock. It checks the tool, not the hosts, so it plays on whichever hosts are open. It passes when the read is within noise of zero and no game is forfeited. The match tools are `tools/pool.ts`, `tools/llr.ts` and the queue.
 - **Name a host by its `tools/hosts` name,** never by its address.
