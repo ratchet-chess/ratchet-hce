@@ -1,6 +1,6 @@
 /**
- * The transposition table: 32-byte buckets of three 10-byte entries (Ethereal's
- * TTBucket, Alexandria's layout), indexed by a 32 x 32 -> 64 multiply of the key's
+ * The transposition table: 32-byte buckets of three 10-byte entries (Ethereal 0e47e9b
+ * TTBucket, Alexandria 829daf4 TTBucket's layout), indexed by a 32 x 32 -> 64 multiply of the key's
  * low half, checked by its top 16 bits.
  *
  * Entry: key16 u16 | move u16 | score i16 | raw eval i16 | depth u8 | flags u8,
@@ -88,9 +88,9 @@ export function ttProbe(key: u64): bool {
 
 /**
  * Stores a search result. The slot is the key's own, or else the one with the
- * least depth less 8 per generation of age (Stockfish 9dbb3ae8). A result for the
+ * least depth less 8 per generation of age (Stockfish 9dbb3ae8 TranspositionTable::probe). A result for the
  * same key that is not exact and is more than 2 plies shallower is dropped, and a
- * store without a move keeps the old one (Ethereal tt_store).
+ * store without a move keeps the old one (Ethereal 0e47e9b tt_store).
  */
 export function ttStore(key: u64, move: i32, score: i32, rawEval: i32, depth: i32, bound: i32, pv: bool): void {
   if (!ttEnabled) return;

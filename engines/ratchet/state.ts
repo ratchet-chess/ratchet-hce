@@ -12,9 +12,9 @@ import { PSQ, scratchPsq } from "./eval";
 export let psq: i32 = 0;
 const psqStack = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + 1)));
 
-/** the pawns of both colors, hashed with the core's piece keys (Stockfish Position::set_state pawnKey) */
+/** the pawns of both colors, hashed with the core's piece keys (Stockfish 15 Position::set_state pawnKey) */
 export let pawnKey: u64 = 0;
-/** by color, that color's knights, bishops, rooks and queens (Stash dcc25ed nonpawn_key; Stockfish's nonPawnKey also hashes the king) */
+/** by color, that color's knights, bishops, rooks and queens (Stash dcc25ed nonpawn_key; Stockfish 7cdd5e89 Position::set_state nonPawnKey also hashes the king) */
 export const nonPawnKey = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 2));
 /** both colors' knights and bishops, and both kings (Stash ba73642 minor_key, the kings added where it reads the key) */
 export let minorKey: u64 = 0;

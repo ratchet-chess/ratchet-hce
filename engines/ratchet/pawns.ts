@@ -3,7 +3,7 @@
  * (backward, doubled, isolated, phalanx, defenders), passed and candidate pawns by
  * rank, and each passer's distance to both kings, each form named where it is
  * applied. Its value depends only on the pawns and the kings, so
- * it is cached by a key of both (Stash king_pawn_probe). An entry also keeps the
+ * it is cached by a key of both (Stash 37 king_pawn_probe). An entry also keeps the
  * passed-pawn set, which endgame scaling reads. King shelter and pawn storm follow
  * Ethereal 12.75 evaluateKingsPawns, as a value here and a share of the safety sum
  * that pieces.ts reads with the span of each color's pawns.
@@ -96,7 +96,7 @@ export function clearPawns(): void {
 export function kingPawn(cached: bool): i32 {
   const wk = <i32>ctz(bb[KING]);
   const bk = <i32>ctz(bb[8 | KING]);
-  // the pawn key with both kings, Stash's king_pawn_key; never 0 for a real board, so 0 marks an empty slot
+  // the pawn key with both kings, Stash 37 king_pawn_key; never 0 for a real board, so 0 marks an empty slot
   const key = pawnKey ^ unchecked(Z_PIECE[(KING << 6) + wk]) ^ unchecked(Z_PIECE[((8 | KING) << 6) + bk]);
   const entry = kpTable + (<usize>(key & <u64>(SIZE - 1)) << 6);
   if (cached && load<u64>(entry) == key) {
@@ -138,7 +138,7 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
   const them = us ^ 1;
   let v = 0;
 
-  // the squares our pawns may one day attack (Stash compute_attack_span)
+  // the squares our pawns may one day attack (Stash 37 compute_attack_span)
   let span: u64 = 0;
   let b = ours;
   while (b) {
@@ -148,7 +148,7 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
 
   unchecked((spanOf[us] = span));
 
-  // isolated, per pawn, Weiss 2.0 and Clockwork; Stash counts it once per file
+  // isolated, per pawn, Weiss 2.0 EvalPawns; Stash 37 evaluate_doubled_isolated counts it once per file
   let isolated: u64 = 0;
   for (let f = 0; f < 8; f++) {
     const file = FILE_A << <u64>f;
@@ -157,11 +157,11 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
   }
   v += S(PAWN_ISOLATED_MG, PAWN_ISOLATED_EG) * <i32>popcnt(isolated);
 
-  // doubled, per directly stacked pawn, Weiss 2.0, Clockwork and Laser; Stash counts it once per file
+  // doubled, per directly stacked pawn, Weiss 2.0 EvalPawns; Stash 37 evaluate_doubled_isolated counts it once per file
   v += S(PAWN_DOUBLED_MG, PAWN_DOUBLED_EG) * <i32>popcnt(ours & (ours << 8));
 
-  // backward, Stash evaluate_backward's stop-square test: a stop square attacked by their pawns and out of our span. Not
-  // isolated, and one value each for an open and a closed file (Ethereal, Stockfish 11, Laser); Stash scores only the open file
+  // backward, Stash 37 evaluate_backward's stop-square test: a stop square attacked by their pawns and out of our span. Not
+  // isolated, and one value each for an open and a closed file (Ethereal 12.75 evaluatePawns PawnBackwards); Stash 37 scores only the open file
   const stops = us == 0 ? ours << 8 : ours >> 8;
   const stuck = stops & theirAtt & ~span;
   let backward = (us == 0 ? stuck >> 8 : stuck << 8) & ~isolated;
@@ -176,7 +176,7 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
     v += S(PAWN_BACKWARD_OPEN_MG, PAWN_BACKWARD_OPEN_EG) * <i32>popcnt(backward & ~closed);
   }
 
-  // phalanx and defenders, Stash evaluate_connected
+  // phalanx and defenders, Stash 37 evaluate_connected
   let phalanx = ours & ((ours >> 1) & ~FILE_H);
   while (phalanx) {
     const r = relRank(<i32>ctz(phalanx), us);
@@ -190,10 +190,10 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
     defenders &= defenders - 1;
   }
 
-  // passed pawns, the plain mask: no enemy pawn ahead on its file or the next (Ethereal, Weiss 2.0, Xiphos, Clockwork), so a
-  // rear twin passes too, which CPW, Fruit and Laser reject. A candidate has its own table, Ethereal and Fruit, and is
-  // not in the passed set: the file ahead is free and their pawns' control of it is matched by ours, CPW "Candidate
-  // Passed Pawn" and Stash evaluate_passed, which merges the two
+  // passed pawns, the plain mask: no enemy pawn ahead on its file or the next (Weiss 2.0 EvalPawns PassedMask), so a
+  // rear twin passes too, which Fruit 2.1 pawn_comp_info rejects. A candidate has its own table (Ethereal 12.75
+  // evaluatePawns PawnCandidatePasser) and is not in the passed set: the file ahead is free and their pawns' control of
+  // it is matched by ours (Stash 37 evaluate_passed, vendor/cpw/pages/Candidate_Passed_Pawn.wiki). Stash 37 merges the two
   let passed: u64 = 0;
   b = ours;
   while (b) {
@@ -212,8 +212,8 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
   }
   unchecked((passedOf[us] = passed));
 
-  // each passer, by both kings' distance to it, linear per rank, Ethereal 12.75 evaluatePassed; Stash's 2-D table
-  // holds this form, and adds cells that only sparse data fills
+  // each passer, by both kings' distance to it, linear per rank, Ethereal 12.75 evaluatePassed; Stash 37
+  // evaluate_passed_pos PassedOurKingDistance is a 2-D table, which adds cells that only sparse data fills
   b = passed;
   while (b) {
     const s = <i32>ctz(b);

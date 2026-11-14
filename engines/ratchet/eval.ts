@@ -1,7 +1,7 @@
 /**
  * The own engine's eval: material and piece-square tables, the king-pawn terms
- * (pawns.ts), the terms that read attack maps (pieces.ts), complexity, tapered between middlegame and endgame by phase (Fruit 2.0's form;
- * PeSTO's phase weights) after the endgame half is scaled (Stash 37), the side
+ * (pawns.ts), the terms that read attack maps (pieces.ts), complexity, tapered between middlegame and endgame by phase (Fruit 2.1 material_comp_info's form;
+ * PeSTO's phase weights) after the endgame half is scaled (Stash 37 eval_scale_endgame), the side
  * to move's tempo, insufficient material, and KXK mop-up. Scores are for the
  * side to move, in the engine's unit.
  *
@@ -27,7 +27,7 @@ const PHASE_MAX = 24;
 
 /**
  * A (middlegame, endgame) pair packed in one i32, the endgame in the high half
- * (Stockfish's Score). Sums and differences of packed pairs stay exact while each
+ * (Stockfish 11 Score). Sums and differences of packed pairs stay exact while each
  * half stays within i16.
  */
 @inline export function S(mg: i32, eg: i32): i32 {
@@ -108,7 +108,7 @@ const DARK: u64 = 0xaa55aa55aa55aa55;
 const KINGSIDE: u64 = 0xf0f0f0f0f0f0f0f0;
 const QUEENSIDE: u64 = ~KINGSIDE;
 
-/** a color's non-pawn material at the middlegame values, Stash's stack->material */
+/** a color's non-pawn material at the middlegame values, Stash 37 stack->material */
 @inline function material(c: i32): i32 {
   const o = c << 3;
   return (
@@ -121,7 +121,7 @@ const QUEENSIDE: u64 = ~KINGSIDE;
 
 /**
  * The endgame half's scale out of 256, for the side it favors, Stash 37
- * eval_scale_endgame. Stash's endgame-specific scale functions (endgame.c) are
+ * eval_scale_endgame. Stash 37's endgame-specific scale functions (endgame.c) are
  * not in Ratchet; their endings take the general factor. So does its one-wing
  * rook ending, a rule no other engine read has in general form.
  */
@@ -152,7 +152,7 @@ const EVAL_MAX = 30000;
 
 /**
  * The endgame half's adjustment by how likely the stronger side is to convert,
- * Xiphos 0.6's initiative and Ethereal 12.75 evaluateComplexity. It never changes
+ * Xiphos 0.6 eval's initiative and Ethereal 12.75 evaluateComplexity. It never changes
  * which side is ahead.
  */
 function complexity(eg: i32, pawns: u64): i32 {

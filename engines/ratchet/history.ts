@@ -1,15 +1,15 @@
 /**
- * Move-ordering memory: one killer per ply (Weiss 0d00a00), butterfly history by
+ * Move-ordering memory: one killer per ply (Weiss 0d00a00 UpdateQuietHistory), butterfly history by
  * side, from and to and by whether each of those squares is attacked, 1-, 2- and
  * 4-ply continuation history by the previous moves' piece and square, pawn history
  * by pawn structure, piece and square, and capture history by piece, square and
  * victim. A history entry moves by gravity, entry += bonus - entry * |bonus| / 16384
- * (Ethereal update_history), so it stays within +-16384; a continuation entry decays
+ * (Ethereal 0e47e9b update_history), so it stays within +-16384; a continuation entry decays
  * against its move's average entry instead (gravityFrom), and a pawn-history entry
  * stays within its own limit.
  *
- * The tables last between moves of a game and are emptied by newGame (Stockfish
- * 946fa476); a fresh go() empties them too, so a node signature starts clean.
+ * The tables last between moves of a game (Stockfish 946fa476 id_loop) and are emptied
+ * by newGame; a fresh go() empties them too, so a node signature starts clean.
  */
 import { BISHOP, FILE_A, KING, KNIGHT, MAX_PLY, PAWN, QUEEN, ROOK, moveFrom, moveTo } from "../../core/constants";
 import { bb, hash, side } from "../../core/position";
@@ -48,7 +48,7 @@ export function clearHistory(): void {
   for (let i = 0; i < MAX_PLY + 2; i++) unchecked((killers[i] = 0));
 }
 
-/** the bonus for the move that cut at `depth`, Weiss c735b8f */
+/** the bonus for the move that cut at `depth`, Weiss c735b8f Bonus */
 @inline export function bonusAt(depth: i32): i32 {
   return min(HIST_BONUS_MAX, max(0, HIST_BONUS_MUL * depth - HIST_BONUS_SUB));
 }

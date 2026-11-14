@@ -1,7 +1,7 @@
 /**
  * Static exchange evaluation against a threshold: whether a move wins at least
  * `threshold` once every capture on its square is played out, least valuable
- * attacker first. The form is Stockfish's Position::see_ge (sf_15): a swap list
+ * attacker first. The form is Stockfish 15 Position::see_ge: a swap list
  * kept as one running balance, with x-rays added as pieces leave the board.
  * Pins are ignored. Castling, en passant and promotions score as an even trade.
  */

@@ -1,24 +1,27 @@
 /**
  * Time use: a soft limit checked between iterations and a hard limit checked
- * inside the search (Glaurung's two limits, in Stockfish's first commit; Weiss
- * c735b8f's constants). Between iterations the soft limit is scaled by two factors:
+ * inside the search (Stockfish bb751d6c, its first commit, think() with
+ * MaxSearchTime and AbsoluteMaxSearchTime; the constants are Weiss c735b8f
+ * InitTimeManagement). Between iterations the soft limit is scaled by two factors:
  *
- * - the best move's share of the nodes (Koivisto #115, Weiss 1401211);
+ * - the best move's share of the nodes (Koivisto 51747be9 spentEffort, Weiss 1401211
+ *   IterativeDeepening);
  * - the score's fall over three iterations (Berserk 787b2e1b scoreChangeFactor, the
- *   first of its two terms; Stockfish 11 fallingEval reads a fall too, within 0.5
- *   and 1.5). Stash's one-iteration factor is rejected: it halved the limit on a
- *   rise and doubled it on a fall.
+ *   first of its two terms). Stash 37's one-iteration factor, timeman_scale_score_diff,
+ *   is rejected: it halved the limit on a rise and doubled it on a fall.
  *
- * The search does not stop while the last iteration changed the best move: Weiss's
- * `uncertain`, as Weiss held it before 7608ca3. Stash's table for how long the best
- * move has held is left out, as in Polaris and Weiss: its first row could not act
- * behind `uncertain`, and the node share already reads a settled move.
+ * The search does not stop while the last iteration changed the best move: Weiss 216d6c1
+ * AspirationWindow `uncertain`, which compares the new best move with the previous
+ * iteration's. Stash 37's table for how long the best move has held,
+ * BestmoveStabilityScale, is left out: its first row could not act behind `uncertain`,
+ * and the node share already reads a settled move.
  *
  * In sudden death with an increment under the overhead, the moves counted ahead fall
- * with a low clock (Stockfish 23493de0, one move per 20 ms). Two forms are rejected.
- * Stockfish applies the fall at every increment, which also drops the increments counted
- * and so changes play on a clock that pays its overhead. Ethereal's `tm_init` takes the
- * overhead once from the clock, which changes the limits on every clock.
+ * with a low clock (Stockfish 23493de0 TimeManagement::init, one move per 20 ms). Two
+ * forms are rejected. Stockfish applies the fall at every increment, which also drops
+ * the increments counted and so changes play on a clock that pays its overhead.
+ * Ethereal 60f4d5c tm_init takes the overhead once from the clock, which changes the
+ * limits on every clock.
  *
  * Every limit is in the host clock's milliseconds. Under the node clock the host
  * counts nodes as time, so these rules stay deterministic there.

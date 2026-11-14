@@ -14,11 +14,11 @@
 export const MAT_MG: StaticArray<i32> = [0, 307, 1854, 1640, 2347, 5065, 0];
 export const MAT_EG: StaticArray<i32> = [0, 460, 1869, 1906, 3506, 6317, 0];
 
-/** the side to move's bonus, added as a (middlegame, endgame) pair before the blend (Stash, Clockwork) */
+/** the side to move's bonus, added as a (middlegame, endgame) pair before the blend (Stash 37 Initiative) */
 export const TEMPO_MG = 152;
 export const TEMPO_EG = 276;
 
-/** KXK mop-up, CPW "Mop-up Evaluation": per step of the bare king's center distance, and per step the kings close */
+/** KXK mop-up, vendor/cpw/pages/Mop-up_Evaluation.wiki: per step of the bare king's center distance, and per step the kings close */
 export const MOPUP_EDGE = 80;
 export const MOPUP_CLOSE = 32;
 
@@ -146,33 +146,33 @@ export const KING_EG: StaticArray<i32> = [
 ];
 
 // ---------------------------------------------------------------- pawns
-// Stash 37 kp_eval.c, converted by its middlegame pawn 103; each pair is (middlegame, endgame).
+// Stash 37 kp_eval.c, converted by its PAWN_MG_SCORE 103; each pair is (middlegame, endgame).
 
-/** a backward pawn that is not isolated, on a file an enemy pawn closes: its stop square attacked by an enemy pawn and out of reach of its own */
+/** a backward pawn that is not isolated, on a file an enemy pawn closes: its stop square attacked by an enemy pawn and out of reach of its own, Ethereal 12.75 PawnBackwards */
 export const PAWN_BACKWARD_MG = -7;
 export const PAWN_BACKWARD_EG = -58;
-/** the same on a file no enemy pawn closes */
+/** the same on a file no enemy pawn closes, Stash 37 BackwardPenalty */
 export const PAWN_BACKWARD_OPEN_MG = -81;
 export const PAWN_BACKWARD_OPEN_EG = -88;
-/** a pawn with a friendly pawn directly behind it */
+/** a pawn with a friendly pawn directly behind it, Stash 37 DoubledPenalty */
 export const PAWN_DOUBLED_MG = -20;
 export const PAWN_DOUBLED_EG = -168;
-/** a pawn with no friendly pawn on a neighboring file */
+/** a pawn with no friendly pawn on a neighboring file, Stash 37 IsolatedPenalty */
 export const PAWN_ISOLATED_MG = -40;
 export const PAWN_ISOLATED_EG = -67;
-/** a passed pawn by relative rank: no enemy pawn ahead on its file or the next */
+/** a passed pawn by relative rank: no enemy pawn ahead on its file or the next; Stash 37 PassedBonus */
 export const PAWN_PASSED_MG: StaticArray<i32> = [0, -6, -26, -166, 110, 631, 952, 0];
 export const PAWN_PASSED_EG: StaticArray<i32> = [0, -13, 169, 206, 310, 130, 587, 0];
-/** a candidate by relative rank: not passed, no enemy pawn ahead on its file, and every square of its path an enemy pawn attacks is attacked as often by its own; seeded from Ethereal 12.75 PawnCandidatePasser at its pawn 82 */
+/** a candidate by relative rank: not passed, no enemy pawn ahead on its file, and every square of its path an enemy pawn attacks is attacked as often by its own; seeded from Ethereal 12.75 PawnCandidatePasser at its PawnValue 82 */
 export const PAWN_CANDIDATE_MG: StaticArray<i32> = [0, -58, -50, -51, 18, 149, 0, 0];
 export const PAWN_CANDIDATE_EG: StaticArray<i32> = [0, 23, 37, 161, 309, 395, 0, 0];
-/** a pawn with a friendly pawn beside it on the next file, by relative rank */
+/** a pawn with a friendly pawn beside it on the next file, by relative rank; Stash 37 PhalanxBonus */
 export const PAWN_PHALANX_MG: StaticArray<i32> = [0, 42, 75, 89, 170, 276, -339, 0];
 export const PAWN_PHALANX_EG: StaticArray<i32> = [0, -24, -1, 68, 240, 1459, 2441, 0];
-/** a pawn defending a friendly pawn, by the defender's relative rank */
+/** a pawn defending a friendly pawn, by the defender's relative rank; Stash 37 DefenderBonus */
 export const PAWN_DEFENDER_MG: StaticArray<i32> = [0, 71, 81, 71, 62, 769, 0, 0];
 export const PAWN_DEFENDER_EG: StaticArray<i32> = [0, 73, 62, 137, 445, 415, 0, 0];
-/** a passed pawn, per step of its distance from its own king, by relative rank; seeded by lines through the earlier table, ranks 1 and 2 from Ethereal 12.75 at its pawn 82 */
+/** a passed pawn, per step of its distance from its own king, by relative rank; seeded by lines through the earlier table, ranks 1 and 2 from Ethereal 12.75 PassedFriendlyDistance at its PawnValue 82 */
 export const PASSED_OUR_KING_MG: StaticArray<i32> = [0, -5, -8, 27, 2, -57, -29, 0];
 export const PASSED_OUR_KING_EG: StaticArray<i32> = [0, -6, -23, -84, -119, -134, -190, 0];
 /** the same from the enemy king */
@@ -196,124 +196,122 @@ export const SCALE_PER_PAWN = 13;
 // ---------------------------------------------------------------- search
 
 /*
- * The margins in the eval's unit start from the seeds their comments cite, then all
- * move by one factor, 1.30, chosen by a race of games at the eval's wider scale. So
- * a value here is its cited seed times that factor. SEE's margins read SEE_VALUE,
- * which did not move, so they keep their seeds.
+ * A value's comment cites the seed it started from, in its source's unit. The values
+ * here are tuned since, so a seed records where a value began, not what it is.
  */
 
 /** SEE values by piece type (none, P, N, B, R, Q, K); the king is never captured */
 export const SEE_VALUE: StaticArray<i32> = [0, 400, 1200, 1200, 2000, 3600, 0];
 
-/** aspiration windows, Ethereal 0e47e9b aspirationWindow: from depth 4, delta 10 at its pawn 82, widened by half; search.ts think names where the form differs */
+/** aspiration windows, Ethereal 0e47e9b aspirationWindow: from depth 4, delta 10 at its PawnValue 82, widened by half; search.ts think names where the form differs */
 export const ASP_DEPTH = 4;
 export const ASP_DELTA = 61;
 
-/** reverse futility, Stash f91e750: depth <= 7, 86 per ply less 79 when improving, at its pawn 103 */
+/** reverse futility, Stash f91e750 search: depth <= 7, 86 per ply less 79 when improving, at its PAWN_MG_SCORE 103 */
 export const RFP_DEPTH = 7;
 export const RFP_MARGIN = 377;
 export const RFP_IMPROVING = 338;
 
-/** razoring, Stash f91e750: depth <= 3, static eval + 120 per ply <= alpha, at its pawn 103 */
+/** razoring, Stash f91e750 search: depth <= 3, static eval + 120 per ply <= alpha, at its PAWN_MG_SCORE 103 */
 export const RAZOR_DEPTH = 3;
 /** at this depth or less, razoring returns qsearch's score without the null-window test */
 export const RAZOR_QS_DEPTH = 2;
 export const RAZOR_MARGIN = 673;
 /**
- * 1: the last clause of Stash 13ac9e7's razoring. When the null-window qsearch does not fail low and beats beta by one
- * ply's margin, the node is searched a ply shallower. 0 turns it off. Clockwork 641d9f5 and Berserk test qsearch at alpha
- * itself, down to depth 7 or 5 with a wider margin, the form not taken.
+ * 1: the last clause of Stash 13ac9e7 search's razoring. When the null-window qsearch does not fail low and beats beta by
+ * one ply's margin, the node is searched a ply shallower. 0 turns it off. Clockwork 641d9f5 Worker::search tests qsearch
+ * at alpha itself, down to depth 7 with a wider margin, the form not taken.
  */
 export const RAZOR_DROP = 1;
 
-/** null move, Ethereal v12.75: R = 4 + depth / 6 + min(3, (eval - beta) / 200), at its pawn 82 */
+/** null move, Ethereal 12.75 search: R = 4 + depth / 6 + min(3, (eval - beta) / 200), at its PawnValue 82 */
 export const NMP_DEPTH = 2;
 export const NMP_BASE = 4;
 export const NMP_DEPTH_DIV = 6;
 export const NMP_EVAL_DIV = 1144;
 export const NMP_EVAL_MAX = 3;
 /**
- * 1: the null move is tried at an expected cut node only (Stash f91e750, Clockwork ca21224); 0 tries it at every non-PV
- * node, as Ethereal v12.75 and Weiss 2.0 do.
+ * 1: the null move is tried at an expected cut node only (Stash f91e750 search); 0 tries it at every non-PV node, as
+ * Ethereal 12.75 search does.
  */
 export const NMP_CUT_NODE = 1;
 /**
- * The null move needs the eval at or above beta by this much: Stash 8546bfe's 30 at its pawn 103, as Clockwork 212fb9e
- * and Sirius also ask. 0 gives the plain test, eval >= beta.
+ * The null move needs the eval at or above beta by this much: Stash 8546bfe search's 30 at its PAWN_MG_SCORE 103. 0 gives
+ * the plain test, eval >= beta.
  */
 export const NMP_EVAL_MARGIN = 149;
 /**
- * 1: the null move also needs the static eval at or above beta + NMP_STATIC_BASE - NMP_STATIC_PER * depth, Weiss ac11d26
- * and 6189645: 138 and 13 at its pawn 104, a gate that eases with depth (Sirius holds the same form). 0 turns it off.
- * Stockfish 11's gate also eases when improving, the form not taken.
+ * 1: the null move also needs the static eval at or above beta + NMP_STATIC_BASE - NMP_STATIC_PER * depth, Weiss c735b8f
+ * AlphaBeta: 138 and 13 at its P_MG 104, a gate that eases with depth. 0 turns it off. Stockfish 11 search's gate also
+ * eases when improving, the form not taken.
  */
 export const NMP_STATIC = 1;
 export const NMP_STATIC_BASE = 648;
 export const NMP_STATIC_PER = 68;
 
 /**
- * 1: at a node not expected to cut, the table cuts on a fail low only (Ethereal 311d110, Berserk d7e1f05); 0 turns it off.
- * Stockfish 43e100ae's form, the node type equal to the bound's side up to a depth, is not taken.
+ * 1: at a node not expected to cut, the table cuts on a fail low only (Ethereal 311d110 search); 0 turns it off.
+ * Stockfish 43e100ae Search::Worker::search's form, the node type equal to the bound's side up to a depth, is not taken.
  */
 export const TT_CUT_NODE = 1;
 /**
  * 1: a result for a key the table already holds overwrites an entry left by an earlier search, however deep that entry is
- * (Berserk fe1363a, Igel 07f86c2). 0 keeps a deeper entry of any age against a result that is not exact. A probe does
+ * (Berserk fe1363a TTPut). 0 keeps a deeper entry of any age against a result that is not exact. A probe does
  * not refresh an entry's age, as in Berserk: with a refresh, the entry a node stores over would always be of this search.
  */
 export const TT_AGE_STORE = 1;
 /**
  * A draw by repetition or the fifty-move rule scores +DRAW_JITTER or -DRAW_JITTER by a bit of the node count, so drawn
- * lines do not all look equal to the search: Stash 767fdb1's (nodes & 2) - 1 at its pawn 103, as in Ethereal 37ccbfe
- * and Stockfish 97d2cc9a. 0 scores every draw 0. Weiss e9021fb's 8 - (nodes & 7) leans every draw toward the side to
- * move, the form not taken.
+ * lines do not all look equal to the search: Stash 767fdb1 draw_score's (nodes & 2) - 1 at its PAWN_MG_SCORE 74. 0 scores
+ * every draw 0. Weiss e9021fb AlphaBeta's 8 - (nodes & 7) leans every draw toward the side to move, the form not taken.
  */
 export const DRAW_JITTER = 6;
 
-/** ProbCut, Stash f91e750: depth >= 6, beta + 152 at its pawn 103, a capture's reduced search at depth - 4 */
+/** ProbCut, Stash f91e750 search: depth >= 6, beta + 152 at its PAWN_MG_SCORE 103, a capture's reduced search at depth - 4 */
 export const PC_DEPTH = 6;
 export const PC_MARGIN = 833;
 export const PC_REDUCTION = 4;
 
 /**
- * singular extensions, Stash f91e750's gate and margin: TT depth >= depth - 3, singular beta = TT score - 10 d / 16 at its pawn 103.
- * SE_DEPTH 6: the least depth, Stockfish 11's, Berserk 5's and Clockwork 641d9f5's tuned value; Stash's 7 gives the play before it,
- * and Weiss c735b8f's 5 is the form not taken
+ * singular extensions, Stash f91e750 search's gate and margin: TT depth >= depth - 3, singular beta = TT score - 10 d / 16 at its
+ * PAWN_MG_SCORE 103. SE_DEPTH 6: the least depth, Stockfish 11 search's; Stash's 7 gives the play before it, and Weiss c735b8f
+ * AlphaBeta's 5 is the form not taken
  */
 export const SE_DEPTH = 6;
 /**
- * the singular search's depth is depth / 2 plus this. 0 is Weiss, Clockwork 641d9f5, Stockfish 11 and Xiphos; 1 is Stash's and
- * gives the play before it. Ethereal's and Berserk 5's (depth - 1) / 2 is the form not taken
+ * the singular search's depth is depth / 2 plus this. 0 is Clockwork 641d9f5 Worker::search's; 1 is Stash f91e750 search's and
+ * gives the play before it. Ethereal f71ac47 singularity's (depth - 1) / 2 is the form not taken
  */
 export const SE_SEARCH_ADD = 0;
 export const SE_TT_DEPTH = 3;
 export const SE_MARGIN = 54;
 export const SE_MARGIN_DIV = 16;
-/** a double extension at a non-PV node whose singular search fails low by more than 14 at its pawn 103, while the line has at most 10 */
+/** a double extension at a non-PV node whose singular search fails low by more than 14, while the line has at most 10: Stash f91e750 search at its PAWN_MG_SCORE 103 */
 export const SE_DOUBLE_MARGIN = 88;
 export const SE_DOUBLE_MAX = 10;
 /**
- * a double extension becomes a triple when the TT move is quiet and the singular search fails low by more than this, Stash
- * 4f1ccc1's 120 at its pawn 103; 100000000 turns it off. Clockwork 641d9f5 and Stockfish lower the margin by the move's history instead
+ * a double extension becomes a triple when the TT move is quiet and the singular search fails low by more than this, Stash 4f1ccc1
+ * search's 120 at its PAWN_MG_SCORE 103; 100000000 turns it off. Clockwork 641d9f5 Worker::search lowers the margin by the move's
+ * history instead
  */
 export const SE_TRIPLE_MARGIN = 615;
 /**
  * plies taken off a TT move that is not singular, where the TT score itself does not reach beta; 0 turns each off.
- * SE_NEG_CUT: at a cut node, Weiss c735b8f; Berserk takes two.
- * SE_NEG_ALPHA: when the TT score is at or below alpha, Ethereal f71ac47 and Berserk
+ * SE_NEG_CUT: at a cut node, Weiss c735b8f AlphaBeta; Berserk d7e1f05 Negamax takes two.
+ * SE_NEG_ALPHA: when the TT score is at or below alpha, Ethereal f71ac47 singularity
  */
 export const SE_NEG_CUT = 1;
 export const SE_NEG_ALPHA = 1;
-/** the check extension's plies, on the move in the parent (Stash f91e750); 0 turns it off, for the flag screen */
+/** the check extension's plies, on the move in the parent (Stash f91e750 search); 0 turns it off, for the flag screen */
 export const CHECK_EXT = 1;
 
-/** internal iterative reduction, Berserk 03cebd6: PV or cut node, depth >= 4, no TT move */
+/** internal iterative reduction, Berserk 03cebd6 Negamax: PV or cut node, depth >= 4, no TT move */
 export const IIR_DEPTH = 4;
 
 /**
  * late move pruning's move count at depth d, (BASE + PER_DEPTH * d + PER_DEPTH_SQ * d * d) >> 10, one set not improving
  * and one improving; initSearch fills a table from them up to LMP_DEPTH. The form is Ethereal 1eff740 initSearch, a
- * quadratic by depth per row. These values give Ethereal v12.75 LateMovePruningCounts exactly at depths 1 to 8, so the
+ * quadratic by depth per row. These values give Ethereal 12.75 LateMovePruningCounts exactly at depths 1 to 8, so the
  * tree is the table's; the improving row needs the linear term for that. Not taken: Stockfish 7cdd5e89 search's
  * (3 + depth * depth) / (2 - improving), and Ethereal 1eff740's own coefficients, which each play another tree.
  * search.ts counts moves played against it, where Ethereal counts quiets seen.
@@ -326,48 +324,57 @@ export const LMP_IMPROVING_BASE = 5400;
 export const LMP_IMPROVING_PER_DEPTH = -960;
 export const LMP_IMPROVING_PER_DEPTH_SQ = 1048;
 
-/** futility on the reduced depth, Ethereal 0e47e9b: eval + 77 + 52 per ply <= alpha at its pawn 82; history limits by improving, v12.75 */
+/** futility on the reduced depth, Ethereal 0e47e9b search: eval + 77 + 52 per ply <= alpha at its PawnValue 82; history limits by improving, Ethereal 12.75 FutilityPruningHistoryLimit */
 export const FUT_DEPTH = 8;
 export const FUT_BASE = 514;
 export const FUT_PER_DEPTH = 479;
 export const FUT_HISTORY: StaticArray<i32> = [12000, 6000];
 
-/** history pruning, Ethereal v12.75 as the dig note reads it: 1- and 2-ply continuation history below a limit, by improving; one pair where Ethereal keeps a limit and a depth per table */
+/**
+ * history pruning, Ethereal 0e47e9b search's continuation pruning: 1- or 2-ply continuation history below a limit, by
+ * improving, one ContinuationPruningDepth and ContinuationPruningHistoryLimit pair for both tables. Ethereal 12.75 search's
+ * limit and depth per table, CounterMoveHistoryLimit and FollowUpMoveHistoryLimit, is the form not taken
+ */
 export const HP_DEPTH: StaticArray<i32> = [3, 2];
 export const HP_LIMIT: StaticArray<i32> = [-1000, -2500];
 
-/** SEE pruning, Ethereal v12.75: depth <= 9, quiets below -64 per ply, noisy below -19 per ply squared, at its pawn 82 */
+/**
+ * SEE pruning, Ethereal 12.75 search: depth <= 9, quiets below SEEQuietMargin -64 per ply, noisy below SEENoisyMargin -19 per
+ * ply squared. As seeds, at its SEEPieceValues pawn 100, they are 256 and 76 in SEE_VALUE's unit
+ */
 export const SEE_DEPTH = 9;
 export const SEE_QUIET = 174;
 export const SEE_NOISY = 84;
 /**
- * a quiet's bar moves by its history, in 1/1024 of SEE's unit per point: Clockwork f236181's 17 at its pawn 100, on a sum of
- * tables with this limit; 0 turns it off. Stockfish moves a capture's bar by its capture history, the form not taken
+ * a quiet's bar moves by its history, in 1/1024 of SEE's unit per point: Clockwork f236181 Worker::search's form, at Clockwork
+ * 641d9f5's see_pvs_hist_mult 17 and f236181 SEE::value's pawn 100, on a sum of tables with this limit; 0 turns it off.
+ * Stockfish 17 search moves a capture's bar by its capture history, the form not taken
  */
 export const SEE_HISTORY = 85;
 
 /**
- * futility for the bad captures, Clockwork 662c568: at depth <= 8, not in check, once the picker reaches them, static eval +
- * 75 per ply by its middlegame pawn <= alpha ends the move loop, and the score rises to that estimate. A depth of 0 turns
- * it off. Stockfish 15's test per capture, with the victim and capture history, is the form not taken.
+ * futility for the bad captures, Clockwork 662c568 Worker::search: at depth <= 8, not in check, once the picker reaches them,
+ * static eval + 75 per ply <= alpha ends the move loop, and the score rises to that estimate; converted by Clockwork 641d9f5's
+ * PAWN_MAT middlegame pawn 112. A depth of 0 turns it off. Stockfish 15 search's test per capture, with the victim and
+ * capture history, is the form not taken.
  */
 export const NF_DEPTH = 8;
 export const NF_MARGIN = 176;
 
 /**
- * late move reductions in 1/1024 ply, the terms summed before the sum is cut to whole plies (Clockwork 641d9f5), where
- * Ethereal v12.75 and Weiss add whole plies. Base + ln(depth) ln(moves) / div is Ethereal's 0.75 + ln d ln m / 2.25, with the
- * logs scaled by 1024. A non-PV node, a node not improving and a move from before the quiet stage are its terms, and history
- * moves the sum by whole steps, capped
+ * late move reductions in 1/1024 ply, the terms summed before the sum is cut to whole plies (Clockwork 641d9f5 Worker::search),
+ * where Ethereal 12.75 search adds whole plies. Base + ln(depth) ln(moves) / div is Ethereal 12.75 initSearch's
+ * 0.75 + ln d ln m / 2.25, with the logs scaled by 1024. A non-PV node, a node not improving and a move from before the
+ * quiet stage are its terms, and history moves the sum by whole steps, capped
  */
 export const LMR_MIN_DEPTH = 3;
 export const LMR_BASE = 798;
 export const LMR_DIV = 2321;
 export const LMR_NON_PV = 1204;
 /**
- * 1: the non-PV term skips a node whose TT entry has the PV bit, a node that is or was on a PV (Berserk f05f9dc,
- * Stockfish 70880b8e); qsearch then keeps the bit when it stores. 0 turns it off. Clockwork 04f2f0e takes a ply off at
- * every such node and adds one when the TT score is at or below alpha, the form not taken.
+ * 1: the non-PV term skips a node whose TT entry has the PV bit, a node that is or was on a PV (Berserk f05f9dc Negamax);
+ * qsearch then keeps the bit when it stores. 0 turns it off. Clockwork 04f2f0e Worker::search takes a ply off at every
+ * such node and adds one when the TT score is at or below alpha, the form not taken.
  */
 export const LMR_TT_PV = 1;
 export const LMR_NOT_IMPROVING = 1114;
@@ -376,8 +383,8 @@ export const LMR_HISTORY_STEP = 906;
 export const LMR_HISTORY_DIV = 5327;
 export const LMR_HISTORY_MAX = 2;
 /**
- * terms that reduce more, in 1/1024 ply, at Clockwork 641d9f5's tuned values: a cut node (Stockfish 11 and Weiss 95b0951 add
- * two plies); a quiet when the TT move is noisy; a node whose children have failed high more than LMR_FAIL_HIGH_COUNT times;
+ * terms that reduce more, in 1/1024 ply, at Clockwork 641d9f5 Worker::search's tuned values: a cut node (Weiss 95b0951
+ * AlphaBeta adds two plies); a quiet when the TT move is noisy; a node whose children have failed high more than LMR_FAIL_HIGH_COUNT times;
  * and each time a move has raised alpha here. 0 turns a term off
  */
 export const LMR_CUT_NODE = 1151;
@@ -386,17 +393,17 @@ export const LMR_FAIL_HIGH = 888;
 export const LMR_FAIL_HIGH_COUNT = 3;
 export const LMR_ALPHA_RAISE = 570;
 /**
- * late move reductions on noisy moves: their own base and divisor, Weiss 95b0951's 0.38 + ln d ln m / 3.76, restated for a sum
- * where 1 ply is no reduction and a node neither PV nor improving adds 2. Capture history moves it by whole steps, at Weiss's
- * divisor 8870 scaled from its table's limit 14387 to 16384. A depth of 200 turns them off
+ * late move reductions on noisy moves: their own base and divisor, Weiss 95b0951 InitReductions' 0.38 + ln d ln m / 3.76,
+ * restated for a sum where 1 ply is no reduction and a node neither PV nor improving adds 2. Capture history moves it by whole
+ * steps, at Weiss AlphaBeta's divisor 8870 scaled from its table's limit 14387 to 16384. A depth of 200 turns them off
  */
 export const LMR_NOISY_MIN_DEPTH = 3;
 export const LMR_NOISY_BASE = -543;
 export const LMR_NOISY_DIV = 4063;
 export const LMR_NOISY_HISTORY_DIV = 9206;
 /**
- * the re-search after a reduced search beats alpha: a ply deeper if it beat the best by more than LMR_DEEPER, Clockwork
- * 641d9f5's 94 by the middlegame pawn; else a ply shallower if it beat the best by less than LMR_SHALLOWER per ply of depth.
+ * the re-search after a reduced search beats alpha: a ply deeper if it beat the best by more than LMR_DEEPER, Clockwork 641d9f5
+ * Worker::search's 94 by its PAWN_MAT middlegame pawn 112; else a ply shallower if it beat the best by less than LMR_SHALLOWER per ply of depth.
  * 100000000 and 0 turn them off
  */
 export const LMR_DEEPER = 218;
@@ -406,7 +413,8 @@ export const LMR_CONT_UPDATE = 1;
 
 /**
  * the reduced depth futility and history pruning read: depth less base + ln(depth) ln(moves) / div, the logs scaled by
- * 1024 and the sum in 1/1024 ply. It has its own values, so LMR's can move without moving the pruning. Its seeds are LMR's
+ * 1024 and the sum in 1/1024 ply, Ethereal 0e47e9b search's lmrDepth. It has its own values, so LMR's can move without moving
+ * the pruning. Its seeds are LMR's, Ethereal 12.75 initSearch's 0.75 and 2.25, where 0e47e9b initSearch has 0.7844 and 2.4696
  */
 export const PRUNE_BASE = 706;
 export const PRUNE_DIV = 1527;
@@ -414,28 +422,29 @@ export const PRUNE_DIV = 1527;
 /**
  * what a quiet's history knows, each part with an off value that gives the play before it.
  * THREAT_HISTORY 1: the butterfly table is also indexed by whether the move's from and to squares are attacked by the
- * opponent (Ethereal 341c43f, Clockwork 641d9f5); 0 turns it off.
+ * opponent (Ethereal 341c43f underlying_quiet_history); 0 turns it off.
  * PAWN_HISTORY 1: a table by pawn structure, piece and square orders quiets beside the others, within HIST_PAWN_MAX
- * (Stockfish b0658f09's 512 structures and limit 8192, after Seer); 0 turns it off.
- * HIST_DEEP_MARGIN: a cut that beats beta by this much rewards and penalizes as from one ply deeper, Clockwork 641d9f5's
- * 100 by the middlegame pawn (Stockfish 11 uses a middlegame pawn); 100000000 turns it off
+ * (Stockfish b0658f09 PawnHistory's 512 structures and limit 8192); 0 turns it off.
+ * HIST_DEEP_MARGIN: a cut that beats beta by this much rewards and penalizes as from one ply deeper, Clockwork 641d9f5
+ * Worker::search's 100 by its PAWN_MAT middlegame pawn 112; 100000000 turns it off
  */
 export const THREAT_HISTORY = 1;
 export const PAWN_HISTORY = 1;
 export const HIST_PAWN_MAX = 8192;
 export const HIST_DEEP_MARGIN = 234;
 
-/** a capture is tried among the good ones if SEE >= -score / this, Clockwork 641d9f5's divisor 51 at its pawn 112 */
+/** a capture is tried among the good ones if SEE >= -score / this, Clockwork 641d9f5 MovePicker::next's movepicker_see_capthist_divisor 51 at its PAWN_MAT 112 */
 export const GOOD_CAPTURE_DIV = 14;
 
 /**
- * 1: a queen promotion without a capture is picked among the captures, as Stockfish 10 make_promotions and Stash e1381ca
- * list it, so a node that skips its quiets still tries it; 0 leaves it first among the quiets
+ * 1: a queen promotion without a capture is picked among the captures, as Stockfish 10 make_promotions lists it, so a node
+ * that skips its quiets still tries it; 0 leaves it first among the quiets
  */
 export const PROMO_NOISY = 1;
 /**
- * 1: the move six plies back orders quiets and takes their bonus, Clockwork 3dd022c; 0 turns it off. It stays out of the
- * history sum that pruning and reductions read, as the 4-ply table does. Stockfish gives this table a smaller bonus, the form not taken
+ * 1: the move six plies back orders quiets and takes their bonus, Clockwork 3dd022c History::get_conthist and
+ * update_quiet_stats; 0 turns it off. It stays out of the history sum that pruning and reductions read, as the 4-ply table
+ * does. Stockfish 7cdd5e89 update_continuation_histories gives this table a smaller bonus, the form not taken
  */
 export const CONT6 = 1;
 
@@ -443,21 +452,22 @@ export const CONT6 = 1;
 export const MVV: StaticArray<i32> = [0, 800, 2400, 2400, 4800, 7200, 0];
 
 /**
- * qsearch futility, the per-capture shape of Stockfish 15 and Stash f91e750: a capture that gives no check is skipped if stand pat + its
- * victim's MAT_EG + QS_DELTA cannot reach alpha. QS_DELTA is Stash's 98 at its pawn 103, where CPW "Delta Pruning" names
- * 200 centipawns, which is 1040 here. The victim is in the eval's unit, as stand pat and alpha are, so SEE_VALUE,
- * which is narrower, does not fit this test. Ethereal 12.75's one test per node, on the best capture, is the form rejected.
+ * qsearch futility, the per-capture shape of Stash f91e750 qsearch: a capture that gives no check is skipped if stand pat + its
+ * victim's MAT_EG + QS_DELTA cannot reach alpha. QS_DELTA is Stash's 98 at its PAWN_MG_SCORE 103, where
+ * vendor/cpw/pages/Delta_Pruning.wiki names 200 centipawns, which is 1040 here. The victim is in the eval's unit, as stand pat
+ * and alpha are, so SEE_VALUE, which is narrower, does not fit this test. Ethereal 12.75 qsearch's one test per node, on the
+ * best capture, is the form rejected.
  * QS_SEE 1: when stand pat + QS_DELTA alone cannot reach alpha, a capture that wins nothing by SEE is skipped too (Stash
- * 007850d, Weiss 202280b, Berserk); 0 turns it off.
+ * 007850d qsearch); 0 turns it off.
  * QS_EVASIONS 1: in check, once a move has a score that is not a mate, only captures and promotions that pass SEE are searched
- * (Weiss 95b0951, Clockwork d17b3cf); 0 searches every evasion, as Stash and Fruit 2.1 do. Stockfish 15 stops after two quiet
- * evasions, the form not taken.
+ * (Weiss 95b0951 Quiescence); 0 searches every evasion, as Stash does. Stockfish 15 qsearch stops after two quiet evasions, the
+ * form not taken.
  */
 export const QS_DELTA = 665;
 export const QS_SEE = 1;
 export const QS_EVASIONS = 1;
 
-/** history bonus and malus, Weiss c735b8f: min(2418, 251 d - 267) and min(693, 532 d - 163) */
+/** history bonus and malus, Weiss c735b8f Bonus and Malus: min(2418, 251 d - 267) and min(693, 532 d - 163) */
 export const HIST_BONUS_MUL = 283;
 export const HIST_BONUS_SUB = 222;
 export const HIST_BONUS_MAX = 2555;
@@ -466,21 +476,23 @@ export const HIST_MALUS_SUB = 169;
 export const HIST_MALUS_MAX = 644;
 /**
  * 1: a fail high, or a TT cut on a lower bound, takes the malus of depth + 1 from the continuation entries of the parent's
- * move, when that move is quiet and was the first one played at its node (at a TT cut: the first or second). Stockfish 11's
- * "extra penalty" (e51965aa, a2410227, 0f2df4e4). 0 turns it off. Stockfish also counts the parent's first killer.
+ * move, when that move is quiet and was the first one played at its node (at a TT cut: the first or second). Stockfish 11
+ * update_all_stats' and search's "extra penalty". 0 turns it off. Stockfish also counts the parent's first killer.
  */
 export const HIST_PRIOR_MALUS = 1;
 /**
  * From this depth, or at any depth at a PV node, a node where no move raised alpha gives the bonus to the continuation
- * entries of the parent's quiet move, which caused the fail low (Stockfish 8fd34d77; Stockfish 11's depth 3). 0 turns it off.
+ * entries of the parent's quiet move, which caused the fail low (Stockfish 8fd34d77 search; Stockfish 11 search's depth 3).
+ * 0 turns it off.
  */
 export const HIST_PRIOR_BONUS_DEPTH = 3;
 
-/** correction history, Stash 302136d, dcc25ed, ba73642 and ea9fd72: each table's entry within 32 at its pawn 103; an update weighs 1 + depth, at most 16, of 256 */
+/** correction history, Stash f91e750 update_correction_histories: each table's entry within 32 at its PAWN_MG_SCORE 103 (CORRECTION_HISTORY_MAX); an update weighs 1 + depth, at most 16, of 256 */
 export const CORR_MAX = 163;
 /**
  * 1: a sixth table, by the last two moves, corrects the static eval with the other five's weight and update,
- * Clockwork e774be4; 0 turns it off. Weiss 3f9eb09 gives it its own divisor, the form not taken
+ * Clockwork e774be4 History::get_correction; 0 turns it off. Weiss 3f9eb09 GetCorrectionHistory gives it its own divisor,
+ * the form not taken
  */
 export const CORR_CONT = 1;
 export const CORR_WEIGHT_MAX = 16;
@@ -490,37 +502,39 @@ export const CORR_WEIGHT_MAX = 16;
 /** Weiss c735b8f InitTimeManagement: sudden death uses a share of the time left, at most 0.2 of the clock; its 0.022 scaled so that the soft limit's score factor keeps mean time use */
 export const TM_SHARE = 0.0296;
 export const TM_SHARE_CAP = 0.2;
-/** with moves to go, 0.7 over min(moves to go, 50) (Weiss) */
+/** with moves to go, 0.7 over min(moves to go, 50) (Weiss c735b8f InitTimeManagement) */
 export const TM_MTG_SHARE = 0.7;
 export const TM_MTG_CAP = 50;
-/** the increments counted ahead (Weiss's 50) */
+/** the increments counted ahead (Weiss c735b8f InitTimeManagement's 50) */
 export const TM_INC_MOVES = 50.0;
-/** with an increment under the overhead, the moves counted ahead per millisecond of clock: Stockfish 23493de0's one per 20 ms, so the count falls under one second */
+/** with an increment under the overhead, the moves counted ahead per millisecond of clock: Stockfish 23493de0 TimeManagement::init's one per 20 ms, so the count falls under one second */
 export const TM_INC_MOVES_PER_MS = 0.05;
-/** hard limit: 5 times the soft one, at most 0.8 of the clock (Weiss) */
+/** hard limit: 5 times the soft one, at most 0.8 of the clock (Weiss c735b8f InitTimeManagement) */
 export const TM_HARD_MUL = 5.0;
 export const TM_HARD_CAP = 0.8;
 /** clock milliseconds held back per move for the host and the match runner */
 export const TM_OVERHEAD = 10.0;
 /**
- * node share of the best move, Weiss 1401211's form with Weiss 693b322's values: stop past soft * (0.52 + 3.73 * (1 - share)).
- * 1401211 measured 0.5 + 2.5 beside its live `uncertain` veto; 693b322 tuned these after 7608ca3 left that veto always false
+ * node share of the best move, Weiss 1401211 IterativeDeepening's form with Weiss 693b322 IterativeDeepening's values: stop past
+ * soft * (0.52 + 3.73 * (1 - share)). 1401211 measured 0.5 + 2.5 beside its live `uncertain` veto; 693b322 tuned these after
+ * Weiss 7608ca3 AspirationWindow left that veto always false
  */
 export const TM_NODE_BASE = 0.52;
 export const TM_NODE_MUL = 3.73;
-/** score fall over three iterations, Berserk 787b2e1b: the soft limit times 0.1127 + 0.0262 per centipawn, within 0.5028 and 1.6561; an NNUE-era value, read as 4 units per centipawn */
+/** score fall over three iterations, Berserk 787b2e1b Search: the soft limit times 0.1127 + 0.0262 per centipawn, within 0.5028 and 1.6561; an NNUE-era value, read as 4 units per centipawn */
 export const TM_FALL_BASE = 0.1127;
 export const TM_FALL_PER = 0.00655;
 export const TM_FALL_MIN = 0.5028;
 export const TM_FALL_MAX = 1.6561;
-/** the soft limit with one legal move, Weiss d7d1334's cap */
+/** the soft limit with one legal move, Weiss d7d1334 IterativeDeepening's cap */
 export const TM_ONE_MOVE = 500.0;
 
 // ---------------------------------------------------------------- pieces and attack maps (pieces.ts)
 
-// Seeds: each term's source engine, converted by its middlegame pawn (Stash 103, Ethereal 82, Weiss 104, Laser 100).
+// Seeds: each term's source engine, converted by its middlegame pawn: Stash 37's PAWN_MG_SCORE 103, Ethereal 12.75's
+// PawnValue 82, Weiss c735b8f's P_MG 104, Laser 1.7's PIECE_VALUES pawn 100.
 
-/** mobility by count, Stash 37 */
+/** mobility by count, Stash 37 KnightMobility, BishopMobility, RookMobility and QueenMobility */
 export const MOB_KNIGHT_MG: StaticArray<i32> = [
   -292, -237, -190, -174, -108, -79, -49, -4,
   51,
@@ -557,7 +571,7 @@ export const MOB_QUEEN_EG: StaticArray<i32> = [
   2011, 2066, 2093, 1984, 1947, 1892, 1739, 1730,
   1775, 1744, 2167, 1751,
 ];
-/** outposts by [outside file][pawn-defended], Ethereal 12.75 */
+/** outposts by [outside file][pawn-defended], Ethereal 12.75 KnightOutpost and BishopOutpost */
 export const OUTPOST_KNIGHT_MG: StaticArray<i32> = [
   53, 133, 84, 106,
 ];
@@ -570,48 +584,48 @@ export const OUTPOST_BISHOP_MG: StaticArray<i32> = [
 export const OUTPOST_BISHOP_EG: StaticArray<i32> = [
   -26, 70, 86, -156,
 ];
-/** a minor directly behind any pawn, Ethereal 12.75 */
+/** a minor directly behind any pawn, Ethereal 12.75 KnightBehindPawn and BishopBehindPawn */
 export const BEHIND_KNIGHT_MG = 22;
 export const BEHIND_KNIGHT_EG = 105;
 export const BEHIND_BISHOP_MG = 31;
 export const BEHIND_BISHOP_EG = 67;
-/** a knight four to seven squares from both kings, Ethereal 12.75 */
+/** a knight four to seven squares from both kings, Ethereal 12.75 KnightInSiberia */
 export const FAR_KNIGHT_MG: StaticArray<i32> = [
   -86, -63, -133, -182,
 ];
 export const FAR_KNIGHT_EG: StaticArray<i32> = [
   34, -22, 31, -282,
 ];
-/** the bishop pair, Ethereal 12.75 */
+/** the bishop pair, Ethereal 12.75 BishopPair */
 export const BISHOP_PAIR_MG = 175;
 export const BISHOP_PAIR_EG = 357;
-/** a bishop that sees both center squares from a long diagonal, Ethereal 12.75 */
+/** a bishop that sees both center squares from a long diagonal, Ethereal 12.75 BishopLongDiagonal */
 export const BISHOP_LONG_MG = 88;
 export const BISHOP_LONG_EG = 116;
-/** per own pawn on the bishop's color, Laser 1.7 */
+/** per own pawn on the bishop's color, Laser 1.7 BISHOP_PAWN_COLOR_PENALTY */
 export const BISHOP_PAWNS_MG = 1;
 export const BISHOP_PAWNS_EG = -27;
-/** per rammed own pawn on the bishop's color, Laser 1.7 */
+/** per rammed own pawn on the bishop's color, Laser 1.7 BISHOP_RAMMED_PAWN_COLOR_PENALTY */
 export const BISHOP_RAMMED_MG = -8;
 export const BISHOP_RAMMED_EG = -64;
-/** a rook on a semi-open and an open file, Ethereal 12.75 */
+/** a rook on a semi-open and an open file, Ethereal 12.75 RookFile */
 export const ROOK_FILE_MG: StaticArray<i32> = [
   57, 197,
 ];
 export const ROOK_FILE_EG: StaticArray<i32> = [
   80, 16,
 ];
-/** a rook on the enemy queen's file, Stash 37 */
+/** a rook on the enemy queen's file, Stash 37 RookXrayQueen */
 export const ROOK_QUEEN_FILE_MG = 42;
 export const ROOK_QUEEN_FILE_EG = 109;
-/** a rook hemmed in by its own king, with and without castling rights, Stash 37 */
+/** a rook hemmed in by its own king, with and without castling rights, Stash 37 RookTrapped and RookBuried */
 export const ROOK_TRAPPED_MG = 46;
 export const ROOK_TRAPPED_EG = 15;
 export const ROOK_BURIED_MG = -211;
 export const ROOK_BURIED_EG = 59;
 
-// King safety, Ethereal 12.75: the safety sum's terms, in the units its square reads (pieces.ts KS_DIV_MG).
-/** the pawn shield by [king's file][file][own pawn's distance, 7 for none] */
+// King safety, Ethereal 12.75 evaluateKings and evaluateKingsPawns: the safety sum's terms, in the units its square reads (pieces.ts KS_DIV_MG).
+/** the pawn shield by [king's file][file][own pawn's distance, 7 for none], Ethereal 12.75 KingShelter */
 export const SHELTER_MG: StaticArray<i32> = [
   396, 656, 666, 652, 404, 882, -78, 426,
   147, 196, 205, -142, -190, 144, 395, -143,
@@ -648,7 +662,7 @@ export const SHELTER_EG: StaticArray<i32> = [
   0, -78, -85, -142, -184, 264, 422, 48,
   0, -275, -178, -119, -20, -93, -239, -28,
 ];
-/** the pawn storm by [blocked][file from the edge][enemy pawn's distance, 7 for none] */
+/** the pawn storm by [blocked][file from the edge][enemy pawn's distance, 7 for none], Ethereal 12.75 KingStorm */
 export const STORM_MG: StaticArray<i32> = [
   19, 206, -10, -144, -71, -23, -43, -105,
   -56, 127, -86, 11, 13, 64, 16, -97,
@@ -669,7 +683,7 @@ export const STORM_EG: StaticArray<i32> = [
   0, -302, -110, -42, -17, -116, -145, -133,
   0, -127, -219, -93, -57, -232, -444, 276,
 ];
-/** shelter's and storm's share of the safety sum */
+/** shelter's and storm's share of the safety sum, Ethereal 12.75 SafetyShelter and SafetyStorm */
 export const SAFETY_SHELTER_MG: StaticArray<i32> = [
   -302, -104, -109, 60, 148, 229, -1306, -101,
   0, -217, -225, -124, 133, -106, -743, -297,
@@ -695,7 +709,7 @@ export const SAFETY_ROOK_MG = 295;
 export const SAFETY_ROOK_EG = 875;
 export const SAFETY_QUEEN_MG = 167;
 export const SAFETY_QUEEN_EG = 789;
-/** per attack on the area; Ethereal's value times 9/12, its rescale of the count to a 9-square area, left out */
+/** per attack on the area; Ethereal 12.75 SafetyAttackValue times 9/12, its rescale of the count to a 9-square area left out */
 export const SAFETY_ATTACK_MG = 77;
 export const SAFETY_ATTACK_EG = 120;
 /** per weak square of the area */
@@ -713,7 +727,7 @@ export const SAFETY_CHECK_BISHOP_MG = 364;
 export const SAFETY_CHECK_BISHOP_EG = 4289;
 export const SAFETY_CHECK_KNIGHT_MG = 540;
 export const SAFETY_CHECK_KNIGHT_EG = 2829;
-/** per unsafe check, Stash 37; its S(18, 85) restated for Ethereal's divisors, then converted */
+/** per unsafe check, Stash 37 UnsafeCheck; its S(18, 85) restated for Ethereal 12.75 evaluateKings' divisors, then converted */
 export const SAFETY_UNSAFE_MG = 65;
 export const SAFETY_UNSAFE_EG = 102;
 /** the sum's offset */
@@ -724,8 +738,8 @@ export const SAFETY_OFFSET_EG = -188;
 // Values: fit alone with every other value fixed, results/tuning.md, 2026-11-12.
 /**
  * per flank square the enemy attacks, and per one it attacks twice, in the safety sum; Clockwork bedb1e8's four
- * weights in its sum, which Sirius holds too. Not taken: Stockfish 11's one count, squared, inside its king
- * danger, since this sum is squared whole.
+ * KS_FLANK weights in its sum. Not taken: Stockfish 11 Evaluation::king's one count, squared, inside its king danger, since
+ * this sum is squared whole.
  */
 export const SAFETY_FLANK_ATTACK_MG = 26;
 export const SAFETY_FLANK_ATTACK_EG = -4;
@@ -738,13 +752,13 @@ export const SAFETY_FLANK_DEFENSE2_MG = -25;
 export const SAFETY_FLANK_DEFENSE2_EG = 32;
 /**
  * a penalty outside the sum, so it counts before two attackers reach the king's area: per attacked flank square,
- * with a square attacked twice counted twice; Stockfish 11's FlankAttacks. The fit put its middlegame half at 0.
+ * with a square attacked twice counted twice; Stockfish 11 FlankAttacks. The fit put its middlegame half at 0.
  */
 export const FLANK_ATTACK_MG = 0;
 export const FLANK_ATTACK_EG = -8;
 
-// Passed pawns outside the king-pawn table, Ethereal 12.75 and Weiss c735b8f.
-/** by [can advance][safe to advance][rank]; each cell is Ethereal's less its blocked and unsafe cell, since pawns.ts has the rank's base value */
+// Passed pawns outside the king-pawn table, Ethereal 12.75 evaluatePassed and Weiss c735b8f EvalPassedPawns.
+/** by [can advance][safe to advance][rank]; each cell is Ethereal 12.75 PassedPawn's less its blocked and unsafe cell, since pawns.ts has the rank's base value */
 export const PASSED_ADVANCE_MG: StaticArray<i32> = [
   0, 0, 0, 0, 0, 0, 0, 0,
   0, 85, 104, -41, -73, -124, -212, 0,
@@ -757,14 +771,14 @@ export const PASSED_ADVANCE_EG: StaticArray<i32> = [
   0, 148, -67, 79, -65, 185, 422, 0,
   0, 60, -136, 44, 111, 895, 1864, 0,
 ];
-/** no enemy piece or attack on the pawn or its path, Ethereal 12.75 */
+/** no enemy piece or attack on the pawn or its path, Ethereal 12.75 PassedSafePromotionPath */
 export const PASSED_SAFE_PATH_MG = -200;
 export const PASSED_SAFE_PATH_EG = 304;
-/** an own rook behind the pawn on its file, Weiss c735b8f */
+/** an own rook behind the pawn on its file, Weiss c735b8f PassedRookBack */
 export const PASSED_ROOK_BEHIND_MG = 71;
 export const PASSED_ROOK_BEHIND_EG = 124;
 
-// Threats, Ethereal 12.75: against the side named, except the push.
+// Threats, Ethereal 12.75 evaluateThreats: against the side named, except the push.
 export const THREAT_WEAK_PAWN_MG = -46;
 export const THREAT_WEAK_PAWN_EG = -231;
 export const THREAT_MINOR_BY_PAWN_MG = -348;
@@ -786,7 +800,7 @@ export const THREAT_OVERLOADED_EG = -102;
 export const THREAT_PUSH_MG = 81;
 export const THREAT_PUSH_EG = 125;
 
-// Complexity, Xiphos 0.6 and Ethereal 12.75: the endgame half's adjustment, seeded from Ethereal.
+// Complexity, Ethereal 12.75 evaluateComplexity: the endgame half's adjustment, seeded from its four terms.
 export const COMPLEXITY_PAWNS = 32;
 export const COMPLEXITY_FLANKS = 416;
 export const COMPLEXITY_ENDGAME = 386;

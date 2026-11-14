@@ -1,13 +1,14 @@
 /**
- * Static-eval correction history, Stash 302136d (pawns), dcc25ed (non-pawn
- * pieces), ba73642 (minor pieces) and ea9fd72 (major pieces): five tables, by
+ * Static-eval correction history, Stash 302136d add_correction_history (pawns),
+ * dcc25ed correction_hist_update (non-pawn pieces), ba73642 board_minor_key (minor
+ * pieces) and ea9fd72 board_major_key (major pieces): five tables, by
  * the pawn key, each color's non-pawn key, the minor key and the major key, each
  * per side to move. An entry is a depth-weighted moving average of how far the
  * search's score fell from the static eval, kept in 1/256 of the engine's unit.
  * The search adds the five entries to the raw eval; the TT keeps the raw one, so
  * a probe corrects it again with the tables as they stand.
  *
- * A sixth table is by the last two moves (Clockwork e774be4): the continuation
+ * A sixth table is by the last two moves (Clockwork e774be4 get_cont_corr_slot): the continuation
  * row of the move two plies back, then the piece and square of the last move.
  * A null move or the root's edge on either ply leaves it out.
  *
@@ -47,7 +48,7 @@ export function clearCorrection(): void {
   return (table * 2 + stm) * SIZE + <i32>(key & <u64>(SIZE - 1));
 }
 
-/** the summed correction for the side to move, in the engine's unit (Stash correction_hist_score, once per table) */
+/** the summed correction for the side to move, in the engine's unit (Stash dcc25ed correction_hist_score, once per table) */
 @inline export function correction(stm: i32, cont: i32): i32 {
   return (
     (cont >= 0 ? unchecked(contCorr[cont]) / GRAIN : 0) +
@@ -59,7 +60,7 @@ export function clearCorrection(): void {
   );
 }
 
-/** moves one entry toward `diff`, weighted by depth, within CORR_MAX (Stash correction_hist_update) */
+/** moves one entry toward `diff`, weighted by depth, within CORR_MAX (Stash dcc25ed correction_hist_update) */
 @inline function update(table: StaticArray<i32>, i: i32, w: i32, diff: i32): void {
   const v = (unchecked(table[i]) * (WEIGHT_SCALE - w) + diff * GRAIN * w) / WEIGHT_SCALE;
   unchecked((table[i] = max(-CORR_MAX * GRAIN, min(CORR_MAX * GRAIN, v))));

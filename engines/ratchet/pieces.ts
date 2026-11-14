@@ -41,16 +41,16 @@ const DARK: u64 = 0xaa55aa55aa55aa55;
 const CENTER: u64 = 0x0000001818000000;
 const LONG_DIAGONALS: u64 = 0x8142241818244281;
 
-/** by color and square: the king's area, Ethereal's kingAreaMasks: its moves, its square and the rank ahead, a file wider on the edge */
+/** by color and square: the king's area, Ethereal 12.75 kingAreaMasks: its moves, its square and the rank ahead, a file wider on the edge */
 const KING_AREA = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 128));
 /**
  * by color and its king's file: the king's flank, files a to d, c to f or e to h, on the color's first five ranks
- * (Clockwork king_flank, Sirius kingFlanks). Not taken: Stockfish 11's KingFlank, three files wide for a king on
+ * (Clockwork 641d9f5 king_flank). Not taken: Stockfish 11 KingFlank, three files wide for a king on
  * an edge file.
  */
 const KING_FLANK = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 16));
 
-/** the safety sum's divisors, Ethereal's 720 and 20: the square's scales by the seeds' conversion, so its output converts too */
+/** the safety sum's divisors, Ethereal 12.75 evaluateKings's 720 and 20: the square's scales by the seeds' conversion, so its output converts too */
 const KS_DIV_MG = 3512;
 const KS_DIV_EG = 20;
 
@@ -130,7 +130,7 @@ export let kingSafetyEg = 0;
   zoneWeight[us] = 0;
 }
 
-/** records a piece's attacks in the maps; attacks on the enemy king's area count past squares its pawns hold twice, Ethereal */
+/** records a piece's attacks in the maps; attacks on the enemy king's area count past squares its pawns hold twice, Ethereal 12.75 evaluateKnights */
 @inline function record(us: i32, type: i32, att: u64, weight: i32): void {
   const them = us ^ 1;
   unchecked((attacked2[us] |= att & attacked[us]));
@@ -146,7 +146,7 @@ export let kingSafetyEg = 0;
 
 // ---------------------------------------------------------------- pieces
 
-/** a minor's outpost cell by [outside file][pawn-defended], or -1: Ethereal 12.75, on relative ranks 4 to 6 and out of every enemy pawn's reach */
+/** a minor's outpost cell by [outside file][pawn-defended], or -1: Ethereal 12.75 KnightOutpost, on relative ranks 4 to 6 and out of every enemy pawn's reach */
 @inline function outpost(us: i32, b: u64): i32 {
   const ranks = us == 0 ? (<u64>0xffffff) << 24 : (<u64>0xffffff) << 16;
   if (!(b & ranks & ~unchecked(spanOf[us ^ 1]))) return -1;
@@ -154,7 +154,7 @@ export let kingSafetyEg = 0;
   return outside + ((b & unchecked(attackedBy[(us << 3) | PAWN])) != 0 ? 1 : 0);
 }
 
-/** knights: Ethereal 12.75 evaluateKnights, less its pawn-king and closedness parts; the mobility table is Stash 37's */
+/** knights: Ethereal 12.75 evaluateKnights, less its pawn-king and closedness parts; the mobility table is Stash 37 KnightMobility */
 @inline function knights(us: i32): i32 {
   const them = us ^ 1;
   const ownKing = <i32>ctz(bb[(us << 3) | KING]);
@@ -184,7 +184,7 @@ export let kingSafetyEg = 0;
   return max(abs((a & 7) - (b & 7)), abs((a >> 3) - (b >> 3)));
 }
 
-/** bishops: Ethereal 12.75 evaluateBishops, seeing through own bishops and queens; the same-color pawn terms are Laser 1.7's, the mobility table Stash 37's */
+/** bishops: Ethereal 12.75 evaluateBishops, seeing through own bishops and queens; the same-color pawn terms are Laser 1.7 evaluate's BISHOP_PAWN_COLOR_PENALTY, the mobility table Stash 37 BishopMobility */
 @inline function bishops(us: i32, occ: u64): i32 {
   const o = us << 3;
   const seen = occ ^ (bb[o | BISHOP] | bb[o | QUEEN]);
@@ -216,7 +216,7 @@ export let kingSafetyEg = 0;
   return v;
 }
 
-/** rooks, seeing through own rooks and queens (Ethereal 12.75): file terms Ethereal's; the queen's file, trapped and mobility table Stash 37's */
+/** rooks, seeing through own rooks and queens (Ethereal 12.75 evaluateRooks): file terms Ethereal 12.75 RookFile; the queen's file, trapped and mobility table Stash 37 RookXrayQueen, RookTrapped, RookBuried and RookMobility */
 @inline function rooks(us: i32, occ: u64): i32 {
   const o = us << 3;
   const t = (us ^ 1) << 3;
@@ -239,7 +239,7 @@ export let kingSafetyEg = 0;
     if (file & bb[t | QUEEN]) v += S(ROOK_QUEEN_FILE_MG, ROOK_QUEEN_FILE_EG);
     const n = <i32>popcnt(att & unchecked(mobility[us]));
     v += S(unchecked(MOB_ROOK_MG[n]), unchecked(MOB_ROOK_EG[n]));
-    // hemmed in by its own king, Stash 37: the king between the rook and the board's middle
+    // hemmed in by its own king, Stash 37 RookTrapped: the king between the rook and the board's middle
     if (n <= 4 && relRank(s, us) <= 1 && kingFile != f && kingFile < f == kingFile >= 4) {
       v += castling & (us == 0 ? 3 : 12) ? S(ROOK_TRAPPED_MG, ROOK_TRAPPED_EG) : S(ROOK_BURIED_MG, ROOK_BURIED_EG);
     }
@@ -248,7 +248,7 @@ export let kingSafetyEg = 0;
   return v;
 }
 
-/** queens: mobility over Stash 37's table, seeing through nothing as Ethereal 12.75 */
+/** queens: mobility over Stash 37 QueenMobility, seeing through nothing as Ethereal 12.75 evaluateQueens */
 @inline function queens(us: i32, occ: u64): i32 {
   const o = us << 3;
   const weight = S(SAFETY_QUEEN_MG, SAFETY_QUEEN_EG);
@@ -271,8 +271,8 @@ export let kingSafetyEg = 0;
 /**
  * The penalty on a color's king, its own view, added to kingSafetyMg and
  * kingSafetyEg: Ethereal 12.75 evaluateKings's sum, without its count rescale, and
- * Stash 37's unsafe checks. It counts from two attackers, or one with an enemy queen.
- * The king's flank adds four counts to the sum (Clockwork bedb1e8) and returns a
+ * Stash 37 evaluate_safety's UnsafeCheck. It counts from two attackers, or one with an enemy queen.
+ * The king's flank adds four counts to the sum (Clockwork bedb1e8 evaluate_king_safety) and returns a
  * penalty that needs no attacker on the area, packed, the color's own view
  * (Stockfish 11 FlankAttacks).
  */
@@ -324,7 +324,7 @@ export let kingSafetyEg = 0;
 
 // ---------------------------------------------------------------- passed pawns
 
-/** each passer's room to advance, Ethereal 12.75 evaluatePassed; a rook behind it, Weiss c735b8f. Rank and king distance are in pawns.ts. */
+/** each passer's room to advance, Ethereal 12.75 evaluatePassed; a rook behind it, Weiss c735b8f EvalPassedPawns. Rank and king distance are in pawns.ts. */
 @inline function passers(us: i32, occ: u64): i32 {
   const them = us ^ 1;
   const o = us << 3;
