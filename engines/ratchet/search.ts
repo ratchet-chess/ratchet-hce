@@ -335,8 +335,9 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   killers[p + 1] = 0;
 
   if (!pvNode && !check) {
-    // reverse futility, Stash f91e750 search
-    if (depth <= RFP_DEPTH && eval < MATE_IN_MAX && eval - (RFP_MARGIN * depth - (improving ? RFP_IMPROVING : 0)) >= beta) return eval;
+    // reverse futility, Stash f91e750 search, skipped inside a singular search as Weiss c735b8f AlphaBeta skips its
+    // pruning there; Stash f91e750 runs it there too
+    if (excl == 0 && depth <= RFP_DEPTH && eval < MATE_IN_MAX && eval - (RFP_MARGIN * depth - (improving ? RFP_IMPROVING : 0)) >= beta) return eval;
 
     // razoring, Stash 13ac9e7 search: to qsearch at depth 2 or less, a null-window qsearch below alpha at depth 3,
     // and a ply less for the node when that qsearch beats beta by a ply's margin
