@@ -207,18 +207,18 @@ export const SEE_VALUE: StaticArray<i32> = [0, 400, 1200, 1200, 2000, 3600, 0];
 
 /** aspiration windows, Ethereal 0e47e9b aspirationWindow: from depth 4, delta 10 at its pawn 82, widened by half; search.ts think names where the form differs */
 export const ASP_DEPTH = 4;
-export const ASP_DELTA = 64;
+export const ASP_DELTA = 61;
 
 /** reverse futility, Stash f91e750: depth <= 7, 86 per ply less 79 when improving, at its pawn 103 */
 export const RFP_DEPTH = 7;
-export const RFP_MARGIN = 434;
-export const RFP_IMPROVING = 399;
+export const RFP_MARGIN = 377;
+export const RFP_IMPROVING = 338;
 
 /** razoring, Stash f91e750: depth <= 3, static eval + 120 per ply <= alpha, at its pawn 103 */
 export const RAZOR_DEPTH = 3;
 /** at this depth or less, razoring returns qsearch's score without the null-window test */
 export const RAZOR_QS_DEPTH = 2;
-export const RAZOR_MARGIN = 606;
+export const RAZOR_MARGIN = 673;
 /**
  * 1: the last clause of Stash 13ac9e7's razoring. When the null-window qsearch does not fail low and beats beta by one
  * ply's margin, the node is searched a ply shallower. 0 turns it off. Clockwork 641d9f5 and Berserk test qsearch at alpha
@@ -230,7 +230,7 @@ export const RAZOR_DROP = 1;
 export const NMP_DEPTH = 2;
 export const NMP_BASE = 4;
 export const NMP_DEPTH_DIV = 6;
-export const NMP_EVAL_DIV = 1268;
+export const NMP_EVAL_DIV = 1144;
 export const NMP_EVAL_MAX = 3;
 /**
  * 1: the null move is tried at an expected cut node only (Stash f91e750, Clockwork ca21224); 0 tries it at every non-PV
@@ -241,15 +241,15 @@ export const NMP_CUT_NODE = 1;
  * The null move needs the eval at or above beta by this much: Stash 8546bfe's 30 at its pawn 103, as Clockwork 212fb9e
  * and Sirius also ask. 0 gives the plain test, eval >= beta.
  */
-export const NMP_EVAL_MARGIN = 151;
+export const NMP_EVAL_MARGIN = 149;
 /**
  * 1: the null move also needs the static eval at or above beta + NMP_STATIC_BASE - NMP_STATIC_PER * depth, Weiss ac11d26
  * and 6189645: 138 and 13 at its pawn 104, a gate that eases with depth (Sirius holds the same form). 0 turns it off.
  * Stockfish 11's gate also eases when improving, the form not taken.
  */
 export const NMP_STATIC = 1;
-export const NMP_STATIC_BASE = 690;
-export const NMP_STATIC_PER = 65;
+export const NMP_STATIC_BASE = 648;
+export const NMP_STATIC_PER = 68;
 
 /**
  * 1: at a node not expected to cut, the table cuts on a fail low only (Ethereal 311d110, Berserk d7e1f05); 0 turns it off.
@@ -268,11 +268,11 @@ export const TT_AGE_STORE = 1;
  * and Stockfish 97d2cc9a. 0 scores every draw 0. Weiss e9021fb's 8 - (nodes & 7) leans every draw toward the side to
  * move, the form not taken.
  */
-export const DRAW_JITTER = 5;
+export const DRAW_JITTER = 6;
 
 /** ProbCut, Stash f91e750: depth >= 6, beta + 152 at its pawn 103, a capture's reduced search at depth - 4 */
 export const PC_DEPTH = 6;
-export const PC_MARGIN = 767;
+export const PC_MARGIN = 833;
 export const PC_REDUCTION = 4;
 
 /**
@@ -287,16 +287,16 @@ export const SE_DEPTH = 6;
  */
 export const SE_SEARCH_ADD = 0;
 export const SE_TT_DEPTH = 3;
-export const SE_MARGIN = 51;
+export const SE_MARGIN = 54;
 export const SE_MARGIN_DIV = 16;
 /** a double extension at a non-PV node whose singular search fails low by more than 14 at its pawn 103, while the line has at most 10 */
-export const SE_DOUBLE_MARGIN = 70;
+export const SE_DOUBLE_MARGIN = 88;
 export const SE_DOUBLE_MAX = 10;
 /**
  * a double extension becomes a triple when the TT move is quiet and the singular search fails low by more than this, Stash
  * 4f1ccc1's 120 at its pawn 103; 100000000 turns it off. Clockwork 641d9f5 and Stockfish lower the margin by the move's history instead
  */
-export const SE_TRIPLE_MARGIN = 606;
+export const SE_TRIPLE_MARGIN = 615;
 /**
  * plies taken off a TT move that is not singular, where the TT score itself does not reach beta; 0 turns each off.
  * SE_NEG_CUT: at a cut node, Weiss c735b8f; Berserk takes two.
@@ -316,9 +316,8 @@ export const LMP_COUNT: StaticArray<i32> = [0, 3, 4, 6, 10, 14, 19, 25, 31, 0, 5
 
 /** futility on the reduced depth, Ethereal 0e47e9b: eval + 77 + 52 per ply <= alpha at its pawn 82; history limits by improving, v12.75 */
 export const FUT_DEPTH = 8;
-export const FUT_BASE = 489;
-// the detune screen's value, admitted by SPRT with PRUNE_DIV's: <artifacts>/notes/20261109-detune-screen.md
-export const FUT_PER_DEPTH = 495;
+export const FUT_BASE = 514;
+export const FUT_PER_DEPTH = 479;
 export const FUT_HISTORY: StaticArray<i32> = [12000, 6000];
 
 /** history pruning, Ethereal v12.75 as the dig note reads it: 1- and 2-ply continuation history below a limit, by improving; one pair where Ethereal keeps a limit and a depth per table */
@@ -327,13 +326,13 @@ export const HP_LIMIT: StaticArray<i32> = [-1000, -2500];
 
 /** SEE pruning, Ethereal v12.75: depth <= 9, quiets below -64 per ply, noisy below -19 per ply squared, at its pawn 82 */
 export const SEE_DEPTH = 9;
-export const SEE_QUIET = 312;
-export const SEE_NOISY = 93;
+export const SEE_QUIET = 174;
+export const SEE_NOISY = 84;
 /**
  * a quiet's bar moves by its history, in 1/1024 of SEE's unit per point: Clockwork f236181's 17 at its pawn 100, on a sum of
  * tables with this limit; 0 turns it off. Stockfish moves a capture's bar by its capture history, the form not taken
  */
-export const SEE_HISTORY = 68;
+export const SEE_HISTORY = 85;
 
 /**
  * futility for the bad captures, Clockwork 662c568: at depth <= 8, not in check, once the picker reaches them, static eval +
@@ -341,7 +340,7 @@ export const SEE_HISTORY = 68;
  * it off. Stockfish 15's test per capture, with the victim and capture history, is the form not taken.
  */
 export const NF_DEPTH = 8;
-export const NF_MARGIN = 206;
+export const NF_MARGIN = 176;
 
 /**
  * late move reductions in 1/1024 ply, the terms summed before the sum is cut to whole plies (Clockwork 641d9f5), where
@@ -350,45 +349,45 @@ export const NF_MARGIN = 206;
  * moves the sum by whole steps, capped
  */
 export const LMR_MIN_DEPTH = 3;
-export const LMR_BASE = 768;
-export const LMR_DIV = 2304;
-export const LMR_NON_PV = 1024;
+export const LMR_BASE = 798;
+export const LMR_DIV = 2321;
+export const LMR_NON_PV = 1204;
 /**
  * 1: the non-PV term skips a node whose TT entry has the PV bit, a node that is or was on a PV (Berserk f05f9dc,
  * Stockfish 70880b8e); qsearch then keeps the bit when it stores. 0 turns it off. Clockwork 04f2f0e takes a ply off at
  * every such node and adds one when the TT score is at or below alpha, the form not taken.
  */
 export const LMR_TT_PV = 1;
-export const LMR_NOT_IMPROVING = 1024;
-export const LMR_EARLY_STAGE = 1024;
-export const LMR_HISTORY_STEP = 1024;
-export const LMR_HISTORY_DIV = 5000;
+export const LMR_NOT_IMPROVING = 1114;
+export const LMR_EARLY_STAGE = 1037;
+export const LMR_HISTORY_STEP = 906;
+export const LMR_HISTORY_DIV = 5327;
 export const LMR_HISTORY_MAX = 2;
 /**
  * terms that reduce more, in 1/1024 ply, at Clockwork 641d9f5's tuned values: a cut node (Stockfish 11 and Weiss 95b0951 add
  * two plies); a quiet when the TT move is noisy; a node whose children have failed high more than LMR_FAIL_HIGH_COUNT times;
  * and each time a move has raised alpha here. 0 turns a term off
  */
-export const LMR_CUT_NODE = 1258;
-export const LMR_TT_NOISY = 1024;
-export const LMR_FAIL_HIGH = 942;
+export const LMR_CUT_NODE = 1151;
+export const LMR_TT_NOISY = 936;
+export const LMR_FAIL_HIGH = 888;
 export const LMR_FAIL_HIGH_COUNT = 3;
-export const LMR_ALPHA_RAISE = 518;
+export const LMR_ALPHA_RAISE = 570;
 /**
  * late move reductions on noisy moves: their own base and divisor, Weiss 95b0951's 0.38 + ln d ln m / 3.76, restated for a sum
  * where 1 ply is no reduction and a node neither PV nor improving adds 2. Capture history moves it by whole steps, at Weiss's
  * divisor 8870 scaled from its table's limit 14387 to 16384. A depth of 200 turns them off
  */
 export const LMR_NOISY_MIN_DEPTH = 3;
-export const LMR_NOISY_BASE = -635;
-export const LMR_NOISY_DIV = 3850;
-export const LMR_NOISY_HISTORY_DIV = 10100;
+export const LMR_NOISY_BASE = -543;
+export const LMR_NOISY_DIV = 4063;
+export const LMR_NOISY_HISTORY_DIV = 9206;
 /**
  * the re-search after a reduced search beats alpha: a ply deeper if it beat the best by more than LMR_DEEPER, Clockwork
  * 641d9f5's 94 by the middlegame pawn; else a ply shallower if it beat the best by less than LMR_SHALLOWER per ply of depth.
  * 100000000 and 0 turn them off
  */
-export const LMR_DEEPER = 258;
+export const LMR_DEEPER = 218;
 export const LMR_SHALLOWER = 3;
 /** 1: a quiet's continuation history takes the re-search's result; 0 turns it off */
 export const LMR_CONT_UPDATE = 1;
@@ -397,9 +396,8 @@ export const LMR_CONT_UPDATE = 1;
  * the reduced depth futility and history pruning read: depth less base + ln(depth) ln(moves) / div, the logs scaled by
  * 1024 and the sum in 1/1024 ply. It has its own values, so LMR's can move without moving the pruning. Its seeds are LMR's
  */
-export const PRUNE_BASE = 768;
-// the detune screen's value, admitted by SPRT with FUT_PER_DEPTH's: <artifacts>/notes/20261109-detune-screen.md
-export const PRUNE_DIV = 1400;
+export const PRUNE_BASE = 706;
+export const PRUNE_DIV = 1527;
 
 /**
  * what a quiet's history knows, each part with an off value that gives the play before it.
@@ -413,7 +411,7 @@ export const PRUNE_DIV = 1400;
 export const THREAT_HISTORY = 1;
 export const PAWN_HISTORY = 1;
 export const HIST_PAWN_MAX = 8192;
-export const HIST_DEEP_MARGIN = 274;
+export const HIST_DEEP_MARGIN = 234;
 
 /** a capture is tried among the good ones if SEE >= -score / this, Clockwork 641d9f5's divisor 51 at its pawn 112 */
 export const GOOD_CAPTURE_DIV = 14;
@@ -443,17 +441,17 @@ export const MVV: StaticArray<i32> = [0, 800, 2400, 2400, 4800, 7200, 0];
  * (Weiss 95b0951, Clockwork d17b3cf); 0 searches every evasion, as Stash and Fruit 2.1 do. Stockfish 15 stops after two quiet
  * evasions, the form not taken.
  */
-export const QS_DELTA = 495;
+export const QS_DELTA = 665;
 export const QS_SEE = 1;
 export const QS_EVASIONS = 1;
 
 /** history bonus and malus, Weiss c735b8f: min(2418, 251 d - 267) and min(693, 532 d - 163) */
-export const HIST_BONUS_MUL = 251;
-export const HIST_BONUS_SUB = 267;
-export const HIST_BONUS_MAX = 2418;
-export const HIST_MALUS_MUL = 532;
-export const HIST_MALUS_SUB = 163;
-export const HIST_MALUS_MAX = 693;
+export const HIST_BONUS_MUL = 283;
+export const HIST_BONUS_SUB = 222;
+export const HIST_BONUS_MAX = 2555;
+export const HIST_MALUS_MUL = 544;
+export const HIST_MALUS_SUB = 169;
+export const HIST_MALUS_MAX = 644;
 /**
  * 1: a fail high, or a TT cut on a lower bound, takes the malus of depth + 1 from the continuation entries of the parent's
  * move, when that move is quiet and was the first one played at its node (at a TT cut: the first or second). Stockfish 11's
@@ -467,7 +465,7 @@ export const HIST_PRIOR_MALUS = 1;
 export const HIST_PRIOR_BONUS_DEPTH = 3;
 
 /** correction history, Stash 302136d, dcc25ed, ba73642 and ea9fd72: each table's entry within 32 at its pawn 103; an update weighs 1 + depth, at most 16, of 256 */
-export const CORR_MAX = 161;
+export const CORR_MAX = 163;
 /**
  * 1: a sixth table, by the last two moves, corrects the static eval with the other five's weight and update,
  * Clockwork e774be4; 0 turns it off. Weiss 3f9eb09 gives it its own divisor, the form not taken
