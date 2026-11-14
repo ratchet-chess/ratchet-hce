@@ -11,6 +11,8 @@ the median over spread rounds, since reads come in low bursts; **load's range** 
 | 96 | worker1 | 5 | 2094278 | 1965737 | 1958895 to 1966718 | 1.251 | 1.531 |  | ec4d866 | 2026-11-04 |
 | 96 | worker2 | 5 | 2085409 | 1946313 | 1941517 to 1950167 | 1.263 | 1.537 |  | ec4d866 | 2026-11-04 |
 | 96 | worker3 | 5 | 2092054 | 1963777 | 1961821 to 1965737 | 1.252 | 1.532 |  | ec4d866 | 2026-11-04 |
+| 593 | htpc | 11 | 2801805 | 1772879 | 1763356 to 1776076 | 1.411 | 1.116 |  | cb1a17f | 2026-11-14 |
+| 593 | local | 14 | 3126458 | 2501166 | 2482254 to 2512332 | 1.000 | 1.000 |  | cb1a17f | 2026-11-14 |
 
 Anchors' own speeds, from `tools/host-speed.ts anchors`, at a game's Hash: `go depth 50` then `stop` after a second, over spread positions, alone and at the same load.
 
