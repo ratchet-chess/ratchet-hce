@@ -5,7 +5,7 @@
  */
 import { parentPort, workerData } from "node:worker_threads";
 import { parseFen } from "../fen.ts";
-import { Engine, MATE, START_FEN, moveToUci } from "../wasm.ts";
+import { Engine, MATE, START_FEN } from "../wasm.ts";
 import type { GoLimits } from "./limits.ts";
 
 export type WorkerCommand =
@@ -15,7 +15,8 @@ export type WorkerCommand =
   | { cmd: "hash"; mb: number }
   | { cmd: "tune"; id: number; value: number }
   | { cmd: "eval" }
-  | { cmd: "debug"; on: boolean };
+  | { cmd: "debug"; on: boolean }
+  | { cmd: "chess960"; on: boolean };
 
 const port = parentPort!;
 const stop: Int32Array = workerData.stop;
@@ -80,7 +81,7 @@ function go(limits: GoLimits): void {
   engine.onIteration = (depth, score, nodes) => {
     const ms = performance.now() - t0;
     const nps = Math.round((nodes * 1000) / Math.max(ms, 1));
-    const pv = engine.pv().map(moveToUci).join(" ");
+    const pv = engine.pv().map((m) => engine.uci(m)).join(" ");
     port.postMessage(`info depth ${depth} score ${scoreText(score)} nodes ${nodes} nps ${nps} time ${Math.round(ms)} pv ${pv}`);
     return 0;
   };
@@ -106,7 +107,7 @@ function go(limits: GoLimits): void {
     const f = (x: number) => (x > 1e15 ? "none" : String(Math.round(x * 1000) / 1000));
     port.postMessage(`info string time rule ${t.rule} elapsed ${f(t.elapsed)} soft ${f(t.soft)} hard ${f(t.hard)} score ${f(t.score)} node ${f(t.node)} veto ${t.veto}`);
   }
-  port.postMessage(`bestmove ${best ? moveToUci(best) : "0000"}`);
+  port.postMessage(`bestmove ${best ? engine.uci(best) : "0000"}`);
 }
 
 port.on("message", (c: WorkerCommand) => {
@@ -134,9 +135,13 @@ port.on("message", (c: WorkerCommand) => {
     case "debug":
       debug = c.on;
       break;
+    case "chess960":
+      engine.chess960 = c.on && engine.canChess960;
+      break;
   }
 });
 
 engine.setPosition(START_FEN, []);
 port.postMessage(`name Ratchet${engine.version ? ` ${engine.version}` : ""}`);
+if (engine.canChess960) port.postMessage("chess960");
 port.postMessage("ready");

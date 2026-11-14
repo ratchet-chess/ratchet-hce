@@ -22,6 +22,9 @@
  * levels and no clock, such as Sargon (1978): one level per match, as its
  * operator chose one, so its time controls are ignored.
  *
+ * UCI_Chess960 is offered only by a build that plays Chess960, the own engine: a castle is then written and read
+ * as the king taking its own rook, and a FEN's rights may be in Shredder-FEN or X-FEN. A release plays standard chess.
+ *
  * --nodestime N times the engine in nodes, N per millisecond of its own clock
  * (worker.ts). It is for test matches, so it is a launcher argument, not a UCI
  * option.
@@ -45,11 +48,14 @@ const worker = new Worker(new URL("./worker.ts", import.meta.url), { workerData:
 let markReady: () => void;
 /** the `id name` the worker sends before it is ready: the own engine's carries its version */
 let idName = "Ratchet";
+/** whether the worker's build plays Chess960, which it says before it is ready */
+let chess960 = false;
 const ready = new Promise<void>((r) => (markReady = r));
 
 worker.on("message", (line: string) => {
   if (line === "ready") markReady();
   else if (line.startsWith("name ")) idName = line.slice(5);
+  else if (line === "chess960") chess960 = true;
   else process.stdout.write(line + "\n");
 });
 worker.on("error", (e: Error) => {
@@ -111,6 +117,7 @@ for await (const raw of rl) {
       out("id author the Ratchet contributors");
       out("option name Hash type spin default 16 min 1 max 1024");
       out("option name Threads type spin default 1 min 1 max 1");
+      if (chess960) out("option name UCI_Chess960 type check default false");
       for (const t of tunables) out(`option name ${t.name} type spin default ${t.value} min ${t.min} max ${t.max}`);
       out("uciok");
       break;
@@ -125,6 +132,7 @@ for await (const raw of rl) {
       const name = tokens.slice(tokens.indexOf("name") + 1, tokens.indexOf("value")).join(" ").toLowerCase();
       const value = tokens[tokens.indexOf("value") + 1];
       if (name === "hash") send({ cmd: "hash", mb: Number(value) });
+      if (name === "uci_chess960" && chess960) send({ cmd: "chess960", on: value === "true" });
       const t = tunables.find((x) => x.name.toLowerCase() === name);
       if (t) send({ cmd: "tune", id: t.id, value: Number(value) });
       break;

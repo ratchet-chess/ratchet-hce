@@ -3,7 +3,7 @@
  * build:wasm`) or a release's build/<release>.wasm, which re-exports the core
  * beside its search. Loading, position setup and UCI move strings.
  */
-import { parseFen } from "./fen.ts";
+import { type ParsedFen, castleRooks, parseFen } from "./fen.ts";
 
 interface Exports {
   /** a release's init, which also sets up the core */
@@ -13,6 +13,8 @@ interface Exports {
   put(s: number, p: number): void;
   setState(side: number, castling: number, ep: number, halfmove: number, fullmove: number): void;
   playMove(m: number): void;
+  /** the own engine only: each right's rook square and both kings' squares, for Chess960 (core/position.ts setCastleRooks) */
+  setCastleRooks?(whiteKing: number, blackKing: number, r1: number, r2: number, r4: number, r8: number): void;
   legalMoves(): number;
   rootMove(i: number): number;
   perft(depth: number, bulk: number): number;
@@ -115,7 +117,11 @@ export const MATE = 32000;
 
 const FILES = "abcdefgh";
 const PROMO = " pnbrqk";
+/** core/constants.ts FLAG_CASTLE */
+const FLAG_CASTLE = 1 << 16;
+const STANDARD_ROOKS = [7, 0, 63, 56];
 
+/** move m in UCI's notation; a castle as the king's move to its destination, as standard chess writes it */
 export function moveToUci(m: number): string {
   const from = m & 63;
   const to = (m >>> 6) & 63;
@@ -124,6 +130,13 @@ export function moveToUci(m: number): string {
 }
 
 export class Engine {
+  /**
+   * UCI_Chess960: a castle is written and read as the king taking its own rook. Only a build that sets its rook
+   * squares (canChess960) plays Chess960; its moves keep the king's destination inside.
+   */
+  chess960 = false;
+  /** the loaded position's rook square per right, as the core holds them */
+  private rooks = STANDARD_ROOKS;
   poll: Poll = () => 0;
   onIteration: OnIteration = () => 0;
   clock: Clock = () => performance.now();
@@ -175,6 +188,11 @@ export class Engine {
     return engine;
   }
 
+  /** whether the build plays Chess960: the own engine, not a release */
+  get canChess960(): boolean {
+    return this.wasm.setCastleRooks !== undefined;
+  }
+
   /** loads `fen` and plays the UCI `moves`; throws on an illegal move */
   setPosition(fen: string, moves: string[]): void {
     const f = parseFen(fen);
@@ -182,8 +200,9 @@ export class Engine {
     w.clear();
     for (let s = 0; s < 64; s++) if (f.board[s]) w.put(s, f.board[s]);
     w.setState(f.side, f.castling, f.ep, f.halfmove, f.fullmove);
+    this.setRooks(f);
     for (const uci of moves) {
-      const m = this.legalMoves().find((x) => moveToUci(x) === uci);
+      const m = this.legalMoves().find((x) => this.uci(x) === uci);
       if (m === undefined) throw new Error(`illegal move ${uci}`);
       w.playMove(m);
     }
@@ -195,6 +214,31 @@ export class Engine {
     w.clear();
     for (let s = 0; s < 64; s++) if (board[s]) w.put(s, board[s]);
     w.setState(side, castling, ep, halfmove, fullmove);
+    this.setRooks({ board, side, castling, ep, halfmove, fullmove });
+  }
+
+  /** hands the core each right's rook square, for a build that plays Chess960; a release's stay the corners */
+  private setRooks(f: ParsedFen): void {
+    const set = this.wasm.setCastleRooks;
+    if (!set) return;
+    const present = castleRooks(f);
+    const king = (color: number) => {
+      const s = f.board.indexOf((color << 3) | 6);
+      return s < 0 ? (color ? 60 : 4) : s;
+    };
+    set(king(0), king(1), ...(present.map((r) => (r < 0 ? 64 : r)) as [number, number, number, number]));
+    this.rooks = present.map((r, i) => (r < 0 ? STANDARD_ROOKS[i] : r));
+  }
+
+  /**
+   * move m in UCI's notation for this engine's mode: under chess960 a castle is the king taking its own rook, as
+   * UCI_Chess960 asks; otherwise moveToUci
+   */
+  uci(m: number): string {
+    if (!this.chess960 || !(m & FLAG_CASTLE)) return moveToUci(m);
+    const to = (m >>> 6) & 63;
+    const rook = this.rooks[(to >> 4 & 2) | ((to & 7) === 2 ? 1 : 0)];
+    return moveToUci((m & 63) | (rook << 6));
   }
 
   legalMoves(): number[] {

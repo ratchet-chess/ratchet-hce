@@ -19,7 +19,6 @@ import { BISHOP, FLAG_CASTLE, FLAG_DOUBLE, FLAG_EP, KING, KNIGHT, MAX_PLY, NO_SQ
 import { KING_ATT, KNIGHT_ATT, PAWN_ATT, bishopAttacks, bit, rookAttacks } from "./tables";
 import { Z_CASTLE, Z_EP, Z_PIECE, Z_SIDE } from "./zobrist";
 
-const FLAG_SPECIAL = FLAG_EP | FLAG_CASTLE;
 /** game positions whose hashes are kept for repetition detection */
 const MAX_HISTORY = 1024;
 
@@ -45,14 +44,41 @@ let gameLen: i32 = 0;
 /** the castling rights left after a move from or to each square */
 export const CASTLE_MASK = changetype<StaticArray<u8>>(memory.data(sizeof<u8>() * 64));
 
+/**
+ * The castling rook's square per right, in the order of the rights' bits: white's h-side (1), white's a-side (2),
+ * black's h-side (4), black's a-side (8). Chess960 starts put it on any file; a standard start puts it in the corner.
+ * The king and rook end on the standard castling squares whatever their start. Weiss c735b8f RookSquare.
+ */
+export const ROOK_SQ = changetype<StaticArray<u8>>(memory.data(sizeof<u8>() * 4));
+
 export function initPosition(): void {
+  setCastleRooks(4, 60, 7, 0, 63, 56);
+}
+
+/**
+ * Sets each right's rook square and the castling mask from them, after a position is loaded; NO_SQ marks a right
+ * the position lacks. A standard start's squares give the standard mask. Weiss c735b8f InitCastlingRight.
+ * The mask clears a color's rights on a move from or to its king's square, and one right on a move from or to its
+ * rook's square.
+ */
+export function setCastleRooks(whiteKing: i32, blackKing: i32, r1: i32, r2: i32, r4: i32, r8: i32): void {
   for (let s = 0; s < 64; s++) CASTLE_MASK[s] = 15;
-  CASTLE_MASK[0] = 15 & ~2;
-  CASTLE_MASK[7] = 15 & ~1;
-  CASTLE_MASK[4] = 15 & ~3;
-  CASTLE_MASK[56] = 15 & ~8;
-  CASTLE_MASK[63] = 15 & ~4;
-  CASTLE_MASK[60] = 15 & ~12;
+  CASTLE_MASK[whiteKing] &= ~3;
+  CASTLE_MASK[blackKing] &= ~12;
+  setRook(0, r1, 7);
+  setRook(1, r2, 0);
+  setRook(2, r4, 63);
+  setRook(3, r8, 56);
+}
+
+function setRook(i: i32, r: i32, standard: i32): void {
+  ROOK_SQ[i] = <u8>(r == NO_SQ ? standard : r);
+  if (r != NO_SQ) CASTLE_MASK[r] = <u8>(<i32>CASTLE_MASK[r] & ~(1 << i));
+}
+
+/** the right's index in ROOK_SQ for a castle whose king ends on `to`: c1, g1, c8 or g8 */
+@inline export function castleIndex(to: i32): i32 {
+  return (to >> 4 & 2) | ((to & 7) == 2 ? 1 : 0);
 }
 
 export function clear(): void {
@@ -132,18 +158,23 @@ export function make(m: i32): void {
 
   hash ^= Z_SIDE ^ Z_EP[ep] ^ Z_CASTLE[castling];
 
-  if (captured) removePiece(captured, to);
-  movePiece(piece, from, to);
-
-  if (m & FLAG_SPECIAL) {
+  if (m & FLAG_CASTLE) {
+    // the king's square or the rook's may be the other's destination, so both leave before either lands; Weiss
+    // c735b8f MakeMove, where Stockfish 7cdd5e89 do_castling encodes the castle as the king taking its own rook
+    const rf = <i32>ROOK_SQ[castleIndex(to)];
+    const rook = <i32>board[rf];
+    captured = 0;
+    removePiece(piece, from);
+    removePiece(rook, rf);
+    addPiece(piece, to);
+    addPiece(rook, (to & 7) == 6 ? to - 1 : to + 1);
+  } else {
+    if (captured) removePiece(captured, to);
+    movePiece(piece, from, to);
     if (m & FLAG_EP) {
       const cs = to ^ 8;
       captured = <i32>board[cs];
       removePiece(captured, cs);
-    } else {
-      const rf = to > from ? from + 3 : from - 4;
-      const rt = to > from ? from + 1 : from - 1;
-      movePiece(<i32>board[rf], rf, rt);
     }
   }
 
@@ -172,25 +203,26 @@ export function unmake(m: i32): void {
   const state = undo[u];
   const captured = state & 0xff;
 
-  const promo = movePromo(m);
-  if (promo) {
-    const p = <i32>board[to];
-    toggle(p, to);
-    toggle((p & 8) | PAWN, to);
-  }
-
-  shift(<i32>board[to], to, from);
-
-  if (m & FLAG_SPECIAL) {
-    if (m & FLAG_EP) {
-      toggle(captured, to ^ 8);
-    } else {
-      const rf = to > from ? from + 3 : from - 4;
-      const rt = to > from ? from + 1 : from - 1;
-      shift(<i32>board[rt], rt, rf);
+  if (m & FLAG_CASTLE) {
+    // both leave before either lands, as in make
+    const rf = <i32>ROOK_SQ[castleIndex(to)];
+    const rt = (to & 7) == 6 ? to - 1 : to + 1;
+    const king = <i32>board[to];
+    const rook = <i32>board[rt];
+    toggle(king, to);
+    toggle(rook, rt);
+    toggle(king, from);
+    toggle(rook, rf);
+  } else {
+    const promo = movePromo(m);
+    if (promo) {
+      const p = <i32>board[to];
+      toggle(p, to);
+      toggle((p & 8) | PAWN, to);
     }
-  } else if (captured) {
-    toggle(captured, to);
+    shift(<i32>board[to], to, from);
+    if (m & FLAG_EP) toggle(captured, to ^ 8);
+    else if (captured) toggle(captured, to);
   }
 
   castling = (state >> 8) & 0xff;

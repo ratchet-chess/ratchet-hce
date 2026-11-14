@@ -7,7 +7,7 @@
  */
 import { generateMoves } from "./movegen";
 import { MAX_MOVES, MAX_PLY } from "./constants";
-import { addPiece, attackedWith, bb, castling, clear, ep, halfmove, hash, inCheck, initPosition, make, playMove, ply, setState, side, unmake, board } from "./position";
+import { addPiece, attackedWith, bb, castling, clear, ep, halfmove, hash, inCheck, initPosition, make, playMove, ply, setCastleRooks, setState, side, unmake, board } from "./position";
 import { MAGIC_MUL, initTables } from "./tables";
 import { Z_CASTLE, Z_EP, Z_PIECE, Z_SIDE, initZobrist } from "./zobrist";
 
@@ -20,7 +20,7 @@ export function initCore(): void {
   initPosition();
 }
 
-export { clear, setState, playMove };
+export { clear, setState, setCastleRooks, playMove };
 
 export function put(s: i32, p: i32): void {
   addPiece(p, s);
