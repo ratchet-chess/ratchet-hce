@@ -26,13 +26,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The runners' cache server is unreachable from job containers, so each
-      # cache call waits out a connect timeout before the job goes on.
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: package.json
-          no-cache: true
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
