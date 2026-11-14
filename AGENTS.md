@@ -121,9 +121,10 @@ The steps run in this order. Each step's output is the next step's input.
 - **A download enters through `tools/ws.ts fetch`,** pinned by its sha256. Containers have no network, except a fetch phase that runs no downloaded code.
 - **Never edit a tool script while a run of it is live.** Stage the change beside it, and swap it in after the run.
 - **A tool that submits to `tools/queue.ts` runs its work through the queue.** The queue orders the hosts, not the tool.
-- **Local is the user's desktop, so no job on the real clock runs there.** The conversion suite plays on worker3
-  alone, and rating runs play on the workers. A speed read on local is the one exception. Local's runner containers
-  run in the idle CPU class, so the desktop takes the CPU first.
+- **Local is the user's desktop, so a job on the real clock runs there only by exception.** The conversion suite
+  plays on worker3 alone. A rating run plays on the workers, and on local too inside its hours. A speed read on
+  local is the other exception. Local's runner containers run in the idle CPU class, so the desktop takes the CPU
+  first.
 - **Local plays games only inside its hours,** which `bun tools/queue.ts status` shows. A job submitted outside them
   plays on the workers. Run a null control inside them, because it needs every host.
 - **Stop a run by its PID or its process group,** never by a name pattern.
