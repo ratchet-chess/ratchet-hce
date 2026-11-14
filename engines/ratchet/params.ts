@@ -310,9 +310,21 @@ export const CHECK_EXT = 1;
 /** internal iterative reduction, Berserk 03cebd6: PV or cut node, depth >= 4, no TT move */
 export const IIR_DEPTH = 4;
 
-/** late move pruning, Ethereal v12.75 LateMovePruningCounts: by depth, not improving then improving; search.ts counts moves played against it, where Ethereal counts quiets seen */
+/**
+ * late move pruning's move count at depth d, (BASE + PER_DEPTH * d + PER_DEPTH_SQ * d * d) >> 10, one set not improving
+ * and one improving; initSearch fills a table from them up to LMP_DEPTH. The form is Ethereal 1eff740 initSearch, a
+ * quadratic by depth per row. These values give Ethereal v12.75 LateMovePruningCounts exactly at depths 1 to 8, so the
+ * tree is the table's; the improving row needs the linear term for that. Not taken: Stockfish 7cdd5e89 search's
+ * (3 + depth * depth) / (2 - improving), and Ethereal 1eff740's own coefficients, which each play another tree.
+ * search.ts counts moves played against it, where Ethereal counts quiets seen.
+ */
 export const LMP_DEPTH = 8;
-export const LMP_COUNT: StaticArray<i32> = [0, 3, 4, 6, 10, 14, 19, 25, 31, 0, 5, 7, 11, 17, 26, 36, 48, 63];
+export const LMP_BASE = 2900;
+export const LMP_PER_DEPTH = 0;
+export const LMP_PER_DEPTH_SQ = 465;
+export const LMP_IMPROVING_BASE = 5400;
+export const LMP_IMPROVING_PER_DEPTH = -960;
+export const LMP_IMPROVING_PER_DEPTH_SQ = 1048;
 
 /** futility on the reduced depth, Ethereal 0e47e9b: eval + 77 + 52 per ply <= alpha at its pawn 82; history limits by improving, v12.75 */
 export const FUT_DEPTH = 8;

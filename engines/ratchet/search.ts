@@ -25,7 +25,8 @@ import {
   quietScore, resumeAfterTT, selectBest, victimOf,
 } from "./movepick";
 import {
-  ASP_DELTA, ASP_DEPTH, CHECK_EXT, CONT6, CORR_CONT, DRAW_JITTER, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HIST_DEEP_MARGIN, HIST_PRIOR_BONUS_DEPTH, HIST_PRIOR_MALUS, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_COUNT, LMP_DEPTH, LMR_ALPHA_RAISE,
+  ASP_DELTA, ASP_DEPTH, CHECK_EXT, CONT6, CORR_CONT, DRAW_JITTER, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HIST_DEEP_MARGIN, HIST_PRIOR_BONUS_DEPTH, HIST_PRIOR_MALUS, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_BASE, LMP_DEPTH, LMP_IMPROVING_BASE, LMP_IMPROVING_PER_DEPTH,
+  LMP_IMPROVING_PER_DEPTH_SQ, LMP_PER_DEPTH, LMP_PER_DEPTH_SQ, LMR_ALPHA_RAISE,
   LMR_BASE, LMR_CONT_UPDATE, LMR_CUT_NODE, LMR_DEEPER, LMR_DIV, LMR_EARLY_STAGE, LMR_FAIL_HIGH, LMR_FAIL_HIGH_COUNT, LMR_HISTORY_DIV, LMR_HISTORY_MAX,
   LMR_HISTORY_STEP, LMR_MIN_DEPTH, LMR_NOISY_BASE, LMR_NOISY_DIV, LMR_NOISY_HISTORY_DIV, LMR_NOISY_MIN_DEPTH, LMR_NON_PV, LMR_NOT_IMPROVING,
   LMR_SHALLOWER, LMR_TT_NOISY, LMR_TT_PV, MAT_EG, NF_DEPTH, NF_MARGIN, NMP_BASE, NMP_CUT_NODE, NMP_EVAL_MARGIN, NMP_STATIC, NMP_STATIC_BASE, NMP_STATIC_PER, PAWN_HISTORY, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN,
@@ -93,6 +94,13 @@ const capturesTried = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * M
 /** ln(i) * 1024, rounded: late move reductions and the pruning's reduced depth read it */
 const LN = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 64));
 
+/**
+ * late move pruning's move count by depth, not improving then improving, from the LMP_ values in params.ts. A row has a
+ * fixed size because a tuning build makes LMP_DEPTH a runtime value; LMP_DEPTH stays below LMP_ROW. Depth 0 is never read
+ */
+const LMP_ROW = 64;
+const LMP = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 2 * LMP_ROW));
+
 /** the root's legal moves and the nodes spent under each, for the time rule */
 const rootMoves = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_MOVES));
 const rootNodes = changetype<StaticArray<f64>>(memory.data(sizeof<f64>() * MAX_MOVES));
@@ -109,6 +117,10 @@ export let bestScore = 0;
 
 export function initSearch(): void {
   for (let i = 1; i < 64; i++) LN[i] = <i32>Math.round(Math.log(<f64>i) * 1024);
+  for (let d = 1; d <= min(LMP_DEPTH, LMP_ROW - 1); d++) {
+    LMP[d] = (LMP_BASE + LMP_PER_DEPTH * d + LMP_PER_DEPTH_SQ * d * d) >> 10;
+    LMP[LMP_ROW + d] = (LMP_IMPROVING_BASE + LMP_IMPROVING_PER_DEPTH * d + LMP_IMPROVING_PER_DEPTH_SQ * d * d) >> 10;
+  }
 }
 
 export function nodesSearched(): f64 {
@@ -431,7 +443,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       if (!noisy) {
         // late move pruning, Ethereal v12.75's table: it counts moves played and drops the move that triggers it,
         // as Xiphos and Weiss 2.0 do, where Ethereal counts quiets seen and searches that move
-        if (depth <= LMP_DEPTH && played >= LMP_COUNT[(improving ? 9 : 0) + depth]) {
+        if (depth <= LMP_DEPTH && played >= LMP[(improving ? LMP_ROW : 0) + depth]) {
           skipQuiets = true;
           continue;
         }
