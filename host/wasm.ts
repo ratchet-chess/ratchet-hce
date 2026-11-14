@@ -61,6 +61,8 @@ interface Search {
   unitsPerCp?(): number;
   /** one field of the own engine's record of its last timed search */
   timeTrace?(field: number): number;
+  /** the own engine's table fill by this search, in permille */
+  hashfull?(): number;
   /** the own engine's incremental-eval mismatches, walking the tree to a depth */
   evalWalk?(depth: number): number;
   /** the own engine's windowed search for the window gate: one search to a depth with (alpha, beta), fresh, with or without its table */
@@ -318,6 +320,11 @@ export class Engine {
     if (!t) return undefined;
     const rule = (["none", "soft", "hard-between", "hard-inside", "host"] as const)[t(0)] ?? "none";
     return { rule, elapsed: t(1), soft: t(2), hard: t(3), score: t(4), node: t(5), veto: t(6) };
+  }
+
+  /** the table's fill by the current search, in permille, or undefined for a build that does not report it */
+  hashfull(): number | undefined {
+    return this.search.hashfull?.();
   }
 
   /** the deepest iteration the last search finished */

@@ -82,7 +82,9 @@ function go(limits: GoLimits): void {
     const ms = performance.now() - t0;
     const nps = Math.round((nodes * 1000) / Math.max(ms, 1));
     const pv = engine.pv().map((m) => engine.uci(m)).join(" ");
-    port.postMessage(`info depth ${depth} score ${scoreText(score)} nodes ${nodes} nps ${nps} time ${Math.round(ms)} pv ${pv}`);
+    const full = engine.hashfull();
+    const hashfull = full === undefined ? "" : ` hashfull ${full}`;
+    port.postMessage(`info depth ${depth} score ${scoreText(score)} nodes ${nodes} nps ${nps}${hashfull} time ${Math.round(ms)} pv ${pv}`);
     return 0;
   };
   const white = sideToMove === 0;

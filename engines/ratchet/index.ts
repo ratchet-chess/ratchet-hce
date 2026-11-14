@@ -22,7 +22,7 @@ import {
   doMove, majorKey, minorKey, nonPawnKey, pawnKey, psq, refresh, scratchMajorKey, scratchMinorKey, scratchNonPawnKey, scratchPawnKey, setPawnKey, undoMove,
 } from "./state";
 import { noClock, startClock, timeTrace as clockTrace } from "./time";
-import { ttAlloc, ttClear, ttEnable } from "./tt";
+import { ttAlloc, ttClear, ttEnable, ttHashfull } from "./tt";
 
 /** the version `id name` reports: major << 16 | minor << 8 | patch; tools/calibrate.sh reads this line to name a rating's row */
 const VERSION = (0 << 16) | (3 << 8) | 12;
@@ -114,6 +114,11 @@ export function searchScore(): i32 {
 
 export function searchDepth(): i32 {
   return completedDepth();
+}
+
+/** the table's fill by this search, in permille */
+export function hashfull(): i32 {
+  return ttHashfull();
 }
 
 export function pvLength(): i32 {

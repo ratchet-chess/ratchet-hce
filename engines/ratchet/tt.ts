@@ -69,6 +69,22 @@ export function ttNewSearch(): void {
   return table + <usize>(((key & 0xffffffff) * buckets) >> 32) * BUCKET_BYTES;
 }
 
+/**
+ * the permille of entries in the first 1000 buckets that this search stored, for UCI's hashfull: Weiss c735b8f
+ * HashFull counts only the current generation, where Ethereal 0e47e9b tt_hashfull counts every filled entry
+ */
+export function ttHashfull(): i32 {
+  const n = <usize>min<u64>(1000, buckets);
+  let used = 0;
+  for (let i: usize = 0; i < n; i++) {
+    for (let j = 0; j < ENTRIES; j++) {
+      const flags = <i32>load<u8>(table + i * BUCKET_BYTES + <usize>j * ENTRY_BYTES, 9);
+      if (flags & 3 && flags >> 3 == generation) used++;
+    }
+  }
+  return <i32>((<u64>used * 1000) / (<u64>n * ENTRIES));
+}
+
 /** finds `key`; on a hit sets the tt* fields and returns true */
 export function ttProbe(key: u64): bool {
   const b = bucketOf(key);
