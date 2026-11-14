@@ -323,7 +323,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     raw = hit && ttEval != EVAL_NONE ? ttEval : evaluate();
     staticEval = raw + correction(side, corrCont);
     eval = staticEval;
-    if (hit && (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > eval : tScore < eval))) eval = tScore;
+    // the TT score stands in only where a TT cut may, before the fifty-move count nears its end: Ratchet's guard
+    if (hit && halfmove < 90 && (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > eval : tScore < eval))) eval = tScore;
     // improving, Alexandria 829daf4 Negamax: against two plies up, else four, else true
     const s2 = ssStatic[p + SS - 2];
     const s4 = ssStatic[p + SS - 4];
@@ -696,7 +697,7 @@ function qsearch(alpha: i32, beta: i32): i32 {
   if (!check) {
     raw = hit && ttEval != EVAL_NONE ? ttEval : evaluate();
     best = raw + correction(side, contSlot(ssCont[p + SS - 2], ssCont[p + SS - 1]));
-    if (hit && (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > best : tScore < best))) best = tScore;
+    if (hit && halfmove < 90 && (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > best : tScore < best))) best = tScore;
     if (best >= beta) return best;
     if (best > alpha) alpha = best;
   }
