@@ -17,9 +17,11 @@
  * nixpkgs. --bun lists Bun's --target names (default the host's own). A target other than the host's makes Bun
  * download that platform's runtime when it compiles.
  *
- * Every file prints the WASI build's node signature with `bench`; check a native build that runs here with it.
+ * Every file prints its node signature with `bench`. Before it writes SHA256SUMS, the tool runs `bench` on each
+ * file this host can run (Windows builds under Wine, when wine64 is installed), at bench/search.ts's depth for
+ * the release, and fails if any count differs from the tool build's node signature.
  */
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
@@ -34,14 +36,14 @@ const wasi = join(root, "build/wasi", `${release}.wasm`);
 
 /**
  * Native targets: the C compiler and its flags. Each target's file is named for its OS and for the oldest x86-64
- * level it runs on, as Stockfish names its builds. gcc, because on this engine's wasm2c output it gave about 1.23x
- * Bun's speed against clang's 1.07x.
+ * level it runs on, as Stockfish names its builds. gcc where a target has it, since the compiler moves the speed
+ * of wasm2c's output; read each binary's speed before trusting it.
  */
 const NATIVE: Record<string, { cc: string; flags: string[]; exe: string }> = {
   "linux-x86-64": { cc: "gcc", flags: ["-march=x86-64", "-static", "-lpthread", "-lm"], exe: "" },
   "linux-x86-64-v3": { cc: "gcc", flags: ["-march=x86-64-v3", "-static", "-lpthread", "-lm"], exe: "" },
-  "windows-x86-64": { cc: "x86_64-w64-mingw32-gcc", flags: ["-march=x86-64", "-static", "-lpthread"], exe: ".exe" },
-  "windows-x86-64-v3": { cc: "x86_64-w64-mingw32-gcc", flags: ["-march=x86-64-v3", "-static", "-lpthread"], exe: ".exe" },
+  "windows-x86-64": { cc: "x86_64-w64-mingw32-gcc", flags: ["-march=x86-64", "-static", "-lpthread", "-Wl,--no-insert-timestamp"], exe: ".exe" },
+  "windows-x86-64-v3": { cc: "x86_64-w64-mingw32-gcc", flags: ["-march=x86-64-v3", "-static", "-lpthread", "-Wl,--no-insert-timestamp"], exe: ".exe" },
 };
 
 const run = (cmd: string, argv: string[], cwd = root) => execFileSync(cmd, argv, { cwd, stdio: ["ignore", "pipe", "inherit"], encoding: "utf8" });
@@ -97,6 +99,28 @@ if (bunTargets.length) {
     run("bun", ["build", "--compile", `--target=${target}`, entry, join(root, "host/wasi/thread.ts"), "--outfile", join(dir, file)]);
     files.push(file);
   }
+}
+
+// every file this host can run must print the tool build's node signature
+const tool = run("bun", ["bench/search.ts", "--engine", release, "--repeat", "1", "--warmup", "1"]);
+const found = /d(\d+)\s+signature (\d+)/.exec(tool);
+if (!found) throw new Error(`no signature from bench/search.ts:\n${tool}`);
+const [depth, signature] = [found[1], Number(found[2])];
+const wine = spawnSync("sh", ["-c", "command -v wine64"], { encoding: "utf8" }).stdout.trim();
+const hostOs = process.platform === "win32" ? "windows" : process.platform === "darwin" ? "macos" : process.platform;
+for (const f of files) {
+  let cmd: string[] | undefined;
+  if (f.endsWith(".wasm")) cmd = ["bun", "host/wasi/main.ts", join(dir, f)];
+  else if (f.endsWith(".exe") && hostOs !== "windows") cmd = wine ? [wine, join(dir, f)] : undefined;
+  else if (!f.endsWith(".js") && f.includes(`-${hostOs}-`)) cmd = [join(dir, f)];
+  if (!cmd) {
+    console.error(`${f}: not run on this host`);
+    continue;
+  }
+  const r = spawnSync(cmd[0], [...cmd.slice(1), "bench", depth], { cwd: root, input: "", encoding: "utf8", env: { ...process.env, WINEDEBUG: "-all" } });
+  const nodes = Number(/Nodes searched\s*:\s*(\d+)/.exec(r.stdout)?.[1]);
+  if (nodes !== signature) throw new Error(`${f}: bench ${depth} gave ${nodes} nodes, the tool build ${signature}\n${r.stderr}`);
+  console.error(`${f}: ${nodes} nodes at depth ${depth}, the tool build's signature`);
 }
 
 const sums = files.map((f) => `${createHash("sha256").update(readFileSync(join(dir, f))).digest("hex")}  ${f}`).join("\n") + "\n";
