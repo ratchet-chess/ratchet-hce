@@ -26,7 +26,7 @@ do not say where, ask the user.
 | **variant** | a copy of a release that keeps its mechanisms and opens its constants or its speed | what-if branch, fork |
 | **own engine** | Ratchet's own program, `engines/ratchet/`: Ratchet's code on the core, with no original | release, variant |
 | **concurrency** | how many units of one queue job a host runs at once, a per-host job param | slot, slots |
-| **allocation** | the queue keeps local free of some or all units while a command outside the queue runs, `tools/queue.ts alloc` | hold |
+| **allocation** | the queue keeps a host free of some or all units, while a command outside the queue runs on local or until it is released, `tools/queue.ts alloc` | hold |
 | **start rule** | the queue's per-host check of whether a job's next unit may start, made of named filters that each give a reason | START, fits |
 | **attribute** | a fact about a host, held by the queue's manager, such as `gpu` | property, feature |
 | **requirement** | an attribute a job's units need on a host | constraint |
