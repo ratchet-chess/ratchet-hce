@@ -132,7 +132,7 @@ The steps run in this order. Each step's output is the next step's input.
   plays on worker3 alone. A rating run plays on the workers, and on local too inside its hours. A speed read on
   local is the other exception. Local's runner containers run in the idle CPU class, so the desktop takes the CPU
   first.
-- **Local plays games only inside its hours,** which `bun tools/queue.ts status` shows. A job submitted outside them
+- **Local plays games only inside its hours or an extra window,** which `bun tools/queue.ts status` shows. `bun tools/queue.ts hours local --extra HH:MM-HH:MM` opens one window, which lapses at its end. A job submitted outside them
   plays on the workers.
 - **Stop a run by its PID or its process group,** never by a name pattern.
 - **Wait for a run to finish,** rather than polling it in a loop.
