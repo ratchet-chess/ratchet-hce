@@ -19,9 +19,9 @@
  *                                                           one dataset from several of one resolver and
  *                                                           validation share, repeats merged as in dataset
  *   bun tools/texel/main.ts info <dataset.bin>              a dataset's header and label counts
- * eval, trace and tune take this host's cores, so each runs under a batch hold of
- * the CPU manager's queue (tools/queue.ts hold, decision batch-hold): it starts
- * once no wall-clock match plays here, and none starts beside it. A hold waits
+ * eval, trace and tune take this host's cores, so each runs under a batch allocation
+ * of the CPU manager's queue (tools/queue.ts alloc, decision batch-hold): it starts
+ * once no wall-clock match plays here, and none starts beside it. An allocation waits
  * behind the jobs queued before it; QUEUE_PRIORITY above 0 puts it ahead, which
  * needs the user's word or the CPU owner's.
  *
@@ -74,8 +74,8 @@ const DATASETS = join(REPO, "tmp", "texel", "datasets");
 const DOWNLOADS = "/ws/downloads";
 
 const [step, ...rest] = process.argv.slice(2);
-if (["eval", "trace", "tune"].includes(step) && !process.env.QUEUE_HOLD) {
-  const held = spawnSync("bun", [join(REPO, "tools", "queue.ts"), "hold", "--kind", "batch", "--name", `texel-${step}`,
+if (["eval", "trace", "tune"].includes(step) && !process.env.QUEUE_ALLOC) {
+  const held = spawnSync("bun", [join(REPO, "tools", "queue.ts"), "alloc", "--kind", "batch", "--name", `texel-${step}`,
     "--priority", process.env.QUEUE_PRIORITY ?? "0", "--", process.execPath, ...process.argv.slice(1)], { stdio: "inherit" });
   process.exit(held.status ?? 1);
 }
