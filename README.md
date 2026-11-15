@@ -76,6 +76,7 @@ prints the build's node signature, which equals the tool build's:
 ```sh
 bun host/wasi/main.ts build/wasi/ratchet.wasm             # UCI on stdin and stdout, under Bun or Node
 bun host/wasi/main.ts build/wasi/ratchet.wasm bench       # the node signature over bench/positions.txt
+bun tools/package.ts --release ratchet                    # dist/: the .wasm, the browser Worker, native builds, Bun executables
 ```
 
 ## Fidelity
