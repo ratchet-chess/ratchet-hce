@@ -31,11 +31,11 @@ engine there is a release here.
 
 ## Layout
 
-- `core/`: the board, in AssemblyScript: bitboards, magic sliders, legal move generation, Zobrist hashing and perft. It compiles to `build/core.wasm`.
+- `core/`: the board, in AssemblyScript: bitboards, magic sliders, legal move generation, Zobrist hashing and perft. It compiles to `build/core.wasm`. It also holds the WASI build's UCI front end (`uci.ts`, `wasi.ts`) and the calls a release makes to its host (`host.ts`).
 - `engines/`: one directory per release, each compiled with the core to `build/<release>.wasm`, with its fidelity reference; and `engines/ratchet/`, the own engine, Ratchet's own program on the core.
 - `inventory/`: one record per release.
 - `results/`: measured results that change as protocols change, such as ratings, anchor checks and timings; the tools write their rows.
-- `host/`: the TypeScript host: the WASM wrapper, FEN, and the UCI front end, which passes each `go`'s limits and a clock to the release.
+- `host/`: the TypeScript host: the WASM wrapper, FEN, and the UCI front end, which passes each `go`'s limits and a clock to the release. `host/wasi/` runs a WASI build: the seven WASI calls it imports, with stdin fed through a ring in shared memory.
 - `bin/`: the UCI launcher.
 - `web/`: a browser page to play a release or the own engine, or to watch two play, on a real clock or a node budget, on a chessground board. Each engine searches in a Web Worker, and the core referees.
 - `test/`: the gates: perft, incremental state, each release's own move generator, the own engine's eval mirror and its window gate; and the 0x88 board the perft gate checks the core against.
@@ -68,6 +68,15 @@ bun run web  # the play page: rebuilds any stale wasm, builds web/dist/, serves 
 ```
 
 `bin/ratchet` is the UCI engine for a GUI or a match runner: `bin/ratchet [bun|node|deno] --release <name>`.
+
+A release with an `engines/<release>/wasi.ts` also builds to `build/wasi/<release>.wasm`, its WASI build: a WASI
+preview-1 module with the UCI front end inside, which speaks UCI on stdin and stdout (UCI over WASI). Its `bench`
+prints the build's node signature, which equals the tool build's:
+
+```sh
+bun host/wasi/main.ts build/wasi/ratchet.wasm             # UCI on stdin and stdout, under Bun or Node
+bun host/wasi/main.ts build/wasi/ratchet.wasm bench       # the node signature over bench/positions.txt
+```
 
 ## Fidelity
 

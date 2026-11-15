@@ -30,9 +30,7 @@ import {
   TM_HARD_CAP, TM_HARD_MUL, TM_INC_MOVES, TM_INC_MOVES_PER_MS, TM_MTG_CAP, TM_MTG_SHARE, TM_NODE_BASE, TM_NODE_MUL, TM_ONE_MOVE, TM_OVERHEAD, TM_SHARE,
   TM_FALL_BASE, TM_FALL_MAX, TM_FALL_MIN, TM_FALL_PER, TM_SHARE_CAP,
 } from "./params";
-
-@external("env", "clock") declare function hostClock(nodes: f64): f64;
-@external("env", "poll") declare function hostPoll(): i32;
+import { hostClock, hostPoll } from "../../core/host";
 
 /** whether this search has a clock to keep */
 export let timed = false;

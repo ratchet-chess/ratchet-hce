@@ -38,8 +38,7 @@ import { seeGe } from "./see";
 import { doMove, doNull, psq, undoMove, undoNull } from "./state";
 import { mayContinue, mustStop } from "./time";
 import { BOUND_EXACT, BOUND_LOWER, BOUND_UPPER, fullMove, ttBound, ttDepth, ttEval, ttMove, ttNewSearch, ttProbe, ttPv, ttScore, ttStore } from "./tt";
-
-@external("env", "onIteration") declare function hostIteration(depth: i32, score: i32, nodes: f64): i32;
+import { hostIteration } from "../../core/host";
 
 export const MATE = 32000;
 /** scores beyond this are mates */
