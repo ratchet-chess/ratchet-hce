@@ -34,6 +34,7 @@ and an exact commit. A revision is a commit prefix or a release's version; a ver
 | Koivisto | 51747be9 | https://github.com/Luecx/Koivisto | 51747be9f239e611d60e1b736cd6ef8589041338 | - |
 | Laser | 1.7 | https://github.com/jeffreyan11/laser-chess-engine | 96bfbdba8d064442626e1bb23e02473a46559a2e | v1.7 |
 | Stash | 007850d | https://github.com/mhouppin/stash-bot | 007850df35d51bdad46a011fcd08f0d1c8687f6f | - |
+| Stash | 079fcba | https://github.com/mhouppin/stash-bot | 079fcbabe9d74851640ee55e7654e0915f846c4b | - |
 | Stash | 13ac9e7 | https://github.com/mhouppin/stash-bot | 13ac9e77bb364684becd2cecb7b09f2aafc89c30 | - |
 | Stash | 302136d | https://github.com/mhouppin/stash-bot | 302136d09eaec4c0635178ad59e3290386289298 | - |
 | Stash | 37 | https://github.com/mhouppin/stash-bot | 077a93828fee354853ffac322f178d1a4f1670ff | v37.0 |
@@ -55,16 +56,21 @@ and an exact commit. A revision is a commit prefix or a release's version; a ver
 | Stockfish | 45e5e65a | https://github.com/official-stockfish/Stockfish | 45e5e65a28ce7e304c279fabf5f8a83cced73013 | - |
 | Stockfish | 4739037f | https://github.com/official-stockfish/Stockfish | 4739037f967ac3c818907e89cc88c7b97021d027 | - |
 | Stockfish | 5ae195ee | https://github.com/official-stockfish/Stockfish | 5ae195ee7e3ccac01b8145f9b7022e352a288f07 | - |
+| Stockfish | 6b782211 | https://github.com/official-stockfish/Stockfish | 6b7822119feffd0a27ae5b2a95d3570c9e046090 | - |
 | Stockfish | 7cdd5e89 | https://github.com/official-stockfish/Stockfish | 7cdd5e89a39fe3071b67d91c7bb07d712044bf76 | - |
 | Stockfish | 8fd34d77 | https://github.com/official-stockfish/Stockfish | 8fd34d7763072fc3ec7216729c1f7b7354bfa470 | - |
+| Stockfish | 91a76331 | https://github.com/official-stockfish/Stockfish | 91a76331ca27b40d63f0031fbd7b9e41ead354d4 | - |
 | Stockfish | 946fa476 | https://github.com/official-stockfish/Stockfish | 946fa4762539307dcdcb30d08f13d627864e9bcf | - |
 | Stockfish | 9dbb3ae8 | https://github.com/official-stockfish/Stockfish | 9dbb3ae8b2c5ef4ad2b399a42707ad1fd851c68b | - |
 | Stockfish | 9eb7b607 | https://github.com/official-stockfish/Stockfish | 9eb7b607cf69f6b613c89ae767b7f934f26e59e1 | - |
 | Stockfish | a32d2086 | https://github.com/official-stockfish/Stockfish | a32d2086bc227f1d76bd04808e10c8e7bd230fe9 | - |
 | Stockfish | b0658f09 | https://github.com/official-stockfish/Stockfish | b0658f09b93185e2b43d4b2d6f0daa30c36ebcc2 | - |
+| Stockfish | b7b7a3f3 | https://github.com/official-stockfish/Stockfish | b7b7a3f3fa786449832bd84d501c1183290f3e3a | - |
 | Stockfish | bae019b5 | https://github.com/official-stockfish/Stockfish | bae019b53e5c2bfcf0d69b4ebfc52b4f4de762eb | - |
 | Stockfish | bb751d6c | https://github.com/official-stockfish/Stockfish | bb751d6c890f5c50c642366d601740366cfae8d0 | - |
 | Stockfish | c228f319 | https://github.com/official-stockfish/Stockfish | c228f3196ae9965250f317c8784012c2485228c4 | - |
+| Stockfish | e4f8a4fa | https://github.com/official-stockfish/Stockfish | e4f8a4fa7f5da8287579c0c74e292974c6acfd8d | - |
+| Weiss | 073eda5 | https://github.com/TerjeKir/weiss | 073eda51162ee2bdc9b930520d993c516873d02c | - |
 | Weiss | 0d00a00 | https://github.com/TerjeKir/weiss | 0d00a00609309e8348284cb615b4f9a1899a69f0 | - |
 | Weiss | 1401211 | https://github.com/TerjeKir/weiss | 14012110db757c452bc086cc0a9262dda8c3af2c | - |
 | Weiss | 2.0 | https://github.com/TerjeKir/weiss | 0db49c7270f5c6286a983390a5ea2780e1e0c9f4 | v2.0 |
@@ -79,4 +85,5 @@ and an exact commit. A revision is a commit prefix or a release's version; a ver
 | Weiss | c735b8f | https://github.com/TerjeKir/weiss | c735b8f3d2ddb0cdf42b135a5fb42e21c01f7a3d | - |
 | Weiss | d7d1334 | https://github.com/TerjeKir/weiss | d7d133426e1f8ae862021571ea2a636b0d151f07 | - |
 | Weiss | e9021fb | https://github.com/TerjeKir/weiss | e9021fb29c713a79bf69342e3828faf1670ca819 | - |
+| Weiss | fe8e513 | https://github.com/TerjeKir/weiss | fe8e513bc8f58739524e6d0b43ddc9bdf0005b05 | - |
 | Xiphos | 0.6 | https://github.com/milostatarevic/xiphos | e7ba1a4d44a59c3fa076666a3814f2487153a8a5 | v0.6 |

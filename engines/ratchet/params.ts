@@ -266,6 +266,15 @@ export const TT_AGE_STORE = 1;
  * every draw 0. Weiss e9021fb AlphaBeta's 8 - (nodes & 7) leans every draw toward the side to move, the form not taken.
  */
 export const DRAW_JITTER = 6;
+/**
+ * 1: a node with depth left whose side to move can repeat an earlier position raises alpha to the draw score before
+ * its table probe (cycle.ts upcomingRepetition; Stockfish 91a76331 search's Step 3). The repeating move's child
+ * returns the draw score, so on the plain tree the raise changes no value. 2: the horizon node raises too, before its
+ * quiescence search (Stockfish e4f8a4fa search; Stash 079fcba search), where the quiet repeating move is not in the
+ * tree and the raise adds it. 0 turns both off. Stockfish b7b7a3f3 qsearch raises inside the quiescence search as
+ * well, the placement not taken.
+ */
+export const UPCOMING_REP = 2;
 
 /** ProbCut, Stash f91e750 search: depth >= 6, beta + 152 at its PAWN_MG_SCORE 103, a capture's reduced search at depth - 4 */
 export const PC_DEPTH = 6;

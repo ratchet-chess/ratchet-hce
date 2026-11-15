@@ -18,6 +18,7 @@ import { KING, MAX_MOVES, MAX_PLY, PAWN, movePromo } from "../../core/constants"
 import { generateCaptures, generateMoves } from "../../core/movegen";
 import { bb, halfmove, hash, inCheck, isRepetition, make, ply, side, unmake } from "../../core/position";
 import { contSlot, correction, updateCorrection } from "./correction";
+import { upcomingRepetition } from "./cycle";
 import { UNITS_PER_CP, evalCached } from "./eval";
 import { bonusAt, butterfly, butterflyIndex, captureHist, contHist, gravity, gravityFrom, killers, malusAt, rewardPawn, threatsAt } from "./history";
 import {
@@ -31,7 +32,7 @@ import {
   LMR_HISTORY_STEP, LMR_MIN_DEPTH, LMR_NOISY_BASE, LMR_NOISY_DIV, LMR_NOISY_HISTORY_DIV, LMR_NOISY_MIN_DEPTH, LMR_NON_PV, LMR_NOT_IMPROVING,
   LMR_SHALLOWER, LMR_TT_NOISY, LMR_TT_PV, MAT_EG, NF_DEPTH, NF_MARGIN, NMP_BASE, NMP_CUT_NODE, NMP_EVAL_MARGIN, NMP_STATIC, NMP_STATIC_BASE, NMP_STATIC_PER, PAWN_HISTORY, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN,
   SE_DOUBLE_MAX, SE_MARGIN, SE_MARGIN_DIV, SE_NEG_ALPHA, SE_NEG_CUT, SE_SEARCH_ADD, SE_TRIPLE_MARGIN, SE_TT_DEPTH, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA,
-  QS_EVASIONS, QS_SEE, RAZOR_DEPTH, RAZOR_DROP, RAZOR_MARGIN, RAZOR_QS_DEPTH, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, SEE_DEPTH, SEE_HISTORY, SEE_NOISY, SEE_QUIET, TT_CUT_NODE,
+  QS_EVASIONS, QS_SEE, RAZOR_DEPTH, RAZOR_DROP, RAZOR_MARGIN, RAZOR_QS_DEPTH, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, SEE_DEPTH, SEE_HISTORY, SEE_NOISY, SEE_QUIET, TT_CUT_NODE, UPCOMING_REP,
 } from "./params";
 import { seeGe } from "./see";
 import { doMove, doNull, psq, undoMove, undoNull } from "./state";
@@ -261,7 +262,17 @@ function updateHistories(best: i32, depth: i32, bonusDepth: i32, p: i32, quiets:
 function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   const p = ply;
   pvLen[p] = p;
-  if (depth <= 0) return qsearch(alpha, beta);
+  if (depth <= 0) {
+    // UPCOMING_REP 2: the horizon node takes the raise too, before its quiescence search (Stockfish e4f8a4fa search)
+    if (UPCOMING_REP == 2 && p != 0 && halfmove >= 3) {
+      const draw = drawScore();
+      if (alpha < draw && upcomingRepetition(excludedAt[p])) {
+        alpha = draw;
+        if (alpha >= beta) return alpha;
+      }
+    }
+    return qsearch(alpha, beta);
+  }
   const pvNode = beta - alpha > 1;
   const root = p == 0;
   nodeCount++;
@@ -276,6 +287,15 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     alpha = max(alpha, -MATE + p);
     beta = min(beta, MATE - p - 1);
     if (alpha >= beta) return alpha;
+    // a move into an earlier position makes this node worth a draw at least (Stockfish 91a76331 search's Step 3);
+    // a singular search does not count the move it excludes: Ratchet's guard
+    if (UPCOMING_REP != 0 && halfmove >= 3) {
+      const draw = drawScore();
+      if (alpha < draw && upcomingRepetition(excludedAt[p])) {
+        alpha = draw;
+        if (alpha >= beta) return alpha;
+      }
+    }
   }
 
   const check = hash == knownCheckKey ? knownCheck : inCheck();

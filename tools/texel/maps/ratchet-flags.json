@@ -28,6 +28,7 @@
   { "name": "QS_DELTA", "off": 100000000, "min": 0, "max": 100000000, "sources": [{ "file": "params.ts", "symbol": "QS_DELTA" }] },
   { "name": "QS_EVASIONS", "off": 0, "min": 0, "max": 1, "sources": [{ "file": "params.ts", "symbol": "QS_EVASIONS" }] },
   { "name": "DRAW_JITTER", "off": 0, "min": 0, "max": 64, "sources": [{ "file": "params.ts", "symbol": "DRAW_JITTER" }] },
+  { "name": "UPCOMING_REP", "off": 0, "min": 0, "max": 2, "sources": [{ "file": "params.ts", "symbol": "UPCOMING_REP" }] },
   { "name": "CORR_MAX", "off": 0, "min": 0, "max": 1000, "sources": [{ "file": "params.ts", "symbol": "CORR_MAX" }] }
  ]
 }

@@ -282,6 +282,16 @@ export function isRepetition(): bool {
   return false;
 }
 
+/** how many positions the hash history holds before the current one, game and search path together */
+@inline export function pliesKept(): i32 {
+  return gameLen + ply;
+}
+
+/** the hash of the position `back` plies before the current one; `back` is at most pliesKept() */
+@inline export function hashBack(back: i32): u64 {
+  return hashes[gameLen + ply - back];
+}
+
 /** true if color `by` attacks s, with occupancy occ for slider rays */
 export function attackedWith(s: i32, by: i32, occ: u64): bool {
   const by8 = by << 3;

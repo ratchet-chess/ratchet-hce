@@ -15,6 +15,7 @@ import { generateMoves } from "../../core/movegen";
 import { bb, castling, setState, side } from "../../core/position";
 import { UNITS_PER_CP, clearEvalCache, evalWith, evaluateScratch, initEval, scratchPsq } from "./eval";
 import { clearCorrection } from "./correction";
+import { initCycle } from "./cycle";
 import { clearPawns } from "./pawns";
 import { clearHistory } from "./history";
 import { MAX_DEPTH, bestScore, completedDepth, hostScore, initSearch, nodesSearched as searchNodes, pvAt, rootPvLen, searchWindow, think } from "./search";
@@ -31,6 +32,7 @@ const HASH_MB = 16;
 
 export function init(): void {
   initCore();
+  initCycle();
   initEval();
   initSearch();
   ttAlloc(HASH_MB);
