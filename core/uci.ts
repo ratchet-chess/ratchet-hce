@@ -65,8 +65,12 @@ const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 /** nodes per millisecond of the engine's own clock under --nodestime, else 0 (host/uci/worker.ts nodesTime) */
 let nodesTime: f64 = 0;
-/** whether a stop or quit has arrived since the last go */
+/** whether a stop has arrived since the last go */
 let stopped = false;
+/** whether the search under way has no limit of its own, so only a stop or the end of input ends it */
+let unbounded = false;
+/** whether stdin has ended: no more input comes, so a search under way is the last */
+let inputEnded = false;
 /** the wall clock at the go, for the info lines' time and nps */
 let goStart: f64 = 0;
 /** set during `bench`, whose searches neither report nor read input */
@@ -77,10 +81,17 @@ let quiet = false;
   return nodesTime > 0 ? nodes / nodesTime : nowMs();
 }
 
-/** reads waiting input during a search, answers isready, and returns 1 once a stop or quit has arrived */
+/**
+ * Reads waiting input during a search, answers isready, and returns 1 once the
+ * search must end: on a stop, or at the end of input when the search is unbounded.
+ * A bounded search runs on at the end of input, so its `go` still gets a bestmove.
+ */
 @global export function uciPoll(): i32 {
   if (quiet) return 0;
-  if (readInput(false) < 0) exit(0);
+  if (!inputEnded && readInput(false) < 0) {
+    inputEnded = true;
+    if (unbounded) stopped = true;
+  }
   scanWhileSearching();
   return stopped ? 1 : 0;
 }
@@ -129,7 +140,9 @@ function putScore(s: i32): void {
 
 // ------------------------------------------------------------------ reading lines
 
-/** the start of input not yet scanned during a search: lines before it wait for the main loop */
+/** the end of the command being run: during its search, the lines in [queueFrom, scanFrom) wait for the main loop */
+let queueFrom = 0;
+/** the start of input not yet scanned during a search */
 let scanFrom = 0;
 /** the token cursor: the line ends at lineEnd; the current token is [tokStart, tokStart + tokLen) */
 let cursor = 0;
@@ -206,9 +219,10 @@ function nextNumber(): f64 {
 }
 
 /**
- * During a search: answers each complete waiting line that UCI allows then
- * (isready, stop, quit) and removes it; leaves any other line for the main loop,
- * in order.
+ * During a search: acts on each complete waiting `stop` and `quit` and removes
+ * it; leaves any other line for the main loop, in order. An `isready` is answered
+ * only when no line waits ahead of it, since its `readyok` tells a GUI that the
+ * earlier lines were handled.
  */
 function scanWhileSearching(): void {
   for (;;) {
@@ -216,7 +230,7 @@ function scanWhileSearching(): void {
     if (nl < 0) return;
     startLine(scanFrom, nl);
     nextToken();
-    if (tokenIs("isready")) {
+    if (tokenIs("isready") && scanFrom == queueFrom) {
       put("readyok");
       endLine();
       cutInput(scanFrom, nl + 1);
@@ -231,10 +245,10 @@ function scanWhileSearching(): void {
   }
 }
 
-/** after a `go infinite` search: waits until a stop or quit arrives, answering isready meanwhile */
+/** after a `go infinite` search: waits until a stop, a quit or the end of input arrives, answering isready meanwhile */
 function waitForStop(): void {
-  while (!stopped) {
-    if (readInput(true) < 0) exit(0);
+  while (!stopped && !inputEnded) {
+    if (readInput(true) < 0) inputEnded = true;
     scanWhileSearching();
   }
 }
@@ -495,6 +509,7 @@ function go(): void {
   if (!isNaN(nodes)) fail("a release takes no node limit");
   stopped = false;
   const white = sideToMove == 0;
+  unbounded = infinite || (isNaN(white ? wtime : btime) && isNaN(movetime) && isNaN(depth));
   if (nodesTime > 0) {
     const own = white ? wtime : btime;
     if (!isNaN(own)) {
@@ -740,11 +755,12 @@ export function uciMain(e: UciEngine): void {
     const nl = newlineFrom(0);
     if (nl < 0) {
       if (readInput(true) >= 0) continue;
+      queueFrom = scanFrom = inEnd;
       if (inEnd > 0) command(0, inEnd);
       exit(0);
     }
     // a search scans only the input after this line, and cuts only lines there, so [0, nl] stays in place
-    scanFrom = nl + 1;
+    queueFrom = scanFrom = nl + 1;
     command(0, nl);
     cutInput(0, nl + 1);
   }
