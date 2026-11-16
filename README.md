@@ -40,7 +40,7 @@ engine there is a release here.
 - `web/`: a browser page to play a release or the own engine, or to watch two play, on a real clock or a node budget, on a chessground board. Each engine searches in a Web Worker, and the core referees.
 - `test/`: the gates: perft, incremental state, each release's own move generator, the own engine's eval mirror and its window gate; and the 0x88 board the perft gate checks the core against.
 - `bench/`: the perft benchmark, the search benchmark over the releases' shared position set, and the own engine's eval benchmark.
-- `shim/`: the poll helper that another engine links to become a WASI build, in C and in Rust: its search runs on the UCI thread and reads its input through the helper.
+- `shim/`: the poll helper that another engine links to become a WASI build, in C, Rust and Go: its search runs on the UCI thread and reads its input through the helper.
 - `tools/`: fidelity checks, matches, ratings, the conversion suite, and readers of match PGNs and time logs.
 - `flake.nix` and `nix/`: the containers. The runner plays matches on the workers; the local runner plays them on the host and builds the anchor tree (`nix/anchors.sh`); the workspace is for work on originals. `tools/ws.ts` builds, loads and runs them. `nix/anchor-tree` and `nix/syzygy` pin the anchor tree and the Syzygy tables in the Nix store.
 - `vendor/fastchess/`: the match runner, as a submodule.
