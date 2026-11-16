@@ -2,7 +2,7 @@
  * The WASI build's UCI front end: the conversation a GUI or a match runner holds
  * with the engine over stdin and stdout. It is the AssemblyScript form of
  * host/uci/main.ts and host/uci/worker.ts, and says what they say, line for
- * line, so a WASI build and the tool build behind bin/ratchet play alike.
+ * line, so a WASI build and bin/ratchet play alike.
  *
  * A release's `wasi.ts` fills a UciEngine with its functions and calls uciMain.
  * The search reaches this file through core/host.ts: its clock (uciClock), its

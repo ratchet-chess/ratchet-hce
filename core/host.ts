@@ -3,13 +3,13 @@
  * waiting input, and a report after each finished iteration. A release calls
  * these, never an import of its own.
  *
- * The tool build (`index.ts`) imports them from the JavaScript host (host/wasm.ts).
+ * The wasm the host and the tools load (`index.ts`) imports them from the JavaScript host (host/wasm.ts).
  * The WASI build (`wasi.ts`, compiled with `--use WASI=1`) answers them inside the
  * module, from core/uci.ts. `isDefined(WASI)` is settled at compile time, so each
  * build holds only its own branch.
  *
  * This file does not import core/uci.ts: an import would put that module's buffers
- * and statics into every tool build. Its three answers are `@global` there, and only
+ * and statics into every such wasm. Its three answers are `@global` there, and only
  * a WASI entry imports it, so only the WASI build resolves the names below.
  */
 

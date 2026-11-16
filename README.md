@@ -72,7 +72,7 @@ bun run web  # the play page: rebuilds any stale wasm, builds web/dist/, serves 
 
 A release with an `engines/<release>/wasi.ts` also builds to `build/wasi/<release>.wasm`, its WASI build: a WASI
 preview-1 module with the UCI front end inside, which speaks UCI on stdin and stdout (UCI over WASI). Its `bench`
-prints the build's node signature, which equals the tool build's:
+prints the release's node signature:
 
 ```sh
 bun host/wasi/main.ts build/wasi/ratchet.wasm             # UCI on stdin and stdout, under Bun or Node

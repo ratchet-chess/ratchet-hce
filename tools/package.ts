@@ -19,7 +19,7 @@
  *
  * Every file prints its node signature with `bench`. Before it writes SHA256SUMS, the tool runs `bench` on each
  * file this host can run (Windows builds under Wine, when wine64 is installed), at bench/search.ts's depth for
- * the release, and fails if any count differs from the tool build's node signature.
+ * the release, and fails if any count differs from the release's node signature.
  */
 import { execFileSync, spawnSync } from "node:child_process";
 import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -101,7 +101,7 @@ if (bunTargets.length) {
   }
 }
 
-// every file this host can run must print the tool build's node signature
+// every file this host can run must print the release's node signature
 const tool = run("bun", ["bench/search.ts", "--engine", release, "--repeat", "1", "--warmup", "1"]);
 const found = /d(\d+)\s+signature (\d+)/.exec(tool);
 if (!found) throw new Error(`no signature from bench/search.ts:\n${tool}`);
@@ -119,8 +119,8 @@ for (const f of files) {
   }
   const r = spawnSync(cmd[0], [...cmd.slice(1), "bench", depth], { cwd: root, input: "", encoding: "utf8", env: { ...process.env, WINEDEBUG: "-all" } });
   const nodes = Number(/Nodes searched\s*:\s*(\d+)/.exec(r.stdout)?.[1]);
-  if (nodes !== signature) throw new Error(`${f}: bench ${depth} gave ${nodes} nodes, the tool build ${signature}\n${r.stderr}`);
-  console.error(`${f}: ${nodes} nodes at depth ${depth}, the tool build's signature`);
+  if (nodes !== signature) throw new Error(`${f}: bench ${depth} gave ${nodes} nodes, bench/search.ts ${signature}\n${r.stderr}`);
+  console.error(`${f}: ${nodes} nodes at depth ${depth}, the release's node signature`);
 }
 
 const sums = files.map((f) => `${createHash("sha256").update(readFileSync(join(dir, f))).digest("hex")}  ${f}`).join("\n") + "\n";

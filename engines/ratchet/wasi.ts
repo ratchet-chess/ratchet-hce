@@ -1,8 +1,8 @@
 /**
  * The own engine's WASI build: the engine with its UCI front end inside, a
  * WASI preview-1 command module that speaks UCI on stdin and stdout. index.ts is
- * the tool build, whose exports the host and the tools call; this file uses the
- * same functions, so both builds search alike and have one node signature.
+ * the wasm the host and the tools load, through its exports; this file uses the
+ * same functions, so both search alike and have one node signature.
  *
  * tools/build.sh compiles it with `--use WASI=1 --exportStart _start`, so the
  * module's start, this file's top level, runs when a WASI host calls `_start`.
