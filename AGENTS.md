@@ -31,7 +31,7 @@ do not say where, ask the user.
 | **attribute** | a fact about a host, held by the queue's manager, such as `gpu` | property, feature |
 | **requirement** | an attribute a job's units need on a host | constraint |
 | **taint** | an attribute that keeps off a host every job that does not tolerate it; naming a host tolerates its taints | mark, assigned host |
-| **condition** | a host's one word in the queue's `status` (open, closed, retiring, drained, silent), with its reason | state |
+| **condition** | a host's one word in the queue's `status` (open, closed, allocated, retiring, drained, silent), with its reason | state |
 
 ## Releases
 
