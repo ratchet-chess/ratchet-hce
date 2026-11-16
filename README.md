@@ -6,8 +6,8 @@ and descriptions is a reconstruction. Each is tested against its original, and t
 measure the distance between releases. Taken in order, the releases are the history of computer
 chess.
 
-Holy-hell, an open edutainment incremental game, plays through the same history. Each engine there
-is a release here.
+Iterative Deepening, an open edutainment incremental game, plays through the same history. Each
+engine there is a release here.
 
 ## How a release is built
 
