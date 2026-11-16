@@ -84,6 +84,7 @@ The match tools play releases with fastchess, each side from a snapshot of its c
 - `tools/pool.ts`: an SPRT match, or a race of several candidates, over the hosts HOSTS names. Every run has a row in the run index, `<archive>/sprt/index.md`, which `tools/runs.ts` reads, and a run takes its openings from seeds no earlier run played;
 - `tools/calibrate.sh`: a rating on the CCRL Blitz scale, against anchor engines with published ratings;
 - `tools/mate-suite.sh`: the conversion suite, KQK and KRK starts to mate;
+- `tools/player-perft.ts`: an external player's perft counts against the core's, on the hosts it plays on;
 - `tools/depth.ts`: the mean depth of a match's PGNs.
 - `tools/similarity.ts`: how often engines choose the same move over one position set, for `results/similarity.md`.
 - `tools/host-speed.ts`: each host's speed at game load, for the pinned ratios that scale a worker's time control, in `results/host-speed.md`.

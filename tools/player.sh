@@ -11,9 +11,11 @@
 # An external player is ext:<tree>: a UCI engine from another repo, in a code
 # tree that repo published into the code export itself. The tree holds PLAYER,
 # whose first line is the player's name as results name it, its version
-# included, and bin/engine, a static executable. The engine takes
+# included, and bin/engine, an executable that starts in the runner image
+# (nix/images.nix), whose loader a musl build lacks. The engine takes
 # --nodestime <n>: it then counts its clock in nodes, n per millisecond, as
-# bin/ratchet does. It has no level and no runtime.
+# bin/ratchet does. It has no level and no runtime. It may also answer
+# --perft <depth> <fen>, which tools/player-perft.ts checks against the core.
 #
 # spec prints "ref release level", with "-" for no level. An external player's
 # ref is ext:<tree> and its release is its PLAYER name.
