@@ -35,11 +35,12 @@ engine there is a release here.
 - `engines/`: one directory per release, each compiled with the core to `build/<release>.wasm`, with its fidelity reference; and `engines/ratchet/`, the own engine, Ratchet's own program on the core.
 - `inventory/`: one record per release.
 - `results/`: measured results that change as protocols change, such as ratings, anchor checks and timings; the tools write their rows.
-- `host/`: the TypeScript host: the WASM wrapper, FEN, and the UCI front end, which passes each `go`'s limits and a clock to the release. `host/wasi/` runs a WASI build: the seven WASI calls it imports, with stdin fed through a ring in shared memory.
+- `host/`: the TypeScript host: the WASM wrapper, FEN, and the UCI front end, which passes each `go`'s limits and a clock to the release. `host/wasi/` runs a WASI build, Ratchet's or another engine's: the seven WASI calls a build may rely on, fixed answers for the rest of preview 1, and stdin fed through a ring in shared memory.
 - `bin/`: the UCI launcher.
 - `web/`: a browser page to play a release or the own engine, or to watch two play, on a real clock or a node budget, on a chessground board. Each engine searches in a Web Worker, and the core referees.
 - `test/`: the gates: perft, incremental state, each release's own move generator, the own engine's eval mirror and its window gate; and the 0x88 board the perft gate checks the core against.
 - `bench/`: the perft benchmark, the search benchmark over the releases' shared position set, and the own engine's eval benchmark.
+- `shim/`: the poll helper that another engine links to become a WASI build, in C and in Rust: its search runs on the UCI thread and reads its input through the helper.
 - `tools/`: fidelity checks, matches, ratings, the conversion suite, and readers of match PGNs and time logs.
 - `flake.nix` and `nix/`: the containers. The runner plays matches on the workers; the local runner plays them on the host and builds the anchor tree (`nix/anchors.sh`); the workspace is for work on originals. `tools/ws.ts` builds, loads and runs them. `nix/anchor-tree` and `nix/syzygy` pin the anchor tree and the Syzygy tables in the Nix store.
 - `vendor/fastchess/`: the match runner, as a submodule.
@@ -77,6 +78,7 @@ prints the build's node signature, which equals the tool build's:
 bun host/wasi/main.ts build/wasi/ratchet.wasm             # UCI on stdin and stdout, under Bun or Node
 bun host/wasi/main.ts build/wasi/ratchet.wasm bench       # the node signature over bench/positions.txt
 bun tools/package.ts --release ratchet                    # dist/: the .wasm, the browser Worker, native builds, Bun executables
+bun tools/wasi-check.ts build/wasi/ratchet.wasm           # a WASI build's handling of input during a search
 ```
 
 ## Fidelity
