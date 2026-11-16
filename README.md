@@ -88,7 +88,7 @@ The match tools play releases with fastchess, each side from a snapshot of its c
 - `tools/depth.ts`: the mean depth of a match's PGNs.
 - `tools/similarity.ts`: how often engines choose the same move over one position set, for `results/similarity.md`.
 - `tools/host-speed.ts`: each host's speed at game load, for the pinned ratios that scale a worker's time control, in `results/host-speed.md`.
-- `tools/speed-read.ts`: a `SPEED` read on one host, through the queue, so the other hosts keep playing;
+- `tools/speed-read.ts`: a `SPEED` read on one host, through the queue, so the other hosts keep playing; two external players are read through their own benchmark;
 - `tools/admit.ts`: the admission chain of one own-engine change in one command: the `SPEED` read, the conversion suite and the SPRT, with one summary;
 - `tools/browser-bench.ts`: an engine's speed in real browsers by hash size, its cold start, and what each browser offers an engine, in `results/browser.md`. It runs under an exclusive allocation on this host, or as an exclusive unit on a worker in the `browser` image.
 - `tools/spsa.ts`: an SPSA tune of a map's constants, in one queue job, or with `--screen` a factorial screen of flags, which reads each flag's effect and, against a random opponent mix, each pair's; `tools/texel/main.ts write` puts a tune's values in the engine for an SPRT;

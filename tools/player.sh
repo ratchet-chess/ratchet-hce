@@ -15,7 +15,9 @@
 # (nix/images.nix), whose loader a musl build lacks. The engine takes
 # --nodestime <n>: it then counts its clock in nodes, n per millisecond, as
 # bin/ratchet does. It has no level and no runtime. It may also answer
-# --perft <depth> <fen>, which tools/player-perft.ts checks against the core.
+# --perft <depth> <fen>, which tools/player-perft.ts checks against the core,
+# and --bench, its own fixed benchmark, which tools/speed-read.ts reads a
+# SPEED from: one line, "nodes <count> nps <rate>".
 #
 # spec prints "ref release level", with "-" for no level. An external player's
 # ref is ext:<tree> and its release is its PLAYER name.
