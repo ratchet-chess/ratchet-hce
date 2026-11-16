@@ -112,3 +112,6 @@ Each tool's header comment documents its options. `nix/anchors.sh` builds every 
 
 Ratchet is free software under the GNU General Public License, version 3 or any
 later version. See `LICENSE`.
+
+The poll helper in `helper/` is under the MIT License, so an engine under any license can link it. Each of its
+files has the license's text, and so does `helper/LICENSE`.
