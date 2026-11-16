@@ -484,8 +484,12 @@ function moveMatches(m: i32): bool {
 
 /** the engine's own remaining time under --nodestime, from the game's first go; NaN before it (host/uci/worker.ts ownMs) */
 let ownMs: f64 = NaN;
-/** UCI's debug mode: each search then reports the engine's record of its time use */
-let debug = false;
+/**
+ * The TimeRecord option: each search then prints the engine's record of its time use as one
+ * `info string pgncomment tm ...` line, which fastchess copies into the move's PGN comment under
+ * -pgnout match_line (host/uci/worker.ts timeRecord).
+ */
+let timeRecord = false;
 
 /**
  * `go`, the cursor after it: the side to move's limits pass to the release, which
@@ -530,7 +534,7 @@ function go(): void {
   );
   if (infinite) waitForStop();
   if (nodesTime > 0 && !isNaN(ownMs)) ownMs = Math.max(1, ownMs - engine.nodes() / nodesTime + (isNaN(inc) ? 0 : inc));
-  if (debug && engine.hasTimeTrace) timeTrace();
+  if (timeRecord && engine.hasTimeTrace) timeTrace();
   put("bestmove ");
   if (best) putMove(best);
   else put("0000");
@@ -539,43 +543,48 @@ function go(): void {
 
 const RULES = ["none", "soft", "hard-between", "hard-inside", "host"];
 
-/** `info string time ...`: the rule that ended the search, its time and the soft limit's factors (host/uci/worker.ts) */
+/**
+ * `info string pgncomment tm ...`: the rule that ended the search, the clock's milliseconds it took, the two
+ * limits, the soft limit's score and node factors, and the iterations the veto carried past the soft limit
+ * (host/uci/worker.ts go).
+ */
 function timeTrace(): void {
   const rule = <i32>engine.timeTrace(0);
-  put("info string time rule ");
+  put("info string pgncomment tm rule=");
   put(rule >= 0 && rule < RULES.length ? RULES[rule] : "none");
-  put(" elapsed ");
-  putRounded(engine.timeTrace(1));
-  put(" soft ");
-  putRounded(engine.timeTrace(2));
-  put(" hard ");
-  putRounded(engine.timeTrace(3));
-  put(" score ");
-  putRounded(engine.timeTrace(4));
-  put(" node ");
-  putRounded(engine.timeTrace(5));
-  put(" veto ");
+  put(" el=");
+  putRounded(engine.timeTrace(1), 1);
+  put(" soft=");
+  putRounded(engine.timeTrace(2), 1);
+  put(" hard=");
+  putRounded(engine.timeTrace(3), 1);
+  put(" score=");
+  putRounded(engine.timeTrace(4), 3);
+  put(" node=");
+  putRounded(engine.timeTrace(5), 3);
+  put(" veto=");
   putInt(<i64>engine.timeTrace(6));
   endLine();
 }
 
-/** x to three decimals as JavaScript prints Math.round(x * 1000) / 1000, or "none" beyond 1e15 */
-function putRounded(x: f64): void {
+/** x to `places` decimals (1 or 3) as JavaScript prints Math.round(x * 10 ** places) / 10 ** places, or "none" beyond 1e15 */
+function putRounded(x: f64, places: i32): void {
   if (x > 1e15) {
     put("none");
     return;
   }
-  let k = Math.round(x * 1000);
+  const scale: f64 = places == 1 ? 10 : 1000;
+  let k = Math.round(x * scale);
   if (k < 0) {
     putByte(45);
     k = -k;
   }
-  const whole = <i64>Math.floor(k / 1000);
-  let frac = <i32>(k - <f64>whole * 1000);
+  const whole = <i64>Math.floor(k / scale);
+  let frac = <i32>(k - <f64>whole * scale);
   putInt(whole);
   if (frac == 0) return;
   putByte(46);
-  let digits = 3;
+  let digits = places;
   while (frac % 10 == 0) {
     frac /= 10;
     digits--;
@@ -621,6 +630,7 @@ function setOption(): void {
   }
   if (nameIs("hash") && !isNaN(value)) engine.setHash(<i32>value);
   if (nameIs("uci_chess960") && engine.chess960) chess960 = valueTrue;
+  if (nameIs("timerecord") && engine.hasTimeTrace) timeRecord = valueTrue;
 }
 
 function idName(): void {
@@ -653,6 +663,10 @@ function command(from: i32, to: i32): void {
       put("option name UCI_Chess960 type check default false");
       endLine();
     }
+    if (engine.hasTimeTrace) {
+      put("option name TimeRecord type check default false");
+      endLine();
+    }
     put("uciok");
     endLine();
   } else if (tokenIs("isready")) {
@@ -671,8 +685,6 @@ function command(from: i32, to: i32): void {
     put("eval cp ");
     putInt(engine.evaluate());
     endLine();
-  } else if (tokenIs("debug")) {
-    debug = !(nextToken() && tokenIs("off"));
   } else if (tokenIs("stop")) {
     stopped = true;
   } else if (tokenIs("quit")) {
