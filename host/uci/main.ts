@@ -14,9 +14,11 @@
  * `eval` (not UCI; Stockfish has one) prints `eval cp <n>`: the release's static
  * eval of the current position for the side to move, as the host reports it.
  *
- * `debug on` makes the own engine report its time use after each search, as
- * `info string time ...`: the rule that ended the search, the time taken, the two
- * limits and the soft limit's factors (engines/ratchet/time.ts timeTrace).
+ * TimeRecord is offered only by a build that keeps a record of its time use, the own engine. When it is on, each
+ * search prints `info string pgncomment tm rule= el= soft= hard= score= node= veto=`: the rule that ended the search,
+ * the clock's milliseconds it took, the two limits, the soft limit's score and node factors, and the iterations the
+ * veto carried past the soft limit (engines/ratchet/time.ts timeTrace). fastchess's `-pgnout match_line=` copies the
+ * line into the move's comment.
  *
  * --level N sets the level of every game, for a release whose original has
  * levels and no clock, such as Sargon (1978): one level per match, as its
@@ -50,12 +52,15 @@ let markReady: () => void;
 let idName = "Ratchet";
 /** whether the worker's build plays Chess960, which it says before it is ready */
 let chess960 = false;
+/** whether the worker's build keeps a record of its time use, which it says before it is ready */
+let timeRecord = false;
 const ready = new Promise<void>((r) => (markReady = r));
 
 worker.on("message", (line: string) => {
   if (line === "ready") markReady();
   else if (line.startsWith("name ")) idName = line.slice(5);
   else if (line === "chess960") chess960 = true;
+  else if (line === "timerecord") timeRecord = true;
   else process.stdout.write(line + "\n");
 });
 worker.on("error", (e: Error) => {
@@ -118,6 +123,7 @@ for await (const raw of rl) {
       out("option name Hash type spin default 16 min 1 max 1024");
       out("option name Threads type spin default 1 min 1 max 1");
       if (chess960) out("option name UCI_Chess960 type check default false");
+      if (timeRecord) out("option name TimeRecord type check default false");
       for (const t of tunables) out(`option name ${t.name} type spin default ${t.value} min ${t.min} max ${t.max}`);
       out("uciok");
       break;
@@ -133,6 +139,7 @@ for await (const raw of rl) {
       const value = tokens[tokens.indexOf("value") + 1];
       if (name === "hash") send({ cmd: "hash", mb: Number(value) });
       if (name === "uci_chess960" && chess960) send({ cmd: "chess960", on: value === "true" });
+      if (name === "timerecord" && timeRecord) send({ cmd: "timerecord", on: value === "true" });
       const t = tunables.find((x) => x.name.toLowerCase() === name);
       if (t) send({ cmd: "tune", id: t.id, value: Number(value) });
       break;
@@ -146,9 +153,6 @@ for await (const raw of rl) {
       break;
     case "eval":
       send({ cmd: "eval" });
-      break;
-    case "debug":
-      send({ cmd: "debug", on: tokens[1] !== "off" });
       break;
     case "stop":
       Atomics.store(stop, 0, 1);

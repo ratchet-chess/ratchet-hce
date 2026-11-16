@@ -15,7 +15,7 @@ export type WorkerCommand =
   | { cmd: "hash"; mb: number }
   | { cmd: "tune"; id: number; value: number }
   | { cmd: "eval" }
-  | { cmd: "debug"; on: boolean }
+  | { cmd: "timerecord"; on: boolean }
   | { cmd: "chess960"; on: boolean };
 
 const port = parentPort!;
@@ -24,8 +24,12 @@ const engine = await Engine.load(workerData.release);
 if (!engine.clocked) throw new Error(`${workerData.release} does not time itself, so it cannot play`);
 if (workerData.level) engine.setGameLevel(workerData.level);
 let sideToMove = 0;
-/** UCI's debug mode: each search then reports the engine's record of its time use, if the build keeps one */
-let debug = false;
+/**
+ * The TimeRecord option: each search then prints the engine's record of its time use as one
+ * `info string pgncomment tm ...` line, which fastchess copies into the move's PGN comment under
+ * -pgnout match_line, as OpenBench's client always asks (Incipit e1fe754 TmLog's form).
+ */
+let timeRecord = false;
 
 /**
  * Nodes per millisecond of the engine's own clock when the launcher is given
@@ -104,10 +108,10 @@ function go(limits: GoLimits): void {
     const wait = MIN_REPLY_MS - (performance.now() - t0);
     if (wait > 0) Atomics.wait(pause, 0, 0, wait);
   }
-  const t = debug ? engine.timeTrace() : undefined;
+  const t = timeRecord ? engine.timeTrace() : undefined;
   if (t) {
-    const f = (x: number) => (x > 1e15 ? "none" : String(Math.round(x * 1000) / 1000));
-    port.postMessage(`info string time rule ${t.rule} elapsed ${f(t.elapsed)} soft ${f(t.soft)} hard ${f(t.hard)} score ${f(t.score)} node ${f(t.node)} veto ${t.veto}`);
+    const f = (x: number, places: number) => (x > 1e15 ? "none" : String(Math.round(x * 10 ** places) / 10 ** places));
+    port.postMessage(`info string pgncomment tm rule=${t.rule} el=${f(t.elapsed, 1)} soft=${f(t.soft, 1)} hard=${f(t.hard, 1)} score=${f(t.score, 3)} node=${f(t.node, 3)} veto=${t.veto}`);
   }
   port.postMessage(`bestmove ${best ? engine.uci(best) : "0000"}`);
 }
@@ -134,8 +138,8 @@ port.on("message", (c: WorkerCommand) => {
     case "eval":
       port.postMessage(`eval cp ${engine.evaluate()}`);
       break;
-    case "debug":
-      debug = c.on;
+    case "timerecord":
+      timeRecord = c.on;
       break;
     case "chess960":
       engine.chess960 = c.on && engine.canChess960;
@@ -146,4 +150,5 @@ port.on("message", (c: WorkerCommand) => {
 engine.setPosition(START_FEN, []);
 port.postMessage(`name Ratchet${engine.version ? ` ${engine.version}` : ""}`);
 if (engine.canChess960) port.postMessage("chess960");
+if (engine.timeTrace() !== undefined) port.postMessage("timerecord");
 port.postMessage("ready");
