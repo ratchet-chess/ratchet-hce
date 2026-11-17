@@ -24,6 +24,7 @@ do not say where, ask the user.
 | **`SPEED`** | a candidate's search speed over a base's, which scales its node budget in a match | speed ratio |
 | **conversion suite** | `tools/mate-suite.sh`: KQK and KRK starts to mate | mate test |
 | **variant** | a copy of a release that keeps its mechanisms and opens its constants or its speed | what-if branch, fork |
+| **adapted engine** | another engine with the edits that make it a module of UCI over WASI; `helper/README.md` is the how-to | port, WASI port |
 | **WASI build** | a WASI preview-1 command module that speaks UCI on stdin and stdout, as UCI over WASI states; a release's is `build/wasi/<release>.wasm` | |
 | **own engine** | Ratchet's own program, `engines/ratchet/`: Ratchet's code on the core, with no original | release, variant |
 | **concurrency** | how many units of one queue job a host runs at once, a per-host job param | slot, slots |
