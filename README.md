@@ -82,7 +82,8 @@ bun tools/wasi-check.ts build/wasi/ratchet.wasm           # a WASI build's handl
 ```
 
 `docs/uci-over-wasi.md` states what such a module must do and what its host must answer. `helper/README.md` is the
-how-to for porting another engine.
+how-to for porting another engine. `docs/wasm-limits.md` lists what the WebAssembly target limits, for an
+engine written for it and for a port.
 
 ## Fidelity
 
