@@ -90,6 +90,8 @@ interface Clocked {
   goClock(timeMs: number, incMs: number, movesToGo: number, moveTimeMs: number, depth: number): number;
   /** the level of every later game, for a release whose original has levels and no clock */
   setGameLevel?(level: number): void;
+  /** the node limit of the next goClock, which clears it; the own engine only, since no original takes one */
+  setNodeLimit?(nodes: number): void;
 }
 
 /** a release's leaf count of its own move generator, when its board is not the core's; optional */
@@ -102,7 +104,7 @@ export type Poll = () => number;
 
 /** The own engine's record of one timed search. `veto` counts iterations that ran on past the soft limit because the best move had just changed. */
 export interface TimeTrace {
-  rule: "none" | "soft" | "hard-between" | "hard-inside" | "host";
+  rule: "none" | "soft" | "hard-between" | "hard-inside" | "host" | "nodes";
   elapsed: number; soft: number; hard: number;
   score: number; node: number; veto: number;
 }
@@ -274,6 +276,17 @@ export class Engine {
     return this.wasm.goClock(limits.timeMs ?? -1, limits.incMs ?? -1, limits.movesToGo ?? -1, limits.moveTimeMs ?? -1, limits.depth ?? -1);
   }
 
+  /** whether the release takes a node limit: the own engine does, and no original did */
+  get nodeLimited(): boolean {
+    return this.wasm.setNodeLimit !== undefined;
+  }
+
+  /** the node limit of the next goClock search, from a `go nodes` */
+  setNodeLimit(nodes: number): void {
+    if (!this.wasm.setNodeLimit) throw new Error("this release takes no node limit");
+    this.wasm.setNodeLimit(nodes);
+  }
+
   /** whether the release has game levels in place of a clock */
   get leveled(): boolean {
     return this.wasm.setGameLevel !== undefined;
@@ -318,7 +331,7 @@ export class Engine {
   timeTrace(): TimeTrace | undefined {
     const t = this.search.timeTrace;
     if (!t) return undefined;
-    const rule = (["none", "soft", "hard-between", "hard-inside", "host"] as const)[t(0)] ?? "none";
+    const rule = (["none", "soft", "hard-between", "hard-inside", "host", "nodes"] as const)[t(0)] ?? "none";
     return { rule, elapsed: t(1), soft: t(2), hard: t(3), score: t(4), node: t(5), veto: t(6) };
   }
 

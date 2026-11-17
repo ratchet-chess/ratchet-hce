@@ -9,7 +9,7 @@
  */
 import { UciEngine, uciMain } from "../../core/uci";
 import {
-  clear, evaluate, go, goClock, hashfull, init, legalMoves, newGame, nodesSearched, playMove, put, pvLength, pvMove, rootMove, setCastleRooks, setHash, setState,
+  clear, evaluate, go, goClock, hashfull, init, legalMoves, newGame, nodesSearched, playMove, put, pvLength, pvMove, rootMove, setCastleRooks, setHash, setNodeLimit, setState,
   timeTrace, version,
 } from "./index";
 
@@ -20,6 +20,7 @@ e.benchDepth = 12;
 e.chess960 = true;
 e.hasHashfull = true;
 e.hasTimeTrace = true;
+e.hasNodeLimit = true;
 e.clear = clear;
 e.put = put;
 e.setState = setState;
@@ -29,6 +30,7 @@ e.legalMoves = legalMoves;
 e.rootMove = rootMove;
 e.go = go;
 e.goClock = goClock;
+e.setNodeLimit = setNodeLimit;
 e.setHash = setHash;
 e.newGame = newGame;
 e.pvLength = pvLength;

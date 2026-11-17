@@ -35,6 +35,8 @@ export class UciEngine {
   hasHashfull: bool = false;
   /** whether the build keeps a record of its time use */
   hasTimeTrace: bool = false;
+  /** whether the build takes a node limit, from `go nodes`, through setNodeLimit */
+  hasNodeLimit: bool = false;
   clear!: () => void;
   put!: (s: i32, p: i32) => void;
   setState!: (side: i32, castling: i32, ep: i32, halfmove: i32, fullmove: i32) => void;
@@ -46,6 +48,8 @@ export class UciEngine {
   go!: (depth: i32) => i32;
   /** one `go` of a game; a limit not given is negative */
   goClock!: (timeMs: f64, incMs: f64, movesToGo: i32, moveTimeMs: f64, depth: i32) => i32;
+  /** the node limit of the next goClock, which clears it */
+  setNodeLimit!: (nodes: f64) => void;
   setHash!: (mb: i32) => void;
   newGame!: () => void;
   pvLength!: () => i32;
@@ -493,8 +497,9 @@ let timeRecord = false;
 
 /**
  * `go`, the cursor after it: the side to move's limits pass to the release, which
- * times itself (host/uci/worker.ts go). A node limit is refused, since no original
- * takes one. In an infinite search the move waits for the GUI's stop.
+ * times itself (host/uci/worker.ts go). A node limit goes to a build that takes one;
+ * any other ignores it and says so, since no original takes one. In an infinite
+ * search the move waits for the GUI's stop.
  */
 function go(): void {
   let wtime = NaN, btime = NaN, winc = NaN, binc = NaN, movestogo = NaN, movetime = NaN, depth = NaN, nodes = NaN;
@@ -510,11 +515,16 @@ function go(): void {
     else if (tokenIs("nodes")) nodes = nextNumber();
     else if (tokenIs("infinite")) infinite = true;
   }
-  if (!isNaN(nodes)) fail("a release takes no node limit");
+  const nodeLimited = !isNaN(nodes) && engine.hasNodeLimit;
+  if (nodeLimited) engine.setNodeLimit(Math.max(0, nodes));
+  else if (!isNaN(nodes)) {
+    put("info string a release takes no node limit; this one is ignored");
+    endLine();
+  }
   stopped = false;
   const white = sideToMove == 0;
-  // unbounded in the release's own terms: it acts on its own side's clock, a movetime and a depth, and on no other limit
-  unbounded = infinite || (isNaN(white ? wtime : btime) && isNaN(movetime) && isNaN(depth));
+  // unbounded in the release's own terms: it acts on its own side's clock, a movetime, a depth and a node limit it takes, and on no other limit
+  unbounded = infinite || (isNaN(white ? wtime : btime) && isNaN(movetime) && isNaN(depth) && !nodeLimited);
   if (nodesTime > 0) {
     const own = white ? wtime : btime;
     if (!isNaN(own)) {
@@ -542,7 +552,7 @@ function go(): void {
   endLine();
 }
 
-const RULES = ["none", "soft", "hard-between", "hard-inside", "host"];
+const RULES = ["none", "soft", "hard-between", "hard-inside", "host", "nodes"];
 
 /**
  * `info string pgncomment tm ...`: the rule that ended the search, the clock's milliseconds it took, the two

@@ -72,11 +72,15 @@ function ownClock(limits: GoLimits): GoLimits {
  * A search: the host passes the side to move's limits to the release, which
  * times itself, and supplies its clock: wall time or, under --nodestime, nodes.
  * The host's stop reaches the release as waiting input. A clock already run
- * out passes as 0. A node limit is refused, since no original takes one. In an
- * infinite search, the move waits for the GUI's stop, as UCI requires.
+ * out passes as 0. A node limit goes to a release that takes one, the own engine; any
+ * other ignores it and says so, since no original takes one. In an infinite search,
+ * the move waits for the GUI's stop, as UCI requires.
  */
 function go(limits: GoLimits): void {
-  if (limits.nodes !== undefined) throw new Error("a release takes no node limit");
+  if (limits.nodes !== undefined) {
+    if (engine.nodeLimited) engine.setNodeLimit(Math.max(0, limits.nodes));
+    else port.postMessage("info string a release takes no node limit; this one is ignored");
+  }
   if (nodesTime) limits = ownClock(limits);
   const given = (ms: number | undefined) => (ms === undefined ? undefined : Math.max(0, ms));
   const t0 = performance.now();

@@ -49,6 +49,7 @@ const RULE_SOFT = 1;
 const RULE_HARD_BETWEEN = 2;
 const RULE_HARD_INSIDE = 3;
 const RULE_HOST = 4;
+const RULE_NODES = 5;
 let traceRule = RULE_NONE;
 let traceElapsed: f64 = 0;
 let traceScore: f64 = 1;
@@ -98,10 +99,28 @@ export function noClock(): void {
   timed = false;
 }
 
-/** whether the search must stop now: the hard limit has passed, or the host has input waiting */
+/** the node limit of the next goClock search, from a `go nodes`; negative for none */
+let nodeLimit: f64 = -1;
+
+/**
+ * Sets the node limit of the next goClock search, which clears it at its end; negative for none. The search
+ * reads it where it reads the clock, every 1024 nodes and between iterations, so it stops less than 1024
+ * nodes past the limit, once its first iteration is done. This follows Stockfish 19 SearchManager::check_time,
+ * which tests `Limits.nodes` at its periodic clock check. Rejected: Ethereal 0e47e9b tm_stop_early and
+ * Weiss c735b8f OutOfTime test the limit at every node, exact at the cost of a compare in every node.
+ */
+export function setNodeLimit(nodes: f64): void {
+  nodeLimit = nodes;
+}
+
+/** whether the search must stop now: the host has input waiting, its node limit is reached, or the hard limit has passed */
 export function mustStop(nodes: f64): bool {
   if (hostPoll()) {
     traceRule = RULE_HOST;
+    return true;
+  }
+  if (nodeLimit >= 0 && nodes >= nodeLimit) {
+    traceRule = RULE_NODES;
     return true;
   }
   if (!timed) return false;
@@ -117,6 +136,10 @@ export function mustStop(nodes: f64): bool {
  * whether it just changed, and the iteration's score
  */
 export function mayContinue(nodes: f64, bestShare: f64, uncertain: bool, score: i32): bool {
+  if (nodeLimit >= 0 && nodes >= nodeLimit) {
+    traceRule = RULE_NODES;
+    return false;
+  }
   if (!timed) return true;
   // a rise counts as no fall; before three iterations there is no window, so no factor
   const scale: f64 = scores >= 3 ? max<f64>(TM_FALL_MIN, min<f64>(TM_FALL_MAX, TM_FALL_BASE + TM_FALL_PER * <f64>max(0, score1 - score))) : 1;
@@ -144,7 +167,7 @@ export function mayContinue(nodes: f64, bestShare: f64, uncertain: bool, score: 
 
 /**
  * The last timed search's record, by field: 0 the rule that ended it (0 none: its depth, or no move to search; 1 the
- * soft limit; 2 the hard limit between iterations; 3 the hard limit inside one; 4 the host's stop), 1 the clock's
+ * soft limit; 2 the hard limit between iterations; 3 the hard limit inside one; 4 the host's stop; 5 the node limit), 1 the clock's
  * milliseconds it took, 2 the soft limit, 3 the hard limit, 4 the score factor, 5 the node factor, 6 the iterations that
  * went on past the soft limit because the best move had just changed. Four engines had a time rule dead or wrong for
  * months unseen.

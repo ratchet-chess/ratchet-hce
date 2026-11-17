@@ -22,7 +22,7 @@ import { MAX_DEPTH, bestScore, completedDepth, hostScore, initSearch, nodesSearc
 import {
   doMove, majorKey, minorKey, nonPawnKey, pawnKey, psq, refresh, scratchMajorKey, scratchMinorKey, scratchNonPawnKey, scratchPawnKey, setPawnKey, undoMove,
 } from "./state";
-import { noClock, startClock, timeTrace as clockTrace } from "./time";
+import { noClock, setNodeLimit as setTimeNodeLimit, startClock, timeTrace as clockTrace } from "./time";
 import { ttAlloc, ttClear, ttEnable, ttHashfull } from "./tt";
 
 /** the version `id name` reports: major << 16 | minor << 8 | patch; tools/calibrate.sh reads this line to name a rating's row */
@@ -60,13 +60,21 @@ export function go(depth: i32): i32 {
 
 /**
  * One `go` of a game under the host's limits (a limit not given is negative): the
- * side to move's clock and increment, moves to go, a fixed move time, a depth.
- * With no limit the search runs until the host's stop. Returns the best move, or 0.
+ * side to move's clock and increment, moves to go, a fixed move time, a depth, and
+ * the node limit setNodeLimit gave it. With no limit the search runs until the host's
+ * stop. Returns the best move, or 0.
  */
 export function goClock(timeMs: f64, incMs: f64, movesToGo: i32, moveTimeMs: f64, depth: i32): i32 {
   refresh();
   startClock(timeMs, incMs, movesToGo, moveTimeMs, legalMoves());
-  return think(depth > 0 ? min(depth, MAX_DEPTH) : MAX_DEPTH);
+  const best = think(depth > 0 ? min(depth, MAX_DEPTH) : MAX_DEPTH);
+  setTimeNodeLimit(-1);
+  return best;
+}
+
+/** the node limit of the next goClock, from a `go nodes`; that search clears it (time.ts setNodeLimit) */
+export function setNodeLimit(nodes: f64): void {
+  setTimeNodeLimit(nodes);
 }
 
 /**
