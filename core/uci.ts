@@ -513,6 +513,7 @@ function go(): void {
   if (!isNaN(nodes)) fail("a release takes no node limit");
   stopped = false;
   const white = sideToMove == 0;
+  // unbounded in the release's own terms: it acts on its own side's clock, a movetime and a depth, and on no other limit
   unbounded = infinite || (isNaN(white ? wtime : btime) && isNaN(movetime) && isNaN(depth));
   if (nodesTime > 0) {
     const own = white ? wtime : btime;
