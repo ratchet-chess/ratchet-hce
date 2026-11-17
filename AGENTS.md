@@ -136,6 +136,9 @@ The steps run in this order. Each step's output is the next step's input.
   first.
 - **Local plays games only inside its hours or an extra window,** which `bun tools/queue.ts status` shows. `bun tools/queue.ts hours local --extra HH:MM-HH:MM` opens one window, which lapses at its end. A job submitted outside them
   plays on the workers.
+- **The htpc plays only while its owner has auto sleep off there and no app is open.** Otherwise `status` shows it
+  closed, with the reason. Never wake it or keep it awake. It takes node-clock and batch work from any job, and other
+  work only by name.
 - **Stop a run by its PID or its process group,** never by a name pattern.
 - **Wait for a run to finish,** rather than polling it in a loop.
 - **A bug found in a tool becomes a tools commit** before the tool is used again. A run that used the bug is repeated, unless the bug cannot change its verdict.
