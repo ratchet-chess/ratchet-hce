@@ -81,6 +81,9 @@ bun tools/package.ts --release ratchet                    # dist/: the .wasm, th
 bun tools/wasi-check.ts build/wasi/ratchet.wasm           # a WASI build's handling of input during a search
 ```
 
+`docs/uci-over-wasi.md` states what such a module must do and what its host must answer. `helper/README.md` is the
+how-to for porting another engine.
+
 ## Fidelity
 
 - `tools/positions.ts`: a fixed position set, drawn from the opening books;
