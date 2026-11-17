@@ -65,6 +65,8 @@ files.push(`${name}.js`);
 const nativeTargets = (opt("--native") ?? Object.keys(NATIVE).join(",")).split(",").filter(Boolean);
 if (nativeTargets.length) {
   const wabt = run("nix", ["build", "--inputs-from", root, "nixpkgs#wabt", "--no-link", "--print-out-paths"]).trim();
+  // wasm2c's C for a module with SIMD includes SIMDe's headers, which wabt does not hold
+  const simde = run("nix", ["build", "--inputs-from", root, "nixpkgs#simde", "--no-link", "--print-out-paths"]).trim();
   const work = join(root, "tmp/package", name);
   mkdirSync(work, { recursive: true });
   run(join(wabt, "bin/wasm2c"), [wasi, "-n", "engine", "-o", join(work, "engine.c")]);
@@ -74,7 +76,7 @@ if (nativeTargets.length) {
     if (!t) throw new Error(`unknown native target ${target}: one of ${Object.keys(NATIVE).join(", ")}`);
     const file = `${name}-${target}${t.exe}`;
     const sources = [join(work, "engine.c"), join(root, "host/wasi/native.c"), ...["wasm-rt-impl.c", "wasm-rt-mem-impl.c", "wasm-rt-exceptions-impl.c"].map((f) => join(rt, f))];
-    run(t.cc, ["-O3", "-I", join(wabt, "include"), "-I", rt, "-I", work, ...sources, "-o", join(dir, file), ...t.flags]);
+    run(t.cc, ["-O3", "-I", join(wabt, "include"), "-I", rt, "-I", work, "-I", join(simde, "include"), ...sources, "-o", join(dir, file), ...t.flags]);
     files.push(file);
   }
 }
