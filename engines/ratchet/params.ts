@@ -655,23 +655,25 @@ export const BAD_NOISY_FUT_DEPTH = 8;
 export const BAD_NOISY_FUT_MARGIN = 176;
 
 /**
- * the reduced depth futility and history pruning read: depth less base + ln(depth) ln(moves) / div, the logs scaled by
- * 1024 and the sum in 1/1024 ply, Ethereal 0e47e9b search's lmrDepth. It has its own values, so LMR's can move without moving
- * the pruning. Its seeds are LMR's, Ethereal 12.75 initSearch's 0.75 and 2.25, where 0e47e9b initSearch has 0.7844 and 2.4696
+ * the reduced depth futility and history pruning read: depth less one ply, less base + ln(depth) ln(moves) / div, the logs
+ * scaled by 1024 and the sum in 1/1024 ply, Ethereal 0e47e9b search's lmrDepth. It has its own values, so LMR's can move
+ * without moving the pruning. Its seeds are LMR's: Ethereal 12.75 initSearch's 0.75 less the ply that Ethereal counts for the
+ * move itself, and 2.25, where 0e47e9b initSearch has 0.7844 and 2.4696
  */
-export const PRUNE_BASE = 706;
+export const PRUNE_BASE = -318;
 export const PRUNE_DIV = 1527;
 
 // ------------------------ search: reductions
 
 /**
  * late move reductions in 1/1024 ply, the terms summed before the sum is cut to whole plies (Clockwork 641d9f5 Worker::search),
- * where Ethereal 12.75 search adds whole plies. Base + ln(depth) ln(moves) / div is Ethereal 12.75 initSearch's
- * 0.75 + ln d ln m / 2.25, with the logs scaled by 1024. A non-PV node, a node not improving and a move from before the
- * quiet stage are its terms, and history moves the sum by whole steps, capped
+ * where Ethereal 12.75 search adds whole plies. The sum counts plies past the move's own, so 0 is no reduction, where
+ * Ethereal's R = 1 is. Base + ln(depth) ln(moves) / div is Ethereal 12.75 initSearch's 0.75 + ln d ln m / 2.25 less that one
+ * ply, with the logs scaled by 1024. A non-PV node, a node not improving and a move from before the quiet stage are its
+ * terms, and history moves the sum by whole steps, capped
  */
 export const LMR_MIN_DEPTH = 3;
-export const LMR_BASE = 798;
+export const LMR_BASE = -226;
 export const LMR_DIV = 2321;
 export const LMR_NON_PV = 1204;
 /**
@@ -697,11 +699,11 @@ export const LMR_FAIL_HIGH_COUNT = 3;
 export const LMR_ALPHA_RAISE = 570;
 /**
  * late move reductions on noisy moves: their own base and divisor, Weiss 95b0951 InitReductions' 0.38 + ln d ln m / 3.76,
- * restated for a sum where 1 ply is no reduction and a node neither PV nor improving adds 2. Capture history moves it by whole
+ * restated for a sum where 0 is no reduction and a node neither PV nor improving adds 2. Capture history moves it by whole
  * steps, at Weiss AlphaBeta's divisor 8870 scaled from its table's limit 14387 to 16384. A depth of 200 turns them off
  */
 export const LMR_NOISY_MIN_DEPTH = 3;
-export const LMR_NOISY_BASE = -543;
+export const LMR_NOISY_BASE = -1567;
 export const LMR_NOISY_DIV = 4063;
 export const LMR_NOISY_HISTORY_DIV = 9206;
 /**

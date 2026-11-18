@@ -461,7 +461,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
 
     // pruning, once a move has kept the node from a mated score; the root is spared, Ratchet's guard
     if (!root && best > -MATE_IN_MAX) {
-      const lmrDepth = max(0, depth - ((PRUNE_BASE + (LN[min(depth, 63)] * LN[min(played, 63)]) / PRUNE_DIV) >> 10));
+      const lmrDepth = max(0, depth - 1 - ((PRUNE_BASE + (LN[min(depth, 63)] * LN[min(played, 63)]) / PRUNE_DIV) >> 10));
       if (!noisy) {
         // late move pruning, Ethereal 12.75 LateMovePruningCounts: it counts moves played and drops the move that
         // triggers it, as Weiss 2.0 AlphaBeta does, where Ethereal counts quiets seen and searches that move
@@ -552,10 +552,10 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     } else {
       let full = true;
       let reSearch = false;
-      // late move reductions, Ethereal 12.75 search's Step 15A: R = 1 is no reduction. Its extension and king-evasion terms
-      // are left out, so an extension stays in the reduced search, as in Weiss 2.0 AlphaBeta. A move that gives check gets
-      // no term of its own, where Ethereal fcb6f77 search reduces it less, because the check extension already searches it
-      // a ply deeper here
+      // late move reductions, Ethereal 12.75 search's Step 15A, with r counted past the move's own ply, so 0 is no reduction
+      // where Ethereal's R = 1 is. Its extension and king-evasion terms are left out, so an extension stays in the reduced
+      // search, as in Weiss 2.0 AlphaBeta. A move that gives check gets no term of its own, where Ethereal fcb6f77 search
+      // reduces it less, because the check extension already searches it a ply deeper here
       if (depth >= (noisy ? LMR_NOISY_MIN_DEPTH : LMR_MIN_DEPTH)) {
         const logs = LN[min(depth, 63)] * LN[min(played, 63)];
         let sum = 0;
@@ -581,9 +581,9 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
         // each raise of alpha here, Clockwork 641d9f5 alpha_raises; Stockfish 9eb7b607 search lowers the node's depth
         // instead
         sum += raises * LMR_ALPHA_RAISE;
-        const r = min(depth - 1, max(sum >> 10, 1));
-        if (r > 1) {
-          const reduced = newDepth - r + 1;
+        const r = min(depth - 2, max(sum >> 10, 0));
+        if (r > 0) {
+          const reduced = newDepth - r;
           v = -search(-alpha - 1, -alpha, reduced, true);
           full = v > alpha;
           if (full) {
