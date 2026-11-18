@@ -1,7 +1,7 @@
 /**
  * Move-ordering memory: one killer per ply (Weiss 0d00a00 UpdateQuietHistory), butterfly history by
- * side, from and to and by whether each of those squares is attacked, 1-, 2- and
- * 4-ply continuation history by the previous moves' piece and square, pawn history
+ * side, from and to and by whether each of those squares is attacked, 1-, 2-, 4- and
+ * 6-ply continuation history by the previous moves' piece and square, pawn history
  * by pawn structure, piece and square, and capture history by piece, square and
  * victim. A history entry moves by gravity, entry += bonus - entry * |bonus| / 16384
  * (Ethereal 0e47e9b update_history), so it stays within +-16384; a continuation entry decays

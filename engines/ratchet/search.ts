@@ -3,16 +3,11 @@
  * principal variation search, and a quiescence search. Scores are for the side
  * to move, in the engine's unit; a mate in n plies is MATE - n.
  *
- * Every node starts with a TT probe; non-PV nodes cut on a TT bound of enough
- * depth, and on nothing less (boundCuts). The static eval is the raw eval plus the correction history
- * (correction.ts); the TT stores the raw one. Before the move loop: reverse
- * futility, razoring, null move and IIR.
- * In it: late move pruning, futility on the reduced depth, history pruning and
- * SEE pruning, then a check extension on the move and late move reductions on
- * quiet and noisy moves, whose re-search goes a ply deeper or shallower by how far
- * the reduced search beat the best.
- * Each form's origin is named where it is applied. The window gate (test/window.ts)
- * reads the search's exact layer through searchWindow.
+ * Non-PV nodes cut on a TT bound of enough depth, and on nothing less (boundCuts).
+ * The static eval is the raw eval plus the correction history (correction.ts); the
+ * TT stores the raw one. Each pruning, reduction and extension names its origin
+ * where it is applied. The window gate (test/window.ts) reads the search's exact
+ * layer through searchWindow.
  */
 import { KING, MAX_MOVES, MAX_PLY, PAWN, movePromo } from "../../core/constants";
 import { generateCaptures, generateMoves } from "../../core/movegen";
@@ -675,14 +670,6 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   return best;
 }
 
-/**
- * The quiescence search: stand pat, then captures and queen promotions that pass
- * SEE >= 0 (Weiss 2568fb7 Quiescence); in check, every evasion. Delta pruning skips a capture
- * that gives no check and whose victim cannot lift stand pat to alpha, and the
- * skip raises the score to that estimate, so the upper bound holds for the skipped
- * capture too (Stash f91e750 qsearch). It probes and stores the TT at depth 0, never
- * as an exact bound (Stockfish 45e5e65a qsearch).
- */
 /** whether a move gives check: the core's make and unmake alone, since no eval state is read */
 @inline function givesCheck(m: i32): bool {
   make(m);
@@ -691,6 +678,14 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   return given;
 }
 
+/**
+ * The quiescence search: stand pat, then captures and queen promotions that pass
+ * SEE >= 0 (Weiss 2568fb7 Quiescence); in check, every evasion. Delta pruning skips a capture
+ * that gives no check and whose victim cannot lift stand pat to alpha, and the
+ * skip raises the score to that estimate, so the upper bound holds for the skipped
+ * capture too (Stash f91e750 qsearch). It probes and stores the TT at depth 0, never
+ * as an exact bound (Stockfish 45e5e65a qsearch).
+ */
 function qsearch(alpha: i32, beta: i32): i32 {
   const p = ply;
   pvLen[p] = p;
