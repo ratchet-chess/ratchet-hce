@@ -12,8 +12,8 @@ where, ask the user.
 
 ## Terms
 
-The rows for **release**, **`SPEED`** and **conversion suite** quote the `AGENTS.md` of ratchet-historical and
-of ratchet-bench, which own those things.
+The rows for **release**, **`SPEED`**, **conversion suite**, **engine config**, **player** and **tree** quote the
+`AGENTS.md` of ratchet-historical and of ratchet-bench, which own those things.
 
 | term | meaning | not |
 |---|---|---|
@@ -25,6 +25,9 @@ of ratchet-bench, which own those things.
 | **release** | one program as it stood at one dated version or event; the unit of the inventory and of `engines/` | exhibit, snapshot, edition, version |
 | **`SPEED`** | a candidate's search speed over a base's, which scales its node budget in a match | speed ratio |
 | **conversion suite** | `tools/mate-suite.sh`: KQK and KRK starts to mate | mate test |
+| **engine config** | an engine repo's `engine.json`: what ratchet-bench reads to build that repo's players at a ref | manifest |
+| **player** | one name an engine config lists, as a match plays it: by ref, `[<ref>:]<name>[@<level>]`, or by tree, `tree:<tree>` | external player |
+| **tree** | one built commit in the code export, which the runners mount | snapshot |
 
 ## Own engine
 
@@ -62,7 +65,11 @@ of ratchet-bench, which own those things.
 ## Testing a change
 
 - **The testing platform is ratchet-bench.** Its queue plays the matches, the conversion suite and the rating runs.
-- **`tools/publish.sh <ref>` publishes a commit of this repo as a tree.** The testing platform plays that tree as an external player, `ext:<tree>`.
+- **`engine.json` is this repo's engine config.** It has the build, the launcher and its runtimes, and the bench, perft and tune entries.
+- **Start a match tool from this repo's worktree.** The tool then builds a player by ref from this worktree, such as `HEAD:ratchet` or `worktree:ratchet`.
+- **`BENCH` in the gitignored `tools/local.env` names the testing platform's checkout.** The admission chain is `bun <BENCH>/tools/admit.ts <parent-ref> [candidate-ref]`.
+- **A command of the engine config runs in the ref's own files.** So an entry works for every ref that has the files it names.
+- **A tool writes its rows to this worktree's `results/`,** and keeps its run state in this worktree's `tmp/`.
 - **Rebuild the wasm after switching branches,** before reading a node signature.
 - **Measured results go in `results/`, written by the tools.** Each row names its protocol, so a protocol change shows which rows are old. Docs hold decisions and invariants.
 - **Research notes and scripts are off-tree,** in the store that `ARTIFACTS` in the gitignored `tools/local.env` names. Records cite it as `<artifacts>`.

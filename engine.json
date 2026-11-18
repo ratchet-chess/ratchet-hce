@@ -1,0 +1,14 @@
+{
+  "players": ["ratchet"],
+  "version": "sed -nE 's/^const VERSION = \\(([0-9]+) << 16\\) \\| \\(([0-9]+) << 8\\) \\| ([0-9]+);.*/\\1.\\2.\\3/p' engines/ratchet/index.ts",
+  "build": "bun run build:wasm",
+  "publish": ["bin", "build", "host", "bench"],
+  "launcher": "bin/ratchet {runtime} --release ratchet",
+  "runtimes": ["bun", "node"],
+  "bench": "{runtime} bench/search.ts --engine ratchet --repeat 1 | awk '$2 ~ /^d[0-9]+$/ && $4 == \"nodes\" { print \"nodes\", $3, \"nps\", $5 * 1000; exit }'",
+  "perft": "{runtime} host/perft.ts",
+  "tune": {
+    "build": "bun tools/tuning-build.ts {map}",
+    "launcher": "bin/ratchet {runtime} --release {tree}/build/ratchet-spsa.wasm --tunables {tree}/tunables.json"
+  }
+}

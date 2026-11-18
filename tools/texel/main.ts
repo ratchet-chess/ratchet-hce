@@ -73,9 +73,16 @@ const REPO = new URL("../../", import.meta.url).pathname;
 const DATASETS = join(REPO, "tmp", "texel", "datasets");
 const DOWNLOADS = "/ws/downloads";
 
+/** the testing platform's checkout, which holds the queue: BENCH in the gitignored tools/local.env */
+function bench(): string {
+  const m = /^BENCH=(.+)$/m.exec(readFileSync(join(REPO, "tools", "local.env"), "utf8"));
+  if (!m) throw new Error("tools/local.env has no BENCH, the path of the testing platform's checkout");
+  return m[1].trim();
+}
+
 const [step, ...rest] = process.argv.slice(2);
 if (["eval", "trace", "tune"].includes(step) && !process.env.QUEUE_ALLOC) {
-  const held = spawnSync("bun", [join(REPO, "tools", "queue.ts"), "alloc", "--kind", "batch", "--name", `texel-${step}`,
+  const held = spawnSync("bun", [join(bench(), "tools", "queue.ts"), "alloc", "--kind", "batch", "--name", `texel-${step}`,
     "--priority", process.env.QUEUE_PRIORITY ?? "0", "--", process.execPath, ...process.argv.slice(1)], { stdio: "inherit" });
   process.exit(held.status ?? 1);
 }
