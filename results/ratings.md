@@ -48,6 +48,7 @@ each rated version keeps its row.
 | ratchet-0.3.11 | 3443 | 11 | 1200 | 51.7% | perseus-1.1, stash-37.0, ethereal-12.75, blackcore-6.0, clockwork-20260705, marvin-6.3.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 9b527cd | 2026-11-13 |
 | ratchet-0.3.12 | 3452 | 14 | 800 | 51.4% | ethereal-12.75, blackcore-6.0, clockwork-20260705, marvin-6.3.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 4d2720e | 2026-11-14 |
 | ratchet-0.3.13 | 3466 | 15 | 800 | 51.5% | blackcore-6.0, clockwork-20260705, marvin-6.3.0, midnight-9 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 90cfd51 | 2026-11-15 |
+| ratchet-0.3.15 | 3470 | 14 | 800 | 52.1% | blackcore-6.0, clockwork-20260705, marvin-6.3.0, midnight-9 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 57a668e | 2026-11-18 |
 | sargon-1978@1 | 582 | 95 | 100 | 9.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
 | sargon-1978@2 | 785 | 66 | 100 | 21.5% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
 | sargon-1978@3 | 860 | 61 | 100 | 28.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
