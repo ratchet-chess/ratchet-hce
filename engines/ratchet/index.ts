@@ -117,7 +117,7 @@ export function nodesSearched(): f64 {
   return searchNodes();
 }
 
-/** the last finished iteration's score for the side to move, in centipawns or as a mate score */
+/** the score of the line the last search returned, for the side to move, in centipawns or as a mate score */
 export function searchScore(): i32 {
   return hostScore(bestScore);
 }

@@ -100,7 +100,7 @@ let quiet = false;
   return stopped ? 1 : 0;
 }
 
-/** the info line after a finished iteration (host/uci/worker.ts onIteration) */
+/** the info line of an iteration's line, finished or cut and kept (host/uci/worker.ts onIteration) */
 @global export function uciIteration(depth: i32, score: i32, nodes: f64): i32 {
   if (quiet) return 0;
   const ms = nowMs() - goStart;

@@ -114,6 +114,10 @@ let completed = 0;
 const rootPv = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
 export let rootPvLen = 0;
 export let bestScore = 0;
+/** the score of the root move that last raised alpha in the root search in progress */
+let rootRaise = 0;
+/** the line of a root move that failed high in the iteration in progress, for think */
+const highPv = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
 
 export function initSearch(): void {
   for (let i = 1; i < 64; i++) LN[i] = <i32>Math.round(Math.log(<f64>i) * 1024);
@@ -636,6 +640,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
           const n = pvLen[p + 1];
           for (let i = p + 1; i < n; i++) pvTable[row + i] = pvTable[child + i];
           pvLen[p] = max(n, p + 1);
+          if (root) rootRaise = v;
         }
         if (v >= beta) {
           ssFailHigh[p]++;
@@ -810,6 +815,13 @@ export function searchWindow(alpha: i32, beta: i32, depth: i32): i32 {
  * Searches the core's position by iterative deepening to `maxDepth`, or until the
  * time rules or the host stop it once an iteration has finished. Returns the best
  * move, or 0 when the position has no legal move.
+ *
+ * A stop inside an iteration keeps what that iteration found, Stockfish 11 Thread::search, where a root move that
+ * finishes as the new best takes its score at once and a stop keeps the sorted root moves: the line of a root move
+ * that the cut search finished above its alpha is returned and reported, at the cut iteration's depth. Rejected:
+ * Ethereal 12.75 iterativeDeepening, which takes an iteration's move only when the iteration finishes, so the nodes
+ * after the last finished iteration change no move. A cut search in which no root move finished above alpha changes
+ * nothing, and `completed` stays the last finished depth.
  */
 export function think(maxDepth: i32): i32 {
   startSearch();
@@ -830,6 +842,10 @@ export function think(maxDepth: i32): i32 {
     }
     let d = depth;
     let v = 0;
+    // a root move that failed high in this iteration: its line stands if the wider search is cut before any root move
+    // finishes, and a fail low after it drops it
+    let highLen = 0;
+    let highScore = 0;
     while (true) {
       v = search(alpha, beta, d, false);
       if (stopped) break;
@@ -837,13 +853,32 @@ export function think(maxDepth: i32): i32 {
         beta = (alpha + beta) / 2;
         alpha = max(v - delta, -INF);
         d = depth;
+        highLen = 0;
       } else if (v >= beta) {
         beta = min(v + delta, INF);
         if (abs(v) < MATE_IN_MAX) d = max(1, d - 1);
+        highLen = pvLen[0];
+        for (let i = 0; i < highLen; i++) highPv[i] = pvTable[i];
+        highScore = v;
       } else break;
       delta += delta / 2;
     }
-    if (stopped) break;
+    if (stopped) {
+      // the root's row of the PV table is written only after a root move's search has finished above alpha, so at a stop
+      // it holds a finished move's line or nothing
+      if (pvLen[0] > 0) {
+        rootPvLen = pvLen[0];
+        for (let i = 0; i < rootPvLen; i++) rootPv[i] = pvTable[i];
+        bestScore = rootRaise;
+        hostIteration(depth, hostScore(bestScore), <f64>nodeCount);
+      } else if (highLen > 0) {
+        rootPvLen = highLen;
+        for (let i = 0; i < rootPvLen; i++) rootPv[i] = highPv[i];
+        bestScore = highScore;
+        hostIteration(depth, hostScore(bestScore), <f64>nodeCount);
+      }
+      break;
+    }
 
     score = v;
     completed = depth;
