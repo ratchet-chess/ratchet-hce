@@ -21,11 +21,11 @@ import {
   quietScore, resumeAfterTT, selectBest, victimOf,
 } from "./movepick";
 import {
-  ASP_DELTA, ASP_DEPTH, CHECK_EXT, CONT6, CORR_CONT, DRAW_JITTER, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HIST_DEEP_MARGIN, HIST_PRIOR_BONUS_DEPTH, HIST_PRIOR_MALUS, HP_DEPTH, HP_LIMIT, IIR_DEPTH, LMP_BASE, LMP_DEPTH, LMP_IMPROVING_BASE, LMP_IMPROVING_PER_DEPTH,
+  ASP_DELTA, ASP_DEPTH, CHECK_EXT, CONT6, CORR_CONT, DRAW_JITTER, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HIST_DEEP_MARGIN, HIST_PRIOR_BONUS_DEPTH, HIST_PRIOR_MALUS, HIST_PRUNE_DEPTH, HIST_PRUNE_LIMIT, IIR_DEPTH, LMP_BASE, LMP_DEPTH, LMP_IMPROVING_BASE, LMP_IMPROVING_PER_DEPTH,
   LMP_IMPROVING_PER_DEPTH_SQ, LMP_PER_DEPTH, LMP_PER_DEPTH_SQ, LMR_ALPHA_RAISE,
   LMR_BASE, LMR_CONT_UPDATE, LMR_CUT_NODE, LMR_DEEPER, LMR_DIV, LMR_EARLY_STAGE, LMR_FAIL_HIGH, LMR_FAIL_HIGH_COUNT, LMR_HISTORY_DIV, LMR_HISTORY_MAX,
   LMR_HISTORY_STEP, LMR_MIN_DEPTH, LMR_NOISY_BASE, LMR_NOISY_DIV, LMR_NOISY_HISTORY_DIV, LMR_NOISY_MIN_DEPTH, LMR_NON_PV, LMR_NOT_IMPROVING,
-  LMR_SHALLOWER, LMR_TT_NOISY, LMR_TT_PV, MAT_EG, NF_DEPTH, NF_MARGIN, NMP_BASE, NMP_CUT_NODE, NMP_EVAL_MARGIN, NMP_STATIC, NMP_STATIC_BASE, NMP_STATIC_PER, PAWN_HISTORY, PC_DEPTH, PC_MARGIN, PC_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN,
+  LMR_SHALLOWER, LMR_TT_NOISY, LMR_TT_PV, MAT_EG, BAD_NOISY_FUT_DEPTH, BAD_NOISY_FUT_MARGIN, NMP_BASE, NMP_CUT_NODE, NMP_EVAL_MARGIN, NMP_STATIC, NMP_STATIC_BASE, NMP_STATIC_PER, PAWN_HISTORY, PROBCUT_DEPTH, PROBCUT_MARGIN, PROBCUT_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN,
   SE_DOUBLE_MAX, SE_MARGIN, SE_MARGIN_DIV, SE_NEG_ALPHA, SE_NEG_CUT, SE_SEARCH_ADD, SE_TRIPLE_MARGIN, SE_TT_DEPTH, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA,
   QS_EVASIONS, QS_SEE, RAZOR_DEPTH, RAZOR_DROP, RAZOR_MARGIN, RAZOR_QS_DEPTH, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, SEE_DEPTH, SEE_HISTORY, SEE_NOISY, SEE_QUIET, TT_CUT_NODE, UPCOMING_REP,
 } from "./params";
@@ -391,12 +391,12 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   }
 
   // ProbCut, Stash f91e750 search: a capture that passes SEE by the margin, and whose qsearch and
-  // reduced search both clear beta + PC_MARGIN, cuts the node; PV nodes too, as in Stash.
+  // reduced search both clear beta + PROBCUT_MARGIN, cuts the node; PV nodes too, as in Stash.
   // The bar's gap is in the eval's unit, and SEE_VALUE is about half that scale, so the bar is stricter than its
   // source's. It stands because easing it showed no gain in games
-  const pcBeta = beta + PC_MARGIN;
-  if (!root && !check && depth >= PC_DEPTH && abs(beta) < MATE_IN_MAX && !(hit && tDepth >= depth - PC_REDUCTION && tScore < pcBeta)) {
-    const bar = pcBeta - staticEval;
+  const probcutBeta = beta + PROBCUT_MARGIN;
+  if (!root && !check && depth >= PROBCUT_DEPTH && abs(beta) < MATE_IN_MAX && !(hit && tDepth >= depth - PROBCUT_REDUCTION && tScore < probcutBeta)) {
+    const bar = probcutBeta - staticEval;
     const base = p * MAX_MOVES;
     const e = generateCaptures(MOVES, base);
     for (let i = base; i < e; i++) SCORES[i] = MOVES[i] == tMove ? 1 << 30 : captureScore(MOVES[i]);
@@ -408,12 +408,12 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       ssCont[p + SS] = pieceTo(m) << 10;
       ssQuietNumber[p + SS] = 0;
       doMove(m);
-      let v = -qsearch(-pcBeta, -pcBeta + 1);
-      if (v >= pcBeta) v = -search(-pcBeta, -pcBeta + 1, depth - PC_REDUCTION, !cutNode);
+      let v = -qsearch(-probcutBeta, -probcutBeta + 1);
+      if (v >= probcutBeta) v = -search(-probcutBeta, -probcutBeta + 1, depth - PROBCUT_REDUCTION, !cutNode);
       undoMove(m);
       if (stopped) return 0;
-      if (v >= pcBeta) {
-        ttStore(key, m, scoreToTT(v, p), raw, depth - PC_REDUCTION + 1, BOUND_LOWER, pvNode || tPv);
+      if (v >= probcutBeta) {
+        ttStore(key, m, scoreToTT(v, p), raw, depth - PROBCUT_REDUCTION + 1, BOUND_LOWER, pvNode || tPv);
         return v;
       }
     }
@@ -478,15 +478,15 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
         // FollowUpMoveHistoryLimit): counter-move and follow-up history, with one limit and depth for both, and with the
         // killer not exempt, where Ethereal exempts it and the counter move
         const imp = improving ? 1 : 0;
-        if (lmrDepth <= HP_DEPTH[imp] && (cmh < HP_LIMIT[imp] || fmh < HP_LIMIT[imp])) continue;
+        if (lmrDepth <= HIST_PRUNE_DEPTH[imp] && (cmh < HIST_PRUNE_LIMIT[imp] || fmh < HIST_PRUNE_LIMIT[imp])) continue;
       }
       // SEE pruning, Ethereal 12.75 SEEPruningDepth: past the good captures; a quiet's bar moves by its history,
       // Clockwork f236181 Worker::search
       if (depth <= SEE_DEPTH && picked > STAGE_GOOD_NOISY && !seeGe(m, noisy ? -SEE_NOISY * depth * depth : -SEE_QUIET * depth - ((hist * SEE_HISTORY) >> 10))) continue;
       // futility for the bad captures, Clockwork 662c568 Worker::search: they are the picker's last stage, so the loop
       // ends, and the score rises to the test's estimate
-      if (!check && depth <= NF_DEPTH && picked == STAGE_BAD_NOISY && staticEval + NF_MARGIN * depth <= alpha) {
-        const estimate = staticEval + NF_MARGIN * depth;
+      if (!check && depth <= BAD_NOISY_FUT_DEPTH && picked == STAGE_BAD_NOISY && staticEval + BAD_NOISY_FUT_MARGIN * depth <= alpha) {
+        const estimate = staticEval + BAD_NOISY_FUT_MARGIN * depth;
         if (abs(beta) < MATE_IN_MAX && best < estimate) best = estimate;
         break;
       }

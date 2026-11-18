@@ -557,9 +557,9 @@ export const NMP_STATIC_BASE = 648;
 export const NMP_STATIC_PER = 68;
 
 /** ProbCut, Stash f91e750 search: depth >= 6, beta + 152 at its PAWN_MG_SCORE 103, a capture's reduced search at depth - 4 */
-export const PC_DEPTH = 6;
-export const PC_MARGIN = 833;
-export const PC_REDUCTION = 4;
+export const PROBCUT_DEPTH = 6;
+export const PROBCUT_MARGIN = 833;
+export const PROBCUT_REDUCTION = 4;
 
 /** internal iterative reduction, Berserk 03cebd6 Negamax: PV or cut node, depth >= 4, no TT move */
 export const IIR_DEPTH = 4;
@@ -628,8 +628,8 @@ export const FUT_HISTORY: StaticArray<i32> = [12000, 6000];
  * improving, one ContinuationPruningDepth and ContinuationPruningHistoryLimit pair for both tables. Ethereal 12.75 search's
  * limit and depth per table, CounterMoveHistoryLimit and FollowUpMoveHistoryLimit, is the form not taken
  */
-export const HP_DEPTH: StaticArray<i32> = [3, 2];
-export const HP_LIMIT: StaticArray<i32> = [-1000, -2500];
+export const HIST_PRUNE_DEPTH: StaticArray<i32> = [3, 2];
+export const HIST_PRUNE_LIMIT: StaticArray<i32> = [-1000, -2500];
 
 /**
  * SEE pruning, Ethereal 12.75 search: depth <= 9, quiets below SEEQuietMargin -64 per ply, noisy below SEENoisyMargin -19 per
@@ -651,8 +651,8 @@ export const SEE_HISTORY = 85;
  * PAWN_MAT middlegame pawn 112. A depth of 0 turns it off. Stockfish 15 search's test per capture, with the victim and
  * capture history, is the form not taken.
  */
-export const NF_DEPTH = 8;
-export const NF_MARGIN = 176;
+export const BAD_NOISY_FUT_DEPTH = 8;
+export const BAD_NOISY_FUT_MARGIN = 176;
 
 /**
  * the reduced depth futility and history pruning read: depth less base + ln(depth) ln(moves) / div, the logs scaled by
