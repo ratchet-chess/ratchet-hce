@@ -51,6 +51,7 @@ and an exact commit. A revision is a commit prefix or a release's version; a ver
 | Stockfish | 11 | https://github.com/official-stockfish/Stockfish | c3483fa9a7d7c0ffa9fcc32b467ca844cfb63790 | sf_11 |
 | Stockfish | 15 | https://github.com/official-stockfish/Stockfish | e6e324eb28fd49c1fc44b3b65784f85a773ec61c | sf_15 |
 | Stockfish | 17 | https://github.com/official-stockfish/Stockfish | e0bfc4b69bbe928d6f474a46560bcc3b3f6709aa | sf_17 |
+| Stockfish | 19 | https://github.com/official-stockfish/Stockfish | edb0d9db6731067ec50ce619ff372b463bc4dd5d | sf_19 |
 | Stockfish | 23493de0 | https://github.com/official-stockfish/Stockfish | 23493de08272226394fb69c4f31182b48b0e739e | - |
 | Stockfish | 43e100ae | https://github.com/official-stockfish/Stockfish | 43e100ae06376d63461005422f26e5517db07c6d | - |
 | Stockfish | 45e5e65a | https://github.com/official-stockfish/Stockfish | 45e5e65a28ce7e304c279fabf5f8a83cced73013 | - |
