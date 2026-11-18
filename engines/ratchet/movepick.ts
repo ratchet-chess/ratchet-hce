@@ -44,7 +44,7 @@ const fmOf = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
 const f4Of = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
 const f6Of = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY));
 
-/** the stage that gave the last move picked */
+/** the stage that gave the last move picked, by any ply: a caller reads it before it searches the move */
 export let pickedStage = 0;
 
 /** the piece type a capture takes */
@@ -113,7 +113,6 @@ export function initPicker(ply: i32, ttMove: i32, killer: i32, cm: i32, fm: i32,
 export function resumeAfterTT(ply: i32, ttMove: i32, killer: i32, cm: i32, fm: i32, f4: i32, f6: i32): void {
   initPicker(ply, ttMove, killer, cm, fm, f4, f6);
   stage[ply] = STAGE_GEN_NOISY;
-  pickedStage = STAGE_TT;
 }
 
 /** moves the best-scored move of [from, to) to `from` */

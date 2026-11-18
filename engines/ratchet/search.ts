@@ -32,7 +32,7 @@ import {
 import { seeGe } from "./see";
 import { doMove, doNull, psq, undoMove, undoNull } from "./state";
 import { mayContinue, mustStop } from "./time";
-import { BOUND_EXACT, BOUND_LOWER, BOUND_UPPER, fullMove, ttBound, ttDepth, ttEval, ttMove, ttNewSearch, ttProbe, ttPv, ttScore, ttStore } from "./tt";
+import { BOUND_EXACT, BOUND_LOWER, BOUND_UPPER, ttMoveOf, ttBound, ttDepth, ttEval, ttMove, ttNewSearch, ttProbe, ttPv, ttScore, ttStore } from "./tt";
 import { hostIteration } from "../../core/host";
 
 export const MATE = 32000;
@@ -60,8 +60,8 @@ const ssStatic = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_P
 const ssRaw = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + SS + 1)));
 /** double extensions on the line to a ply, Stash f91e750 double_extensions */
 const ssDouble = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + SS + 1)));
-/** per ply, the count of moves played at the node when its current move is quiet, else 0: what the child reads of its parent's move */
-const ssQuietCount = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + SS + 1)));
+/** per ply, the number of the move made there when it is quiet, 1 for the node's first move, else 0: what the child reads of its parent's move */
+const ssQuietNumber = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + SS + 1)));
 /** how many of a ply's nodes have failed high since their parent's move loop began; a node reads its children's count (Clockwork 641d9f5 fail_high_count) */
 const ssFailHigh = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + 2)));
 /** the move a ply's singular search leaves out, 0 for none */
@@ -137,10 +137,6 @@ export function pvAt(i: i32): i32 {
 /** a score in the host's terms: centipawns, or a mate score unchanged */
 export function hostScore(s: i32): i32 {
   return abs(s) >= MATE_IN_MAX ? s : s / UNITS_PER_CP;
-}
-
-@inline function evaluate(): i32 {
-  return evalCached(psq);
 }
 
 // ---------------------------------------------------------------- helpers
@@ -280,7 +276,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   if (!root) {
     // Ratchet's guard: a fifty-move draw is returned before a mate on the hundredth ply is found
     if (halfmove >= 100 || isRepetition()) return drawScore();
-    if (p >= PLY_GUARD) return inCheck() ? 0 : evaluate();
+    if (p >= PLY_GUARD) return inCheck() ? 0 : evalCached(psq);
     // mate distance pruning, Stockfish 11 search's Step 3; Fruit 2.1 full_search bounds by a mate test instead
     alpha = max(alpha, -MATE + p);
     beta = min(beta, MATE - p - 1);
@@ -316,33 +312,33 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       // Weiss 5168a50 AlphaBeta: a quiet TT move that cuts earns its bonus; the killer is Ratchet's addition, after
       // Stockfish 11 update_quiet_stats
       if (tScore >= beta) {
-        const cutMove = fullMove(ttMove);
+        const cutMove = ttMoveOf(ttMove);
         if (cutMove && !isNoisy(cutMove)) {
           rewardQuiet(cutMove, bonusAt(depth), p);
           killers[p] = cutMove;
         }
         // the parent's early quiet move is refuted from the table, Stockfish 11 search
-        const prior = ssQuietCount[p + SS - 1];
+        const prior = ssQuietNumber[p + SS - 1];
         if (HIST_PRIOR_MALUS != 0 && prior >= 1 && prior <= 2) rewardPrior(p, -malusAt(depth + 1));
       }
       return tScore;
     }
-    tMove = fullMove(ttMove);
+    tMove = ttMoveOf(ttMove);
   }
 
   // the static eval, and the eval the pruning reads: the TT score where its bound says it is better
   // (Clockwork 6bf993b tt_adjusted_eval)
   let staticEval = EVAL_NONE;
   let raw = EVAL_NONE;
-  let eval = EVAL_NONE;
+  let pruneEval = EVAL_NONE;
   let improving = false;
-  const corrCont = contSlot(ssCont[p + SS - 2], ssCont[p + SS - 1]);
+  const corrCont = contSlot(ssCont[p + SS - 1], ssCont[p + SS - 2]);
   if (!check) {
-    raw = hit && ttEval != EVAL_NONE ? ttEval : evaluate();
+    raw = hit && ttEval != EVAL_NONE ? ttEval : evalCached(psq);
     staticEval = raw + correction(side, corrCont);
-    eval = staticEval;
+    pruneEval = staticEval;
     // the TT score stands in only where a TT cut may, before the fifty-move count nears its end: Ratchet's guard
-    if (hit && halfmove < 90 && (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > eval : tScore < eval))) eval = tScore;
+    if (hit && halfmove < 90 && (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > pruneEval : tScore < pruneEval))) pruneEval = tScore;
     // improving, Alexandria 829daf4 Negamax: against two plies up, else four, else true
     const s2 = ssStatic[p + SS - 2];
     const s4 = ssStatic[p + SS - 4];
@@ -356,7 +352,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   if (!pvNode && !check) {
     // reverse futility, Stash f91e750 search, skipped inside a singular search as Weiss c735b8f AlphaBeta skips its
     // pruning there; Stash f91e750 runs it there too
-    if (excl == 0 && depth <= RFP_DEPTH && eval < MATE_IN_MAX && eval - (RFP_MARGIN * depth - (improving ? RFP_IMPROVING : 0)) >= beta) return eval;
+    if (excl == 0 && depth <= RFP_DEPTH && pruneEval < MATE_IN_MAX && pruneEval - (RFP_MARGIN * depth - (improving ? RFP_IMPROVING : 0)) >= beta) return pruneEval;
 
     // razoring, Stash 13ac9e7 search: to qsearch at depth 2 or less, a null-window qsearch below alpha at depth 3,
     // and a ply less for the node when that qsearch beats beta by a ply's margin
@@ -375,17 +371,17 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       excl == 0 &&
       (NMP_CUT_NODE == 0 || cutNode) &&
       depth >= NMP_DEPTH &&
-      eval >= beta + NMP_EVAL_MARGIN &&
-      eval >= staticEval &&
+      pruneEval >= beta + NMP_EVAL_MARGIN &&
+      pruneEval >= staticEval &&
       (NMP_STATIC == 0 || staticEval >= beta + NMP_STATIC_BASE - NMP_STATIC_PER * depth) &&
       ssMove[p + SS - 1] != NULL_MOVE &&
       ssMove[p + SS - 2] != NULL_MOVE &&
       hasPieces()
     ) {
-      const r = NMP_BASE + depth / NMP_DEPTH_DIV + min(NMP_EVAL_MAX, (eval - beta) / NMP_EVAL_DIV);
+      const r = NMP_BASE + depth / NMP_DEPTH_DIV + min(NMP_EVAL_MAX, (pruneEval - beta) / NMP_EVAL_DIV);
       ssMove[p + SS] = NULL_MOVE;
       ssCont[p + SS] = -1;
-      ssQuietCount[p + SS] = 0;
+      ssQuietNumber[p + SS] = 0;
       doNull();
       const v = -search(-beta, -beta + 1, depth - r, !cutNode);
       undoNull();
@@ -410,7 +406,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       if (m == excl || !seeGe(m, bar)) continue;
       ssMove[p + SS] = m;
       ssCont[p + SS] = pieceTo(m) << 10;
-      ssQuietCount[p + SS] = 0;
+      ssQuietNumber[p + SS] = 0;
       doMove(m);
       let v = -qsearch(-pcBeta, -pcBeta + 1);
       if (v >= pcBeta) v = -search(-pcBeta, -pcBeta + 1, depth - PC_REDUCTION, !cutNode);
@@ -444,6 +440,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   let m = 0;
   while ((m = nextMove(p, skipQuiets)) != 0) {
     if (m == excl) continue;
+    // the picker's stage for this move, read now: the singular search and every child run the picker again
+    const picked = pickedStage;
     const noisy = isNoisy(m);
     const pt = pieceTo(m);
     let cmh = 0;
@@ -472,7 +470,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
           continue;
         }
         // futility on the reduced depth, Ethereal 0e47e9b fmpMargin
-        if (!check && lmrDepth <= FUT_DEPTH && eval + FUT_BASE + FUT_PER_DEPTH * lmrDepth <= alpha && hist < FUT_HISTORY[improving ? 1 : 0]) {
+        if (!check && lmrDepth <= FUT_DEPTH && pruneEval + FUT_BASE + FUT_PER_DEPTH * lmrDepth <= alpha && hist < FUT_HISTORY[improving ? 1 : 0]) {
           skipQuiets = true;
           continue;
         }
@@ -484,10 +482,10 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       }
       // SEE pruning, Ethereal 12.75 SEEPruningDepth: past the good captures; a quiet's bar moves by its history,
       // Clockwork f236181 Worker::search
-      if (depth <= SEE_DEPTH && pickedStage > STAGE_GOOD_NOISY && !seeGe(m, noisy ? -SEE_NOISY * depth * depth : -SEE_QUIET * depth - ((hist * SEE_HISTORY) >> 10))) continue;
+      if (depth <= SEE_DEPTH && picked > STAGE_GOOD_NOISY && !seeGe(m, noisy ? -SEE_NOISY * depth * depth : -SEE_QUIET * depth - ((hist * SEE_HISTORY) >> 10))) continue;
       // futility for the bad captures, Clockwork 662c568 Worker::search: they are the picker's last stage, so the loop
       // ends, and the score rises to the test's estimate
-      if (!check && depth <= NF_DEPTH && pickedStage == STAGE_BAD_NOISY && staticEval + NF_MARGIN * depth <= alpha) {
+      if (!check && depth <= NF_DEPTH && picked == STAGE_BAD_NOISY && staticEval + NF_MARGIN * depth <= alpha) {
         const estimate = staticEval + NF_MARGIN * depth;
         if (abs(beta) < MATE_IN_MAX && best < estimate) best = estimate;
         break;
@@ -540,7 +538,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     const before = nodeCount;
     doMove(m);
     played++;
-    ssQuietCount[p + SS] = noisy ? 0 : played;
+    ssQuietNumber[p + SS] = noisy ? 0 : played;
     // the check extension, on the move in the parent, under the same limits
     if (mayExtend && !singular) {
       knownCheck = inCheck();
@@ -568,7 +566,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
           sum -= LMR_HISTORY_STEP * max(-LMR_HISTORY_MAX, min(LMR_HISTORY_MAX, hist / LMR_NOISY_HISTORY_DIV));
         } else {
           sum = LMR_BASE + logs / LMR_DIV;
-          if (pickedStage < STAGE_QUIET) sum -= LMR_EARLY_STAGE;
+          if (picked < STAGE_QUIET) sum -= LMR_EARLY_STAGE;
           // a noisy TT move, Stockfish 11 ttCapture
           if (tNoisy) sum += LMR_TT_NOISY;
           sum -= LMR_HISTORY_STEP * max(-LMR_HISTORY_MAX, min(LMR_HISTORY_MAX, hist / LMR_HISTORY_DIV));
@@ -653,8 +651,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   if (best >= beta) {
     updateHistories(bestMove, depth, depth + (best - beta >= HIST_DEEP_MARGIN ? 1 : 0), p, quiets, captures);
     // the parent's first move, a quiet, is refuted here, Stockfish 11 update_all_stats
-    if (HIST_PRIOR_MALUS != 0 && ssQuietCount[p + SS - 1] == 1) rewardPrior(p, -malusAt(depth + 1));
-  } else if (!bestMove && HIST_PRIOR_BONUS_DEPTH != 0 && (depth >= HIST_PRIOR_BONUS_DEPTH || pvNode) && ssQuietCount[p + SS - 1] != 0) {
+    if (HIST_PRIOR_MALUS != 0 && ssQuietNumber[p + SS - 1] == 1) rewardPrior(p, -malusAt(depth + 1));
+  } else if (!bestMove && HIST_PRIOR_BONUS_DEPTH != 0 && (depth >= HIST_PRIOR_BONUS_DEPTH || pvNode) && ssQuietNumber[p + SS - 1] != 0) {
     // no move raised alpha: the parent's quiet move caused the fail low, Stockfish 8fd34d77 search
     rewardPrior(p, bonusAt(depth));
   }
@@ -695,7 +693,7 @@ function qsearch(alpha: i32, beta: i32): i32 {
   const pvNode = beta - alpha > 1;
   if (halfmove >= 100 || isRepetition()) return drawScore();
   const check = hash == knownCheckKey ? knownCheck : inCheck();
-  if (p >= PLY_GUARD) return check ? 0 : evaluate();
+  if (p >= PLY_GUARD) return check ? 0 : evalCached(psq);
 
   const key = hash;
   const hit = ttProbe(key);
@@ -708,14 +706,14 @@ function qsearch(alpha: i32, beta: i32): i32 {
     tBound = ttBound;
     tPv = LMR_TT_PV != 0 && ttPv;
     if (!pvNode && halfmove < 90 && boundCuts(tBound, tScore, alpha, beta)) return tScore;
-    tMove = fullMove(ttMove);
+    tMove = ttMoveOf(ttMove);
   }
 
   let best = -MATE + p;
   let raw = EVAL_NONE;
   if (!check) {
-    raw = hit && ttEval != EVAL_NONE ? ttEval : evaluate();
-    best = raw + correction(side, contSlot(ssCont[p + SS - 2], ssCont[p + SS - 1]));
+    raw = hit && ttEval != EVAL_NONE ? ttEval : evalCached(psq);
+    best = raw + correction(side, contSlot(ssCont[p + SS - 1], ssCont[p + SS - 2]));
     if (hit && halfmove < 90 && (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > best : tScore < best))) best = tScore;
     if (best >= beta) return best;
     if (best > alpha) alpha = best;
@@ -787,7 +785,7 @@ function startSearch(): void {
     ssStatic[i] = EVAL_NONE;
     ssRaw[i] = EVAL_NONE;
     ssDouble[i] = 0;
-    ssQuietCount[i] = 0;
+    ssQuietNumber[i] = 0;
   }
   for (let i = 0; i < MAX_PLY + 1; i++) excludedAt[i] = 0;
   for (let i = 0; i < MAX_PLY + 2; i++) ssFailHigh[i] = 0;

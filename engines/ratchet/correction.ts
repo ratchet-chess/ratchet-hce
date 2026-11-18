@@ -37,10 +37,10 @@ export function clearCorrection(): void {
 }
 
 /**
- * the sixth table's entry for a node, or -1 for none: `fm` and `cm` are the continuation rows of the moves two plies and
- * one ply back, -1 where there is no such move
+ * the sixth table's entry for a node, or -1 for none: `cm` and `fm` are the continuation rows of the moves one ply and
+ * two plies back, -1 where there is no such move
  */
-@inline export function contSlot(fm: i32, cm: i32): i32 {
+@inline export function contSlot(cm: i32, fm: i32): i32 {
   return CORR_CONT != 0 && fm >= 0 && cm >= 0 ? fm + (cm >> 10) : -1;
 }
 

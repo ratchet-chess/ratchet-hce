@@ -9,6 +9,8 @@
  * - goWindow() is one windowed search from every table empty, for the window gate.
  */
 export { initCore, clear, put, setState, setCastleRooks, playMove, legalMoves, rootMove, perft, checkedWalk } from "../../core/index";
+export { nodesSearched } from "./search";
+export { setNodeLimit, timeTrace } from "./time";
 import { MAX_MOVES } from "../../core/constants";
 import { initCore, legalMoves } from "../../core/index";
 import { generateMoves } from "../../core/movegen";
@@ -19,11 +21,11 @@ import { clearCorrection } from "./correction";
 import { initCycle } from "./cycle";
 import { clearPawns } from "./pawns";
 import { clearHistory } from "./history";
-import { MAX_DEPTH, bestScore, completedDepth, hostScore, initSearch, nodesSearched as searchNodes, pvAt, rootPvLen, searchWindow, think } from "./search";
+import { MAX_DEPTH, bestScore, completedDepth, hostScore, initSearch, pvAt, rootPvLen, searchWindow, think } from "./search";
 import {
   doMove, majorKey, minorKey, nonPawnKey, pawnKey, psq, refresh, scratchMajorKey, scratchMinorKey, scratchNonPawnKey, scratchPawnKey, setPawnKey, undoMove,
 } from "./state";
-import { noClock, setNodeLimit as setTimeNodeLimit, startClock, timeTrace as clockTrace } from "./time";
+import { noClock, setNodeLimit, startClock } from "./time";
 import { ttAlloc, ttClear, ttEnable, ttHashfull } from "./tt";
 
 /** the version `id name` reports: major << 16 | minor << 8 | patch; tools/calibrate.sh reads this line to name a rating's row */
@@ -37,6 +39,12 @@ export function init(): void {
   initEval();
   initSearch();
   ttAlloc(HASH_MB);
+  clearTables();
+}
+
+/** empties every table a search fills: the TT, the histories, the correction history, the king-pawn table and the eval cache */
+function clearTables(): void {
+  ttClear();
   clearHistory();
   clearCorrection();
   clearPawns();
@@ -49,11 +57,7 @@ export function version(): i32 {
 
 /** the best move from a fresh search to `depth`, or 0 when the position has no legal move */
 export function go(depth: i32): i32 {
-  ttClear();
-  clearHistory();
-  clearCorrection();
-  clearPawns();
-  clearEvalCache();
+  clearTables();
   noClock();
   refresh();
   return think(min(depth, MAX_DEPTH));
@@ -69,13 +73,8 @@ export function goClock(timeMs: f64, incMs: f64, movesToGo: i32, moveTimeMs: f64
   refresh();
   startClock(timeMs, incMs, movesToGo, moveTimeMs, legalMoves());
   const best = think(depth > 0 ? min(depth, MAX_DEPTH) : MAX_DEPTH);
-  setTimeNodeLimit(-1);
+  setNodeLimit(-1);
   return best;
-}
-
-/** the node limit of the next goClock, from a `go nodes`; that search clears it (time.ts setNodeLimit) */
-export function setNodeLimit(nodes: f64): void {
-  setTimeNodeLimit(nodes);
 }
 
 /**
@@ -84,11 +83,7 @@ export function setNodeLimit(nodes: f64): void {
  * Returns the fail-soft score for the side to move, in the engine's unit.
  */
 export function goWindow(alpha: i32, beta: i32, depth: i32, table: i32): i32 {
-  ttClear();
-  clearHistory();
-  clearCorrection();
-  clearPawns();
-  clearEvalCache();
+  clearTables();
   noClock();
   refresh();
   ttEnable(table != 0);
@@ -102,20 +97,7 @@ export function setHash(mb: i32): void {
 }
 
 export function newGame(): void {
-  ttClear();
-  clearHistory();
-  clearCorrection();
-  clearPawns();
-  clearEvalCache();
-}
-
-/** one field of the last timed search's record; time.ts timeTrace names the fields */
-export function timeTrace(field: i32): f64 {
-  return clockTrace(field);
-}
-
-export function nodesSearched(): f64 {
-  return searchNodes();
+  clearTables();
 }
 
 /** the score of the line the last search returned, for the side to move, in centipawns or as a mate score */

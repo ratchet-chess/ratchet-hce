@@ -142,7 +142,7 @@ export function ttStore(key: u64, move: i32, score: i32, rawEval: i32, depth: i3
 }
 
 /** the table's stored move as a legal move of this position with its flags, or 0 */
-export function fullMove(m: i32): i32 {
+export function ttMoveOf(m: i32): i32 {
   if (!m) return 0;
   if (m & TT_CASTLE) return isLegal((m & 0x7fff) | FLAG_CASTLE) ? (m & 0x7fff) | FLAG_CASTLE : 0;
   const from = moveFrom(m);
