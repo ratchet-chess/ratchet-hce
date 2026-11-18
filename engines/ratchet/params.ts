@@ -193,351 +193,6 @@ export const SCALE_OCB_PASSED = 21;
 export const SCALE_BASE = 177;
 export const SCALE_PER_PAWN = 13;
 
-// ---------------------------------------------------------------- search
-
-/*
- * A value's comment cites the seed it started from, in its source's unit. The values
- * here are tuned since, so a seed records where a value began, not what it is.
- */
-
-/** SEE values by piece type (none, P, N, B, R, Q, K); the king is never captured */
-export const SEE_VALUE: StaticArray<i32> = [0, 400, 1200, 1200, 2000, 3600, 0];
-
-/** aspiration windows, Ethereal 0e47e9b aspirationWindow: from depth 4, delta 10 at its PawnValue 82, widened by half; search.ts think names where the form differs */
-export const ASP_DEPTH = 4;
-export const ASP_DELTA = 61;
-
-/** reverse futility, Stash f91e750 search: depth <= 7, 86 per ply less 79 when improving, at its PAWN_MG_SCORE 103 */
-export const RFP_DEPTH = 7;
-export const RFP_MARGIN = 377;
-export const RFP_IMPROVING = 338;
-
-/** razoring, Stash f91e750 search: depth <= 3, static eval + 120 per ply <= alpha, at its PAWN_MG_SCORE 103 */
-export const RAZOR_DEPTH = 3;
-/** at this depth or less, razoring returns qsearch's score without the null-window test */
-export const RAZOR_QS_DEPTH = 2;
-export const RAZOR_MARGIN = 673;
-/**
- * 1: the last clause of Stash 13ac9e7 search's razoring. When the null-window qsearch does not fail low and beats beta by
- * one ply's margin, the node is searched a ply shallower. 0 turns it off. Clockwork 641d9f5 Worker::search tests qsearch
- * at alpha itself, down to depth 7 with a wider margin, the form not taken.
- */
-export const RAZOR_DROP = 1;
-
-/** null move, Ethereal 12.75 search: R = 4 + depth / 6 + min(3, (eval - beta) / 200), at its PawnValue 82 */
-export const NMP_DEPTH = 2;
-export const NMP_BASE = 4;
-export const NMP_DEPTH_DIV = 6;
-export const NMP_EVAL_DIV = 1144;
-export const NMP_EVAL_MAX = 3;
-/**
- * 1: the null move is tried at an expected cut node only (Stash f91e750 search); 0 tries it at every non-PV node, as
- * Ethereal 12.75 search does.
- */
-export const NMP_CUT_NODE = 1;
-/**
- * The null move needs the eval at or above beta by this much: Stash 8546bfe search's 30 at its PAWN_MG_SCORE 103. 0 gives
- * the plain test, eval >= beta.
- */
-export const NMP_EVAL_MARGIN = 149;
-/**
- * 1: the null move also needs the static eval at or above beta + NMP_STATIC_BASE - NMP_STATIC_PER * depth, Weiss c735b8f
- * AlphaBeta: 138 and 13 at its P_MG 104, a gate that eases with depth. 0 turns it off. Stockfish 11 search's gate also
- * eases when improving, the form not taken.
- */
-export const NMP_STATIC = 1;
-export const NMP_STATIC_BASE = 648;
-export const NMP_STATIC_PER = 68;
-
-/**
- * 1: at a node not expected to cut, the table cuts on a fail low only (Ethereal 311d110 search); 0 turns it off.
- * Stockfish 43e100ae Search::Worker::search's form, the node type equal to the bound's side up to a depth, is not taken.
- */
-export const TT_CUT_NODE = 1;
-/**
- * 1: a result for a key the table already holds overwrites an entry left by an earlier search, however deep that entry is
- * (Berserk fe1363a TTPut). 0 keeps a deeper entry of any age against a result that is not exact. A probe does
- * not refresh an entry's age, as in Berserk: with a refresh, the entry a node stores over would always be of this search.
- */
-export const TT_AGE_STORE = 1;
-/**
- * A draw by repetition or the fifty-move rule scores +DRAW_JITTER or -DRAW_JITTER by a bit of the node count, so drawn
- * lines do not all look equal to the search: Stash 767fdb1 draw_score's (nodes & 2) - 1 at its PAWN_MG_SCORE 74. 0 scores
- * every draw 0. Weiss e9021fb AlphaBeta's 8 - (nodes & 7) leans every draw toward the side to move, the form not taken.
- */
-export const DRAW_JITTER = 6;
-/**
- * 1: a node with depth left whose side to move can repeat an earlier position raises alpha to the draw score before
- * its table probe (cycle.ts upcomingRepetition; Stockfish 91a76331 search's Step 3). The repeating move's child
- * returns the draw score, so on the plain tree the raise changes no value. 2: the horizon node raises too, before its
- * quiescence search (Stockfish e4f8a4fa search; Stash 079fcba search), where the quiet repeating move is not in the
- * tree and the raise adds it. 0 turns both off. Stockfish b7b7a3f3 qsearch raises inside the quiescence search as
- * well, the placement not taken.
- */
-export const UPCOMING_REP = 2;
-
-/** ProbCut, Stash f91e750 search: depth >= 6, beta + 152 at its PAWN_MG_SCORE 103, a capture's reduced search at depth - 4 */
-export const PC_DEPTH = 6;
-export const PC_MARGIN = 833;
-export const PC_REDUCTION = 4;
-
-/**
- * singular extensions, Stash f91e750 search's gate and margin: TT depth >= depth - 3, singular beta = TT score - 10 d / 16 at its
- * PAWN_MG_SCORE 103. SE_DEPTH 6: the least depth, Stockfish 11 search's; Stash's 7 gives the play before it, and Weiss c735b8f
- * AlphaBeta's 5 is the form not taken
- */
-export const SE_DEPTH = 6;
-/**
- * the singular search's depth is depth / 2 plus this. 0 is Clockwork 641d9f5 Worker::search's; 1 is Stash f91e750 search's and
- * gives the play before it. Ethereal f71ac47 singularity's (depth - 1) / 2 is the form not taken
- */
-export const SE_SEARCH_ADD = 0;
-export const SE_TT_DEPTH = 3;
-export const SE_MARGIN = 54;
-export const SE_MARGIN_DIV = 16;
-/** a double extension at a non-PV node whose singular search fails low by more than 14, while the line has at most 10: Stash f91e750 search at its PAWN_MG_SCORE 103 */
-export const SE_DOUBLE_MARGIN = 88;
-export const SE_DOUBLE_MAX = 10;
-/**
- * a double extension becomes a triple when the TT move is quiet and the singular search fails low by more than this, Stash 4f1ccc1
- * search's 120 at its PAWN_MG_SCORE 103; 100000000 turns it off. Clockwork 641d9f5 Worker::search lowers the margin by the move's
- * history instead
- */
-export const SE_TRIPLE_MARGIN = 615;
-/**
- * plies taken off a TT move that is not singular, where the TT score itself does not reach beta; 0 turns each off.
- * SE_NEG_CUT: at a cut node, Weiss c735b8f AlphaBeta; Berserk d7e1f05 Negamax takes two.
- * SE_NEG_ALPHA: when the TT score is at or below alpha, Ethereal f71ac47 singularity
- */
-export const SE_NEG_CUT = 1;
-export const SE_NEG_ALPHA = 1;
-/** the check extension's plies, on the move in the parent (Stash f91e750 search); 0 turns it off, for the flag screen */
-export const CHECK_EXT = 1;
-
-/** internal iterative reduction, Berserk 03cebd6 Negamax: PV or cut node, depth >= 4, no TT move */
-export const IIR_DEPTH = 4;
-
-/**
- * late move pruning's move count at depth d, (BASE + PER_DEPTH * d + PER_DEPTH_SQ * d * d) >> 10, one set not improving
- * and one improving; initSearch fills a table from them up to LMP_DEPTH. The form is Ethereal 1eff740 initSearch, a
- * quadratic by depth per row. These values give Ethereal 12.75 LateMovePruningCounts exactly at depths 1 to 8, so the
- * tree is the table's; the improving row needs the linear term for that. Not taken: Stockfish 7cdd5e89 search's
- * (3 + depth * depth) / (2 - improving), and Ethereal 1eff740's own coefficients, which each play another tree.
- * search.ts counts moves played against it, where Ethereal counts quiets seen.
- */
-export const LMP_DEPTH = 8;
-export const LMP_BASE = 2900;
-export const LMP_PER_DEPTH = 0;
-export const LMP_PER_DEPTH_SQ = 465;
-export const LMP_IMPROVING_BASE = 5400;
-export const LMP_IMPROVING_PER_DEPTH = -960;
-export const LMP_IMPROVING_PER_DEPTH_SQ = 1048;
-
-/** futility on the reduced depth, Ethereal 0e47e9b search: eval + 77 + 52 per ply <= alpha at its PawnValue 82; history limits by improving, Ethereal 12.75 FutilityPruningHistoryLimit */
-export const FUT_DEPTH = 8;
-export const FUT_BASE = 514;
-export const FUT_PER_DEPTH = 479;
-export const FUT_HISTORY: StaticArray<i32> = [12000, 6000];
-
-/**
- * history pruning, Ethereal 0e47e9b search's continuation pruning: 1- or 2-ply continuation history below a limit, by
- * improving, one ContinuationPruningDepth and ContinuationPruningHistoryLimit pair for both tables. Ethereal 12.75 search's
- * limit and depth per table, CounterMoveHistoryLimit and FollowUpMoveHistoryLimit, is the form not taken
- */
-export const HP_DEPTH: StaticArray<i32> = [3, 2];
-export const HP_LIMIT: StaticArray<i32> = [-1000, -2500];
-
-/**
- * SEE pruning, Ethereal 12.75 search: depth <= 9, quiets below SEEQuietMargin -64 per ply, noisy below SEENoisyMargin -19 per
- * ply squared. As seeds, at its SEEPieceValues pawn 100, they are 256 and 76 in SEE_VALUE's unit
- */
-export const SEE_DEPTH = 9;
-export const SEE_QUIET = 174;
-export const SEE_NOISY = 84;
-/**
- * a quiet's bar moves by its history, in 1/1024 of SEE's unit per point: Clockwork f236181 Worker::search's form, at Clockwork
- * 641d9f5's see_pvs_hist_mult 17 and f236181 SEE::value's pawn 100, on a sum of tables with this limit; 0 turns it off.
- * Stockfish 17 search moves a capture's bar by its capture history, the form not taken
- */
-export const SEE_HISTORY = 85;
-
-/**
- * futility for the bad captures, Clockwork 662c568 Worker::search: at depth <= 8, not in check, once the picker reaches them,
- * static eval + 75 per ply <= alpha ends the move loop, and the score rises to that estimate; converted by Clockwork 641d9f5's
- * PAWN_MAT middlegame pawn 112. A depth of 0 turns it off. Stockfish 15 search's test per capture, with the victim and
- * capture history, is the form not taken.
- */
-export const NF_DEPTH = 8;
-export const NF_MARGIN = 176;
-
-/**
- * late move reductions in 1/1024 ply, the terms summed before the sum is cut to whole plies (Clockwork 641d9f5 Worker::search),
- * where Ethereal 12.75 search adds whole plies. Base + ln(depth) ln(moves) / div is Ethereal 12.75 initSearch's
- * 0.75 + ln d ln m / 2.25, with the logs scaled by 1024. A non-PV node, a node not improving and a move from before the
- * quiet stage are its terms, and history moves the sum by whole steps, capped
- */
-export const LMR_MIN_DEPTH = 3;
-export const LMR_BASE = 798;
-export const LMR_DIV = 2321;
-export const LMR_NON_PV = 1204;
-/**
- * 1: the non-PV term skips a node whose TT entry has the PV bit, a node that is or was on a PV (Berserk f05f9dc Negamax);
- * qsearch then keeps the bit when it stores. 0 turns it off. Clockwork 04f2f0e Worker::search takes a ply off at every
- * such node and adds one when the TT score is at or below alpha, the form not taken.
- */
-export const LMR_TT_PV = 1;
-export const LMR_NOT_IMPROVING = 1114;
-export const LMR_EARLY_STAGE = 1037;
-export const LMR_HISTORY_STEP = 906;
-export const LMR_HISTORY_DIV = 5327;
-export const LMR_HISTORY_MAX = 2;
-/**
- * terms that reduce more, in 1/1024 ply, at Clockwork 641d9f5 Worker::search's tuned values: a cut node (Weiss 95b0951
- * AlphaBeta adds two plies); a quiet when the TT move is noisy; a node whose children have failed high more than LMR_FAIL_HIGH_COUNT times;
- * and each time a move has raised alpha here. 0 turns a term off
- */
-export const LMR_CUT_NODE = 1151;
-export const LMR_TT_NOISY = 936;
-export const LMR_FAIL_HIGH = 888;
-export const LMR_FAIL_HIGH_COUNT = 3;
-export const LMR_ALPHA_RAISE = 570;
-/**
- * late move reductions on noisy moves: their own base and divisor, Weiss 95b0951 InitReductions' 0.38 + ln d ln m / 3.76,
- * restated for a sum where 1 ply is no reduction and a node neither PV nor improving adds 2. Capture history moves it by whole
- * steps, at Weiss AlphaBeta's divisor 8870 scaled from its table's limit 14387 to 16384. A depth of 200 turns them off
- */
-export const LMR_NOISY_MIN_DEPTH = 3;
-export const LMR_NOISY_BASE = -543;
-export const LMR_NOISY_DIV = 4063;
-export const LMR_NOISY_HISTORY_DIV = 9206;
-/**
- * the re-search after a reduced search beats alpha: a ply deeper if it beat the best by more than LMR_DEEPER, Clockwork 641d9f5
- * Worker::search's 94 by its PAWN_MAT middlegame pawn 112; else a ply shallower if it beat the best by less than LMR_SHALLOWER per ply of depth.
- * 100000000 and 0 turn them off
- */
-export const LMR_DEEPER = 218;
-export const LMR_SHALLOWER = 3;
-/** 1: a quiet's continuation history takes the re-search's result; 0 turns it off */
-export const LMR_CONT_UPDATE = 1;
-
-/**
- * the reduced depth futility and history pruning read: depth less base + ln(depth) ln(moves) / div, the logs scaled by
- * 1024 and the sum in 1/1024 ply, Ethereal 0e47e9b search's lmrDepth. It has its own values, so LMR's can move without moving
- * the pruning. Its seeds are LMR's, Ethereal 12.75 initSearch's 0.75 and 2.25, where 0e47e9b initSearch has 0.7844 and 2.4696
- */
-export const PRUNE_BASE = 706;
-export const PRUNE_DIV = 1527;
-
-/**
- * what a quiet's history knows, each part with an off value that gives the play before it.
- * THREAT_HISTORY 1: the butterfly table is also indexed by whether the move's from and to squares are attacked by the
- * opponent (Ethereal 341c43f underlying_quiet_history); 0 turns it off.
- * PAWN_HISTORY 1: a table by pawn structure, piece and square orders quiets beside the others, within HIST_PAWN_MAX
- * (Stockfish b0658f09 PawnHistory's 512 structures and limit 8192); 0 turns it off.
- * HIST_DEEP_MARGIN: a cut that beats beta by this much rewards and penalizes as from one ply deeper, Clockwork 641d9f5
- * Worker::search's 100 by its PAWN_MAT middlegame pawn 112; 100000000 turns it off
- */
-export const THREAT_HISTORY = 1;
-export const PAWN_HISTORY = 1;
-export const HIST_PAWN_MAX = 8192;
-export const HIST_DEEP_MARGIN = 234;
-
-/** a capture is tried among the good ones if SEE >= -score / this, Clockwork 641d9f5 MovePicker::next's movepicker_see_capthist_divisor 51 at its PAWN_MAT 112 */
-export const GOOD_CAPTURE_DIV = 14;
-
-/**
- * 1: a queen promotion without a capture is picked among the captures, as Stockfish 10 make_promotions lists it, so a node
- * that skips its quiets still tries it; 0 leaves it first among the quiets
- */
-export const PROMO_NOISY = 1;
-/**
- * 1: the move six plies back orders quiets and takes their bonus, Clockwork 3dd022c History::get_conthist and
- * update_quiet_stats; 0 turns it off. It stays out of the history sum that pruning and reductions read, as the 4-ply table
- * does. Stockfish 7cdd5e89 update_continuation_histories gives this table a smaller bonus, the form not taken
- */
-export const CONT6 = 1;
-
-/** most valuable victim by piece type, Clockwork 641d9f5 score_move */
-export const MVV: StaticArray<i32> = [0, 800, 2400, 2400, 4800, 7200, 0];
-
-/**
- * qsearch futility, the per-capture shape of Stash f91e750 qsearch: a capture that gives no check is skipped if stand pat + its
- * victim's MAT_EG + QS_DELTA cannot reach alpha. QS_DELTA is Stash's 98 at its PAWN_MG_SCORE 103, where
- * vendor/cpw/pages/Delta_Pruning.wiki names 200 centipawns, which is 1040 here. The victim is in the eval's unit, as stand pat
- * and alpha are, so SEE_VALUE, which is narrower, does not fit this test. Ethereal 12.75 qsearch's one test per node, on the
- * best capture, is the form rejected.
- * QS_SEE 1: when stand pat + QS_DELTA alone cannot reach alpha, a capture that wins nothing by SEE is skipped too (Stash
- * 007850d qsearch); 0 turns it off.
- * QS_EVASIONS 1: in check, once a move has a score that is not a mate, only captures and promotions that pass SEE are searched
- * (Weiss 95b0951 Quiescence); 0 searches every evasion, as Stash does. Stockfish 15 qsearch stops after two quiet evasions, the
- * form not taken.
- */
-export const QS_DELTA = 665;
-export const QS_SEE = 1;
-export const QS_EVASIONS = 1;
-
-/** history bonus and malus, Weiss c735b8f Bonus and Malus: min(2418, 251 d - 267) and min(693, 532 d - 163) */
-export const HIST_BONUS_MUL = 283;
-export const HIST_BONUS_SUB = 222;
-export const HIST_BONUS_MAX = 2555;
-export const HIST_MALUS_MUL = 544;
-export const HIST_MALUS_SUB = 169;
-export const HIST_MALUS_MAX = 644;
-/**
- * 1: a fail high, or a TT cut on a lower bound, takes the malus of depth + 1 from the continuation entries of the parent's
- * move, when that move is quiet and was the first one played at its node (at a TT cut: the first or second). Stockfish 11
- * update_all_stats' and search's "extra penalty". 0 turns it off. Stockfish also counts the parent's first killer.
- */
-export const HIST_PRIOR_MALUS = 1;
-/**
- * From this depth, or at any depth at a PV node, a node where no move raised alpha gives the bonus to the continuation
- * entries of the parent's quiet move, which caused the fail low (Stockfish 8fd34d77 search; Stockfish 11 search's depth 3).
- * 0 turns it off.
- */
-export const HIST_PRIOR_BONUS_DEPTH = 3;
-
-/** correction history, Stash f91e750 update_correction_histories: each table's entry within 32 at its PAWN_MG_SCORE 103 (CORRECTION_HISTORY_MAX); an update weighs 1 + depth, at most 16, of 256 */
-export const CORR_MAX = 163;
-/**
- * 1: a sixth table, by the last two moves, corrects the static eval with the other five's weight and update,
- * Clockwork e774be4 History::get_correction; 0 turns it off. Weiss 3f9eb09 GetCorrectionHistory gives it its own divisor,
- * the form not taken
- */
-export const CORR_CONT = 1;
-export const CORR_WEIGHT_MAX = 16;
-
-// ---------------------------------------------------------------- time
-
-/** Weiss c735b8f InitTimeManagement: sudden death uses a share of the time left, at most 0.2 of the clock; its 0.022 scaled so that the soft limit's score factor keeps mean time use */
-export const TM_SHARE = 0.0296;
-export const TM_SHARE_CAP = 0.2;
-/** with moves to go, 0.7 over min(moves to go, 50) (Weiss c735b8f InitTimeManagement) */
-export const TM_MTG_SHARE = 0.7;
-export const TM_MTG_CAP = 50;
-/** the increments counted ahead (Weiss c735b8f InitTimeManagement's 50) */
-export const TM_INC_MOVES = 50.0;
-/** with an increment under the overhead, the moves counted ahead per millisecond of clock: Stockfish 23493de0 TimeManagement::init's one per 20 ms, so the count falls under one second */
-export const TM_INC_MOVES_PER_MS = 0.05;
-/** hard limit: 5 times the soft one, at most 0.8 of the clock (Weiss c735b8f InitTimeManagement) */
-export const TM_HARD_MUL = 5.0;
-export const TM_HARD_CAP = 0.8;
-/** clock milliseconds held back per move for the host and the match runner */
-export const TM_OVERHEAD = 10.0;
-/**
- * node share of the best move, Weiss 1401211 IterativeDeepening's form with Weiss 693b322 IterativeDeepening's values: stop past
- * soft * (0.52 + 3.73 * (1 - share)). 1401211 measured 0.5 + 2.5 beside its live `uncertain` veto; 693b322 tuned these after
- * Weiss 7608ca3 AspirationWindow left that veto always false
- */
-export const TM_NODE_BASE = 0.52;
-export const TM_NODE_MUL = 3.73;
-/** score fall over three iterations, Berserk 787b2e1b Search: the soft limit times 0.1127 + 0.0262 per centipawn, within 0.5028 and 1.6561; an NNUE-era value, read as 4 units per centipawn */
-export const TM_FALL_BASE = 0.1127;
-export const TM_FALL_PER = 0.00655;
-export const TM_FALL_MIN = 0.5028;
-export const TM_FALL_MAX = 1.6561;
-/** the soft limit with one legal move, Weiss d7d1334 IterativeDeepening's cap */
-export const TM_ONE_MOVE = 500.0;
-
 // ---------------------------------------------------------------- pieces and attack maps (pieces.ts)
 
 // Seeds: each term's source engine, converted by its middlegame pawn: Stash 37's PAWN_MG_SCORE 103, Ethereal 12.75's
@@ -814,3 +469,367 @@ export const COMPLEXITY_PAWNS = 32;
 export const COMPLEXITY_FLANKS = 416;
 export const COMPLEXITY_ENDGAME = 386;
 export const COMPLEXITY_OFFSET = -739;
+
+// ---------------------------------------------------------------- search
+
+/*
+ * A value's comment cites the seed it started from, in its source's unit. The values
+ * here are tuned since, so a seed records where a value began, not what it is.
+ */
+
+// ------------------------ search: iterative deepening
+
+/** aspiration windows, Ethereal 0e47e9b aspirationWindow: from depth 4, delta 10 at its PawnValue 82, widened by half; search.ts think names where the form differs */
+export const ASP_DEPTH = 4;
+export const ASP_DELTA = 61;
+
+// ------------------------ search: table, draws and repetition
+
+/**
+ * 1: at a node not expected to cut, the table cuts on a fail low only (Ethereal 311d110 search); 0 turns it off.
+ * Stockfish 43e100ae Search::Worker::search's form, the node type equal to the bound's side up to a depth, is not taken.
+ */
+export const TT_CUT_NODE = 1;
+/**
+ * 1: a result for a key the table already holds overwrites an entry left by an earlier search, however deep that entry is
+ * (Berserk fe1363a TTPut). 0 keeps a deeper entry of any age against a result that is not exact. A probe does
+ * not refresh an entry's age, as in Berserk: with a refresh, the entry a node stores over would always be of this search.
+ */
+export const TT_AGE_STORE = 1;
+/**
+ * A draw by repetition or the fifty-move rule scores +DRAW_JITTER or -DRAW_JITTER by a bit of the node count, so drawn
+ * lines do not all look equal to the search: Stash 767fdb1 draw_score's (nodes & 2) - 1 at its PAWN_MG_SCORE 74. 0 scores
+ * every draw 0. Weiss e9021fb AlphaBeta's 8 - (nodes & 7) leans every draw toward the side to move, the form not taken.
+ */
+export const DRAW_JITTER = 6;
+/**
+ * 1: a node with depth left whose side to move can repeat an earlier position raises alpha to the draw score before
+ * its table probe (cycle.ts upcomingRepetition; Stockfish 91a76331 search's Step 3). The repeating move's child
+ * returns the draw score, so on the plain tree the raise changes no value. 2: the horizon node raises too, before its
+ * quiescence search (Stockfish e4f8a4fa search; Stash 079fcba search), where the quiet repeating move is not in the
+ * tree and the raise adds it. 0 turns both off. Stockfish b7b7a3f3 qsearch raises inside the quiescence search as
+ * well, the placement not taken.
+ */
+export const UPCOMING_REP = 2;
+
+// ------------------------ search: pruning before the move loop
+
+/** reverse futility, Stash f91e750 search: depth <= 7, 86 per ply less 79 when improving, at its PAWN_MG_SCORE 103 */
+export const RFP_DEPTH = 7;
+export const RFP_MARGIN = 377;
+export const RFP_IMPROVING = 338;
+
+/** razoring, Stash f91e750 search: depth <= 3, static eval + 120 per ply <= alpha, at its PAWN_MG_SCORE 103 */
+export const RAZOR_DEPTH = 3;
+/** at this depth or less, razoring returns qsearch's score without the null-window test */
+export const RAZOR_QS_DEPTH = 2;
+export const RAZOR_MARGIN = 673;
+/**
+ * 1: the last clause of Stash 13ac9e7 search's razoring. When the null-window qsearch does not fail low and beats beta by
+ * one ply's margin, the node is searched a ply shallower. 0 turns it off. Clockwork 641d9f5 Worker::search tests qsearch
+ * at alpha itself, down to depth 7 with a wider margin, the form not taken.
+ */
+export const RAZOR_DROP = 1;
+
+/** null move, Ethereal 12.75 search: R = 4 + depth / 6 + min(3, (eval - beta) / 200), at its PawnValue 82 */
+export const NMP_DEPTH = 2;
+export const NMP_BASE = 4;
+export const NMP_DEPTH_DIV = 6;
+export const NMP_EVAL_DIV = 1144;
+export const NMP_EVAL_MAX = 3;
+/**
+ * 1: the null move is tried at an expected cut node only (Stash f91e750 search); 0 tries it at every non-PV node, as
+ * Ethereal 12.75 search does.
+ */
+export const NMP_CUT_NODE = 1;
+/**
+ * The null move needs the eval at or above beta by this much: Stash 8546bfe search's 30 at its PAWN_MG_SCORE 103. 0 gives
+ * the plain test, eval >= beta.
+ */
+export const NMP_EVAL_MARGIN = 149;
+/**
+ * 1: the null move also needs the static eval at or above beta + NMP_STATIC_BASE - NMP_STATIC_PER * depth, Weiss c735b8f
+ * AlphaBeta: 138 and 13 at its P_MG 104, a gate that eases with depth. 0 turns it off. Stockfish 11 search's gate also
+ * eases when improving, the form not taken.
+ */
+export const NMP_STATIC = 1;
+export const NMP_STATIC_BASE = 648;
+export const NMP_STATIC_PER = 68;
+
+/** ProbCut, Stash f91e750 search: depth >= 6, beta + 152 at its PAWN_MG_SCORE 103, a capture's reduced search at depth - 4 */
+export const PC_DEPTH = 6;
+export const PC_MARGIN = 833;
+export const PC_REDUCTION = 4;
+
+/** internal iterative reduction, Berserk 03cebd6 Negamax: PV or cut node, depth >= 4, no TT move */
+export const IIR_DEPTH = 4;
+
+// ------------------------ search: extensions
+
+/**
+ * singular extensions, Stash f91e750 search's gate and margin: TT depth >= depth - 3, singular beta = TT score - 10 d / 16 at its
+ * PAWN_MG_SCORE 103. SE_DEPTH 6: the least depth, Stockfish 11 search's; Stash's 7 gives the play before it, and Weiss c735b8f
+ * AlphaBeta's 5 is the form not taken
+ */
+export const SE_DEPTH = 6;
+/**
+ * the singular search's depth is depth / 2 plus this. 0 is Clockwork 641d9f5 Worker::search's; 1 is Stash f91e750 search's and
+ * gives the play before it. Ethereal f71ac47 singularity's (depth - 1) / 2 is the form not taken
+ */
+export const SE_SEARCH_ADD = 0;
+export const SE_TT_DEPTH = 3;
+export const SE_MARGIN = 54;
+export const SE_MARGIN_DIV = 16;
+/** a double extension at a non-PV node whose singular search fails low by more than 14, while the line has at most 10: Stash f91e750 search at its PAWN_MG_SCORE 103 */
+export const SE_DOUBLE_MARGIN = 88;
+export const SE_DOUBLE_MAX = 10;
+/**
+ * a double extension becomes a triple when the TT move is quiet and the singular search fails low by more than this, Stash 4f1ccc1
+ * search's 120 at its PAWN_MG_SCORE 103; 100000000 turns it off. Clockwork 641d9f5 Worker::search lowers the margin by the move's
+ * history instead
+ */
+export const SE_TRIPLE_MARGIN = 615;
+/**
+ * plies taken off a TT move that is not singular, where the TT score itself does not reach beta; 0 turns each off.
+ * SE_NEG_CUT: at a cut node, Weiss c735b8f AlphaBeta; Berserk d7e1f05 Negamax takes two.
+ * SE_NEG_ALPHA: when the TT score is at or below alpha, Ethereal f71ac47 singularity
+ */
+export const SE_NEG_CUT = 1;
+export const SE_NEG_ALPHA = 1;
+/** the check extension's plies, on the move in the parent (Stash f91e750 search); 0 turns it off, for the flag screen */
+export const CHECK_EXT = 1;
+
+// ------------------------ search: pruning in the move loop
+
+/**
+ * late move pruning's move count at depth d, (BASE + PER_DEPTH * d + PER_DEPTH_SQ * d * d) >> 10, one set not improving
+ * and one improving; initSearch fills a table from them up to LMP_DEPTH. The form is Ethereal 1eff740 initSearch, a
+ * quadratic by depth per row. These values give Ethereal 12.75 LateMovePruningCounts exactly at depths 1 to 8, so the
+ * tree is the table's; the improving row needs the linear term for that. Not taken: Stockfish 7cdd5e89 search's
+ * (3 + depth * depth) / (2 - improving), and Ethereal 1eff740's own coefficients, which each play another tree.
+ * search.ts counts moves played against it, where Ethereal counts quiets seen.
+ */
+export const LMP_DEPTH = 8;
+export const LMP_BASE = 2900;
+export const LMP_PER_DEPTH = 0;
+export const LMP_PER_DEPTH_SQ = 465;
+export const LMP_IMPROVING_BASE = 5400;
+export const LMP_IMPROVING_PER_DEPTH = -960;
+export const LMP_IMPROVING_PER_DEPTH_SQ = 1048;
+
+/** futility on the reduced depth, Ethereal 0e47e9b search: eval + 77 + 52 per ply <= alpha at its PawnValue 82; history limits by improving, Ethereal 12.75 FutilityPruningHistoryLimit */
+export const FUT_DEPTH = 8;
+export const FUT_BASE = 514;
+export const FUT_PER_DEPTH = 479;
+export const FUT_HISTORY: StaticArray<i32> = [12000, 6000];
+
+/**
+ * history pruning, Ethereal 0e47e9b search's continuation pruning: 1- or 2-ply continuation history below a limit, by
+ * improving, one ContinuationPruningDepth and ContinuationPruningHistoryLimit pair for both tables. Ethereal 12.75 search's
+ * limit and depth per table, CounterMoveHistoryLimit and FollowUpMoveHistoryLimit, is the form not taken
+ */
+export const HP_DEPTH: StaticArray<i32> = [3, 2];
+export const HP_LIMIT: StaticArray<i32> = [-1000, -2500];
+
+/**
+ * SEE pruning, Ethereal 12.75 search: depth <= 9, quiets below SEEQuietMargin -64 per ply, noisy below SEENoisyMargin -19 per
+ * ply squared. As seeds, at its SEEPieceValues pawn 100, they are 256 and 76 in SEE_VALUE's unit
+ */
+export const SEE_DEPTH = 9;
+export const SEE_QUIET = 174;
+export const SEE_NOISY = 84;
+/**
+ * a quiet's bar moves by its history, in 1/1024 of SEE's unit per point: Clockwork f236181 Worker::search's form, at Clockwork
+ * 641d9f5's see_pvs_hist_mult 17 and f236181 SEE::value's pawn 100, on a sum of tables with this limit; 0 turns it off.
+ * Stockfish 17 search moves a capture's bar by its capture history, the form not taken
+ */
+export const SEE_HISTORY = 85;
+
+/**
+ * futility for the bad captures, Clockwork 662c568 Worker::search: at depth <= 8, not in check, once the picker reaches them,
+ * static eval + 75 per ply <= alpha ends the move loop, and the score rises to that estimate; converted by Clockwork 641d9f5's
+ * PAWN_MAT middlegame pawn 112. A depth of 0 turns it off. Stockfish 15 search's test per capture, with the victim and
+ * capture history, is the form not taken.
+ */
+export const NF_DEPTH = 8;
+export const NF_MARGIN = 176;
+
+/**
+ * the reduced depth futility and history pruning read: depth less base + ln(depth) ln(moves) / div, the logs scaled by
+ * 1024 and the sum in 1/1024 ply, Ethereal 0e47e9b search's lmrDepth. It has its own values, so LMR's can move without moving
+ * the pruning. Its seeds are LMR's, Ethereal 12.75 initSearch's 0.75 and 2.25, where 0e47e9b initSearch has 0.7844 and 2.4696
+ */
+export const PRUNE_BASE = 706;
+export const PRUNE_DIV = 1527;
+
+// ------------------------ search: reductions
+
+/**
+ * late move reductions in 1/1024 ply, the terms summed before the sum is cut to whole plies (Clockwork 641d9f5 Worker::search),
+ * where Ethereal 12.75 search adds whole plies. Base + ln(depth) ln(moves) / div is Ethereal 12.75 initSearch's
+ * 0.75 + ln d ln m / 2.25, with the logs scaled by 1024. A non-PV node, a node not improving and a move from before the
+ * quiet stage are its terms, and history moves the sum by whole steps, capped
+ */
+export const LMR_MIN_DEPTH = 3;
+export const LMR_BASE = 798;
+export const LMR_DIV = 2321;
+export const LMR_NON_PV = 1204;
+/**
+ * 1: the non-PV term skips a node whose TT entry has the PV bit, a node that is or was on a PV (Berserk f05f9dc Negamax);
+ * qsearch then keeps the bit when it stores. 0 turns it off. Clockwork 04f2f0e Worker::search takes a ply off at every
+ * such node and adds one when the TT score is at or below alpha, the form not taken.
+ */
+export const LMR_TT_PV = 1;
+export const LMR_NOT_IMPROVING = 1114;
+export const LMR_EARLY_STAGE = 1037;
+export const LMR_HISTORY_STEP = 906;
+export const LMR_HISTORY_DIV = 5327;
+export const LMR_HISTORY_MAX = 2;
+/**
+ * terms that reduce more, in 1/1024 ply, at Clockwork 641d9f5 Worker::search's tuned values: a cut node (Weiss 95b0951
+ * AlphaBeta adds two plies); a quiet when the TT move is noisy; a node whose children have failed high more than LMR_FAIL_HIGH_COUNT times;
+ * and each time a move has raised alpha here. 0 turns a term off
+ */
+export const LMR_CUT_NODE = 1151;
+export const LMR_TT_NOISY = 936;
+export const LMR_FAIL_HIGH = 888;
+export const LMR_FAIL_HIGH_COUNT = 3;
+export const LMR_ALPHA_RAISE = 570;
+/**
+ * late move reductions on noisy moves: their own base and divisor, Weiss 95b0951 InitReductions' 0.38 + ln d ln m / 3.76,
+ * restated for a sum where 1 ply is no reduction and a node neither PV nor improving adds 2. Capture history moves it by whole
+ * steps, at Weiss AlphaBeta's divisor 8870 scaled from its table's limit 14387 to 16384. A depth of 200 turns them off
+ */
+export const LMR_NOISY_MIN_DEPTH = 3;
+export const LMR_NOISY_BASE = -543;
+export const LMR_NOISY_DIV = 4063;
+export const LMR_NOISY_HISTORY_DIV = 9206;
+/**
+ * the re-search after a reduced search beats alpha: a ply deeper if it beat the best by more than LMR_DEEPER, Clockwork 641d9f5
+ * Worker::search's 94 by its PAWN_MAT middlegame pawn 112; else a ply shallower if it beat the best by less than LMR_SHALLOWER per ply of depth.
+ * 100000000 and 0 turn them off
+ */
+export const LMR_DEEPER = 218;
+export const LMR_SHALLOWER = 3;
+/** 1: a quiet's continuation history takes the re-search's result; 0 turns it off */
+export const LMR_CONT_UPDATE = 1;
+
+// ------------------------ search: move ordering and history
+
+/** SEE values by piece type (none, P, N, B, R, Q, K); the king is never captured */
+export const SEE_VALUE: StaticArray<i32> = [0, 400, 1200, 1200, 2000, 3600, 0];
+
+/** most valuable victim by piece type, Clockwork 641d9f5 score_move */
+export const MVV: StaticArray<i32> = [0, 800, 2400, 2400, 4800, 7200, 0];
+
+/** a capture is tried among the good ones if SEE >= -score / this, Clockwork 641d9f5 MovePicker::next's movepicker_see_capthist_divisor 51 at its PAWN_MAT 112 */
+export const GOOD_CAPTURE_DIV = 14;
+
+/**
+ * 1: a queen promotion without a capture is picked among the captures, as Stockfish 10 make_promotions lists it, so a node
+ * that skips its quiets still tries it; 0 leaves it first among the quiets
+ */
+export const PROMO_NOISY = 1;
+
+/**
+ * what a quiet's history knows, each part with an off value that gives the play before it.
+ * THREAT_HISTORY 1: the butterfly table is also indexed by whether the move's from and to squares are attacked by the
+ * opponent (Ethereal 341c43f underlying_quiet_history); 0 turns it off.
+ * PAWN_HISTORY 1: a table by pawn structure, piece and square orders quiets beside the others, within HIST_PAWN_MAX
+ * (Stockfish b0658f09 PawnHistory's 512 structures and limit 8192); 0 turns it off.
+ * HIST_DEEP_MARGIN: a cut that beats beta by this much rewards and penalizes as from one ply deeper, Clockwork 641d9f5
+ * Worker::search's 100 by its PAWN_MAT middlegame pawn 112; 100000000 turns it off
+ */
+export const THREAT_HISTORY = 1;
+export const PAWN_HISTORY = 1;
+export const HIST_PAWN_MAX = 8192;
+export const HIST_DEEP_MARGIN = 234;
+
+/**
+ * 1: the move six plies back orders quiets and takes their bonus, Clockwork 3dd022c History::get_conthist and
+ * update_quiet_stats; 0 turns it off. It stays out of the history sum that pruning and reductions read, as the 4-ply table
+ * does. Stockfish 7cdd5e89 update_continuation_histories gives this table a smaller bonus, the form not taken
+ */
+export const CONT6 = 1;
+
+/** history bonus and malus, Weiss c735b8f Bonus and Malus: min(2418, 251 d - 267) and min(693, 532 d - 163) */
+export const HIST_BONUS_MUL = 283;
+export const HIST_BONUS_SUB = 222;
+export const HIST_BONUS_MAX = 2555;
+export const HIST_MALUS_MUL = 544;
+export const HIST_MALUS_SUB = 169;
+export const HIST_MALUS_MAX = 644;
+/**
+ * 1: a fail high, or a TT cut on a lower bound, takes the malus of depth + 1 from the continuation entries of the parent's
+ * move, when that move is quiet and was the first one played at its node (at a TT cut: the first or second). Stockfish 11
+ * update_all_stats' and search's "extra penalty". 0 turns it off. Stockfish also counts the parent's first killer.
+ */
+export const HIST_PRIOR_MALUS = 1;
+/**
+ * From this depth, or at any depth at a PV node, a node where no move raised alpha gives the bonus to the continuation
+ * entries of the parent's quiet move, which caused the fail low (Stockfish 8fd34d77 search; Stockfish 11 search's depth 3).
+ * 0 turns it off.
+ */
+export const HIST_PRIOR_BONUS_DEPTH = 3;
+
+// ------------------------ search: quiescence
+
+/**
+ * qsearch futility, the per-capture shape of Stash f91e750 qsearch: a capture that gives no check is skipped if stand pat + its
+ * victim's MAT_EG + QS_DELTA cannot reach alpha. QS_DELTA is Stash's 98 at its PAWN_MG_SCORE 103, where
+ * vendor/cpw/pages/Delta_Pruning.wiki names 200 centipawns, which is 1040 here. The victim is in the eval's unit, as stand pat
+ * and alpha are, so SEE_VALUE, which is narrower, does not fit this test. Ethereal 12.75 qsearch's one test per node, on the
+ * best capture, is the form rejected.
+ * QS_SEE 1: when stand pat + QS_DELTA alone cannot reach alpha, a capture that wins nothing by SEE is skipped too (Stash
+ * 007850d qsearch); 0 turns it off.
+ * QS_EVASIONS 1: in check, once a move has a score that is not a mate, only captures and promotions that pass SEE are searched
+ * (Weiss 95b0951 Quiescence); 0 searches every evasion, as Stash does. Stockfish 15 qsearch stops after two quiet evasions, the
+ * form not taken.
+ */
+export const QS_DELTA = 665;
+export const QS_SEE = 1;
+export const QS_EVASIONS = 1;
+
+// ------------------------ search: correction history
+
+/** correction history, Stash f91e750 update_correction_histories: each table's entry within 32 at its PAWN_MG_SCORE 103 (CORRECTION_HISTORY_MAX); an update weighs 1 + depth, at most 16, of 256 */
+export const CORR_MAX = 163;
+/**
+ * 1: a sixth table, by the last two moves, corrects the static eval with the other five's weight and update,
+ * Clockwork e774be4 History::get_correction; 0 turns it off. Weiss 3f9eb09 GetCorrectionHistory gives it its own divisor,
+ * the form not taken
+ */
+export const CORR_CONT = 1;
+export const CORR_WEIGHT_MAX = 16;
+
+// ---------------------------------------------------------------- time
+
+/** Weiss c735b8f InitTimeManagement: sudden death uses a share of the time left, at most 0.2 of the clock; its 0.022 scaled so that the soft limit's score factor keeps mean time use */
+export const TM_SHARE = 0.0296;
+export const TM_SHARE_CAP = 0.2;
+/** with moves to go, 0.7 over min(moves to go, 50) (Weiss c735b8f InitTimeManagement) */
+export const TM_MTG_SHARE = 0.7;
+export const TM_MTG_CAP = 50;
+/** the increments counted ahead (Weiss c735b8f InitTimeManagement's 50) */
+export const TM_INC_MOVES = 50.0;
+/** with an increment under the overhead, the moves counted ahead per millisecond of clock: Stockfish 23493de0 TimeManagement::init's one per 20 ms, so the count falls under one second */
+export const TM_INC_MOVES_PER_MS = 0.05;
+/** hard limit: 5 times the soft one, at most 0.8 of the clock (Weiss c735b8f InitTimeManagement) */
+export const TM_HARD_MUL = 5.0;
+export const TM_HARD_CAP = 0.8;
+/** clock milliseconds held back per move for the host and the match runner */
+export const TM_OVERHEAD = 10.0;
+/**
+ * node share of the best move, Weiss 1401211 IterativeDeepening's form with Weiss 693b322 IterativeDeepening's values: stop past
+ * soft * (0.52 + 3.73 * (1 - share)). 1401211 measured 0.5 + 2.5 beside its live `uncertain` veto; 693b322 tuned these after
+ * Weiss 7608ca3 AspirationWindow left that veto always false
+ */
+export const TM_NODE_BASE = 0.52;
+export const TM_NODE_MUL = 3.73;
+/** score fall over three iterations, Berserk 787b2e1b Search: the soft limit times 0.1127 + 0.0262 per centipawn, within 0.5028 and 1.6561; an NNUE-era value, read as 4 units per centipawn */
+export const TM_FALL_BASE = 0.1127;
+export const TM_FALL_PER = 0.00655;
+export const TM_FALL_MIN = 0.5028;
+export const TM_FALL_MAX = 1.6561;
+/** the soft limit with one legal move, Weiss d7d1334 IterativeDeepening's cap */
+export const TM_ONE_MOVE = 500.0;
