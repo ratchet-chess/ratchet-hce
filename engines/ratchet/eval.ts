@@ -66,11 +66,14 @@ function endgameScale(eg: i32): i32 {
   const weak = strong ^ 1;
   const sPawns = bb[(strong << 3) | PAWN];
   const bishop = MAT_MG[BISHOP];
-  // no pawns, and at most a bishop ahead
+  // no pawns, and at most a minor ahead. Stash 37 draws the line at its bishop, which its values make the greater minor;
+  // the line here is the greater of the two tuned minors, so a tune that puts the knight above the bishop cannot carry
+  // a lone knight past it
   if (!sPawns) {
+    const minor = max(MAT_MG[KNIGHT], bishop);
     const sMat = material(strong);
     const wMat = material(weak);
-    if (sMat - wMat <= bishop) return sMat <= bishop ? 0 : max(((sMat - wMat) * 8) / bishop, 0);
+    if (sMat - wMat <= minor) return sMat <= minor ? 0 : max(((sMat - wMat) * 8) / minor, 0);
   }
   // opposite bishops
   const wb = bb[BISHOP];
@@ -101,8 +104,8 @@ function complexity(eg: i32, pawns: u64): i32 {
 
 /**
  * The eval for the side to move from `psq`, the board's packed material and PSQT
- * sum. Without pawns, rooks or queens and with at most one minor each, it is a
- * draw (CPW "Draw Evaluation"). Against a bare king, the stronger side is paid for
+ * sum. Without pawns, rooks or queens, at most one minor each, or two knights
+ * against at most one minor, is a draw (CPW "Draw Evaluation"). Against a bare king, the stronger side is paid for
  * driving it to the edge and bringing its own king close (KXK mop-up, CPW "Mop-up
  * Evaluation"). `cached` lets the king-pawn terms use their table.
  */
@@ -112,7 +115,14 @@ export function evalWith(psq: i32, cached: bool): i32 {
   const queens = bb[QUEEN] | bb[8 | QUEEN];
   const wMinors = <i32>popcnt(bb[KNIGHT] | bb[BISHOP]);
   const bMinors = <i32>popcnt(bb[8 | KNIGHT] | bb[8 | BISHOP]);
-  if (!(pawns | rooks | queens) && wMinors <= 1 && bMinors <= 1) return 0;
+  if (!(pawns | rooks | queens)) {
+    if (wMinors <= 1 && bMinors <= 1) return 0;
+    // two knights against a bare king or one minor, CPW "Draw Evaluation"'s simple heuristics. Its other heuristics, two
+    // bishops against a bishop and two minors against one without the bishop pair, are not taken: the scale above
+    // already holds those endings near a draw
+    if (wMinors == 2 && popcnt(bb[KNIGHT]) == 2 && bMinors <= 1) return 0;
+    if (bMinors == 2 && popcnt(bb[8 | KNIGHT]) == 2 && wMinors <= 1) return 0;
+  }
 
   let phase = wMinors + bMinors + 2 * <i32>popcnt(rooks) + 4 * <i32>popcnt(queens);
   if (phase > PHASE_MAX) phase = PHASE_MAX;
