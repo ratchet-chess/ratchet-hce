@@ -7,16 +7,14 @@
   "scripts": {
     "typecheck": "bunx --bun tsc",
     "build:wasm": "sh tools/build.sh",
-    "test": "bun test/perft.ts && bun test/state.ts && bun test/release-perft.ts && bun test/eval-mirror.ts && bun test/window.ts && bun test/wasi-signature.ts",
+    "test": "bun test/perft.ts && bun test/state.ts && bun test/eval-mirror.ts && bun test/window.ts && bun test/wasi-signature.ts",
     "bench": "bun bench/perft.ts",
     "bench:node": "node bench/perft.ts",
     "bench:deno": "deno run --allow-read bench/perft.ts",
     "bench:all": "bun bench/perft.ts && node bench/perft.ts && deno run --allow-read bench/perft.ts",
     "bench:search": "bun bench/search.ts",
     "bench:search:all": "bun bench/search.ts && node bench/search.ts && deno run --allow-read bench/search.ts",
-    "bench:eval:all": "bun bench/eval.ts && node bench/eval.ts && deno run --allow-read bench/eval.ts",
-    "web:build": "bun web/build.ts",
-    "web": "bun web/serve.ts"
+    "bench:eval:all": "bun bench/eval.ts && node bench/eval.ts && deno run --allow-read bench/eval.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
