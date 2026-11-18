@@ -294,6 +294,7 @@ export let kingSafetyEg = 0;
   const rookChecks = rookRays & unchecked(attackedBy[t | ROOK]);
   const queenChecks = (bishopRays | rookRays) & unchecked(attackedBy[t | QUEEN]);
 
+  // the endgame half can pass i16 in a large attack and wrap; a known, measured limit (README, Packed eval)
   let sum = unchecked(zoneWeight[us]) + unchecked(safetyOf[us]) + S(SAFETY_OFFSET_MG, SAFETY_OFFSET_EG);
   sum += S(SAFETY_ATTACK_MG, SAFETY_ATTACK_EG) * unchecked(zoneAttacks[us]);
   sum += S(SAFETY_WEAK_MG, SAFETY_WEAK_EG) * <i32>popcnt(weak & unchecked(kingArea[us]));
