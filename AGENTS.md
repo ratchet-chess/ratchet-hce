@@ -23,7 +23,7 @@ do not say where, ask the user.
 | **node signature** | a build's total node count over a fixed position set | bench, node count |
 | **`SPEED`** | a candidate's search speed over a base's, which scales its node budget in a match | speed ratio |
 | **conversion suite** | `tools/mate-suite.sh`: KQK and KRK starts to mate | mate test |
-| **variant** | a copy of a release that keeps its mechanisms and opens its constants or its speed | what-if branch, fork |
+| **variant** | a what-if on a release: a copy of it with one stated change, built to see what happens | what-if branch, fork |
 | **adapted engine** | another engine with the edits that make it a module of UCI over WASI; `helper/README.md` is the how-to | port, WASI port |
 | **WASI build** | a WASI preview-1 command module that speaks UCI on stdin and stdout, as UCI over WASI states; a release's is `build/wasi/<release>.wasm` | |
 | **own engine** | Ratchet's own program, `engines/ratchet/`: Ratchet's code on the core, with no original | release, variant |
@@ -47,11 +47,10 @@ do not say where, ask the user.
 
 ## Variants
 
+- **A variant asks one question of one release.** It is not a push for rating.
 - **A variant is a directory on main,** `engines/<release>-<name>/`, copied from its release. The release stays untouched.
-- **A variant opens one thing:** its constants (a tuned variant) or its speed (a speed variant). It adds no mechanism.
 - **A variant has no fidelity bar.** It passes the gates its release passes.
-- **A speed variant plays its release's moves with its release's node counts,** checked against the release's reference.
-- **A tuned variant is rated at its release's depths or levels,** so the rating gap measures only its constants.
+- **A variant is rated at its release's depths or levels,** so the rating gap measures only its change.
 
 ## Own engine
 
