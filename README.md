@@ -58,7 +58,7 @@ make -C vendor/fastchess     # build it
 tools/fetch-book.sh          # opening books for matches, into books/
 bun run build:wasm           # compile the core and every release into build/; tests and benches need it
 bun run typecheck
-bun run test                 # the perft, incremental-state, release-generator, eval-mirror and window gates (`bun test` is Bun's own test runner)
+bun run test                 # the perft, incremental-state, release-generator, eval-mirror, window and WASI-signature gates (`bun test` is Bun's own test runner)
 bun test/perft.ts --full     # every perft depth in the suite
 bun test/window.ts --depth 6 # the own engine's window gate deeper than `bun run test` runs it
 bun run bench:all            # perft throughput under Bun, Node and Deno

@@ -7,7 +7,7 @@
   "scripts": {
     "typecheck": "bunx --bun tsc",
     "build:wasm": "sh tools/build.sh",
-    "test": "bun test/perft.ts && bun test/state.ts && bun test/release-perft.ts && bun test/eval-mirror.ts && bun test/window.ts",
+    "test": "bun test/perft.ts && bun test/state.ts && bun test/release-perft.ts && bun test/eval-mirror.ts && bun test/window.ts && bun test/wasi-signature.ts",
     "bench": "bun bench/perft.ts",
     "bench:node": "node bench/perft.ts",
     "bench:deno": "deno run --allow-read bench/perft.ts",
