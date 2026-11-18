@@ -9,6 +9,7 @@
  *     "release": "chess-4.6",            // engines/<release>/, for a source subject
  *     "eval": { "form": "search", "depth": 2 },   // or { "form": "static" }
  *     "quirks": ["reads-search-state"],
+ *     "refresh": "initSearch",           // optional, below
  *     "defaults": { "type": "i32", "step": 8 },
  *     "blocks": [
  *       { "name": "FPNISO", "sources": [{ "file": "eval.ts", "symbol": "FPNISO" }] },
@@ -24,7 +25,9 @@
  * squares); `ties` may instead list index groups. A middlegame and endgame pair is
  * two blocks. `type` is the storage type (i32, i16, i8, u16, u8, f64), whose range
  * bounds the element unless `min` and `max` narrow it. `step` is the local search's
- * step and the probe's unit.
+ * step and the probe's unit. `refresh` names a function in scope in the release's
+ * index.ts that the tuning build calls after each set: it refills a table the
+ * release fills once from the map's constants.
  */
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
@@ -72,6 +75,8 @@ export interface ParameterMap {
   release?: string;
   eval: EvalForm;
   quirks?: string[];
+  /** a function in the release's index.ts scope that the tuning build calls after each set */
+  refresh?: string;
   defaults?: { type?: string; step?: number };
   blocks: Block[];
 }

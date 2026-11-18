@@ -169,7 +169,9 @@ export function buildTuning(m: LoadedMap): string {
   }
   const index = files.get("index.ts");
   if (!index) throw new Error(`${m.releaseDir}: no index.ts`);
-  files.set("index.ts", `${index}\n${imports.join("\n")}\n\n/** sets tuned element \`id\` of ${relative(REPO, m.path)} to \`value\` */\nexport function tuneSet(id: i32, value: f64): void {\n${calls.join("\n")}\n}\n`);
+  // a table the release fills once from a tuned constant is filled again after each set
+  const refresh = m.map.refresh ? `  ${m.map.refresh}();\n` : "";
+  files.set("index.ts", `${index}\n${imports.join("\n")}\n\n/** sets tuned element \`id\` of ${relative(REPO, m.path)} to \`value\` */\nexport function tuneSet(id: i32, value: f64): void {\n${calls.join("\n")}\n${refresh}}\n`);
   emit(m, files, src);
   const flags = ["-O3", "--converge", "--noAssert", "--uncheckedBehavior", "always", "--runtime", "stub"];
   const r = spawnSync("bunx", ["--bun", "asc", join(src, "index.ts"), "-o", wasm, ...flags], { cwd: REPO, encoding: "utf8" });

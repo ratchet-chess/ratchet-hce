@@ -91,7 +91,8 @@ const LN = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 64));
 
 /**
  * late move pruning's move count by depth, not improving then improving, from the LMP_ values in params.ts. A row has a
- * fixed size because a tuning build makes LMP_DEPTH a runtime value; LMP_DEPTH stays below LMP_ROW. Depth 0 is never read
+ * fixed size and is filled whole, because a tuning build makes LMP_DEPTH a runtime value; LMP_DEPTH stays below LMP_ROW.
+ * Depth 0 is never read
  */
 const LMP_ROW = 64;
 const LMP = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 2 * LMP_ROW));
@@ -116,7 +117,7 @@ const highPv = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY)
 
 export function initSearch(): void {
   for (let i = 1; i < 64; i++) LN[i] = <i32>Math.round(Math.log(<f64>i) * 1024);
-  for (let d = 1; d <= min(LMP_DEPTH, LMP_ROW - 1); d++) {
+  for (let d = 1; d < LMP_ROW; d++) {
     LMP[d] = (LMP_BASE + LMP_PER_DEPTH * d + LMP_PER_DEPTH_SQ * d * d) >> 10;
     LMP[LMP_ROW + d] = (LMP_IMPROVING_BASE + LMP_IMPROVING_PER_DEPTH * d + LMP_IMPROVING_PER_DEPTH_SQ * d * d) >> 10;
   }
