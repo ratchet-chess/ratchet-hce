@@ -13,18 +13,18 @@
 import { FILE_A, KING, PAWN } from "../../core/constants";
 import { bb } from "../../core/position";
 import { Z_PIECE } from "../../core/zobrist";
-import { S } from "./eval";
 import {
   PASSED_OUR_KING_EG, PASSED_OUR_KING_MG, PASSED_THEIR_KING_EG, PASSED_THEIR_KING_MG, PAWN_BACKWARD_EG, PAWN_BACKWARD_MG,
   PAWN_BACKWARD_OPEN_EG, PAWN_BACKWARD_OPEN_MG, PAWN_CANDIDATE_EG, PAWN_CANDIDATE_MG, PAWN_DEFENDER_EG, PAWN_DEFENDER_MG, PAWN_DOUBLED_EG, PAWN_DOUBLED_MG, PAWN_ISOLATED_EG, PAWN_ISOLATED_MG, PAWN_PASSED_EG,
   PAWN_PASSED_MG, PAWN_PHALANX_EG, PAWN_PHALANX_MG, SAFETY_SHELTER_EG, SAFETY_SHELTER_MG, SAFETY_STORM_EG, SAFETY_STORM_MG, SHELTER_EG, SHELTER_MG,
   STORM_EG, STORM_MG,
 } from "./params";
+import { FILE_H, distance, pawnAttacks, pawnAttacks2, relRank } from "./geometry";
+import { S } from "./score";
 import { pawnKey } from "./state";
 
 // ---------------------------------------------------------------- masks
 
-const FILE_H: u64 = FILE_A << 7;
 /** by color and square: the squares ahead on its file */
 export const FORWARD = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 128));
 /** by color and square: the squares ahead on the neighboring files, which its pawn may one day attack */
@@ -49,24 +49,6 @@ export function initPawns(): void {
     SPAN[64 + s] = side & bAhead;
   }
   clearPawns();
-}
-
-/** the squares a color's pawns attack */
-@inline export function pawnAttacks(p: u64, color: i32): u64 {
-  return color == 0 ? ((p << 7) & ~FILE_H) | ((p << 9) & ~FILE_A) : ((p >> 9) & ~FILE_H) | ((p >> 7) & ~FILE_A);
-}
-
-/** the squares a color's pawns attack twice */
-@inline export function pawnAttacks2(p: u64, color: i32): u64 {
-  return color == 0 ? ((p << 7) & ~FILE_H) & ((p << 9) & ~FILE_A) : ((p >> 9) & ~FILE_H) & ((p >> 7) & ~FILE_A);
-}
-
-@inline export function relRank(s: i32, color: i32): i32 {
-  return color == 0 ? s >> 3 : 7 - (s >> 3);
-}
-
-@inline function distance(a: i32, b: i32): i32 {
-  return max(abs((a & 7) - (b & 7)), abs((a >> 3) - (b >> 3)));
 }
 
 // ---------------------------------------------------------------- table

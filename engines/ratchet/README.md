@@ -12,7 +12,7 @@ invariants that span files.
   formula. Every tune holds K at the Texel map's `k`, so a retune does not move the eval's scale. A refit
   of K is followed by a retest of the margins.
 - **Packed eval.** Material and PSQT are one i32 per piece and square, the endgame half in the high
-  16 bits (`eval.ts` `S`). Each half of any sum must stay within i16. King safety's square can leave i16, so
+  16 bits (`score.ts` `S`). Each half of any sum must stay within i16. King safety's square can leave i16, so
   its halves stay unpacked (`pieces.ts`), and `eval.ts` bounds the eval.
 - **Eval cache.** `evalCached` keys the eval by the position's hash alone, so the eval reads nothing the hash
   does not cover. A build that changes an eval constant at run time clears the cache or scores through

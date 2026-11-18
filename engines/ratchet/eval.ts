@@ -6,18 +6,20 @@
  * side to move, in the engine's unit.
  *
  * The search reads the packed (middlegame, endgame) sum that state.ts keeps
- * incrementally. evaluateScratch() recomputes it from params.ts, so a tuning
- * build that sets a table at run time is scored with its new values.
+ * incrementally (psq.ts). evaluateScratch() recomputes it from params.ts, so a
+ * tuning build that sets a table at run time is scored with its new values.
  */
 import { BISHOP, KING, KNIGHT, PAWN, QUEEN, ROOK } from "../../core/constants";
-import { bb, board, hash, side } from "../../core/position";
+import { bb, hash, side } from "../../core/position";
 import {
-  BISHOP_EG, BISHOP_MG, COMPLEXITY_ENDGAME, COMPLEXITY_FLANKS, COMPLEXITY_OFFSET, COMPLEXITY_PAWNS, KING_EG, KING_MG, KNIGHT_EG, KNIGHT_MG, MAT_EG, MAT_MG, MOPUP_CLOSE, MOPUP_EDGE, PAWN_EG, PAWN_MG,
-  QUEEN_EG, QUEEN_MG, ROOK_EG, ROOK_MG, SCALE_BASE, SCALE_OCB, SCALE_OCB_PASSED, SCALE_OCB_PIECES, SCALE_OCB_PIECES_PER, SCALE_PER_PAWN,
-  TEMPO_EG, TEMPO_MG,
+  COMPLEXITY_ENDGAME, COMPLEXITY_FLANKS, COMPLEXITY_OFFSET, COMPLEXITY_PAWNS, MAT_MG, MOPUP_CLOSE, MOPUP_EDGE, SCALE_BASE, SCALE_OCB, SCALE_OCB_PASSED,
+  SCALE_OCB_PIECES, SCALE_OCB_PIECES_PER, SCALE_PER_PAWN, TEMPO_EG, TEMPO_MG,
 } from "./params";
+import { DARK } from "./geometry";
 import { initPawns, kingPawn, passedOf } from "./pawns";
 import { initPieces, kingSafetyEg, kingSafetyMg, pieceTerms } from "./pieces";
+import { initPsq, scratchPsq } from "./psq";
+import { S, egOf, mgOf } from "./score";
 
 /** engine units per centipawn; the host reads centipawns */
 export const UNITS_PER_CP = 4;
@@ -25,76 +27,11 @@ export const UNITS_PER_CP = 4;
 /** phase weights by piece type, PeSTO (CPW "PeSTO's Evaluation Function"): N 1, B 1, R 2, Q 4, out of 24 */
 const PHASE_MAX = 24;
 
-/**
- * A (middlegame, endgame) pair packed in one i32, the endgame in the high half
- * (Stockfish 11 Score). Sums and differences of packed pairs stay exact while each
- * half stays within i16.
- */
-@inline export function S(mg: i32, eg: i32): i32 {
-  return (eg << 16) + mg;
-}
-
-@inline export function mgOf(s: i32): i32 {
-  return <i32><i16>s;
-}
-
-@inline export function egOf(s: i32): i32 {
-  return <i32><i16>((s + 0x8000) >> 16);
-}
-
-/** material plus PSQT per piece code and square, White's view: piece code << 6 | square */
-export const PSQ = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 16 * 64));
-
-function tableMg(type: i32, s: i32): i32 {
-  switch (type) {
-    case PAWN: return PAWN_MG[s];
-    case KNIGHT: return KNIGHT_MG[s];
-    case BISHOP: return BISHOP_MG[s];
-    case ROOK: return ROOK_MG[s];
-    case QUEEN: return QUEEN_MG[s];
-    default: return KING_MG[s];
-  }
-}
-
-function tableEg(type: i32, s: i32): i32 {
-  switch (type) {
-    case PAWN: return PAWN_EG[s];
-    case KNIGHT: return KNIGHT_EG[s];
-    case BISHOP: return BISHOP_EG[s];
-    case ROOK: return ROOK_EG[s];
-    case QUEEN: return QUEEN_EG[s];
-    default: return KING_EG[s];
-  }
-}
-
-/** a piece's packed value on a square, read from params.ts: White's at s, Black's mirrored and negated */
-function pieceValue(p: i32, s: i32): i32 {
-  const type = p & 7;
-  const rel = p & 8 ? s ^ 56 : s;
-  const v = S(MAT_MG[type] + tableMg(type, rel), MAT_EG[type] + tableEg(type, rel));
-  return p & 8 ? -v : v;
-}
-
-/** fills PSQ from params.ts, and the pawn masks */
+/** fills the eval's tables from params.ts */
 export function initEval(): void {
   initPawns();
   initPieces();
-  for (let type = PAWN; type <= KING; type++) {
-    for (let s = 0; s < 64; s++) {
-      PSQ[(type << 6) + s] = pieceValue(type, s);
-      PSQ[((8 | type) << 6) + s] = pieceValue(8 | type, s);
-    }
-  }
-}
-
-/** the packed material and PSQT sum of the board, from params.ts */
-export function scratchPsq(): i32 {
-  let v = 0;
-  for (let s = 0; s < 64; s++) {
-    const p = <i32>board[s];
-    if (p) v += pieceValue(p, s);
-  }
-  return v;
+  initPsq();
 }
 
 /** the center Manhattan distance of a square, 0 to 6 */
@@ -104,7 +41,6 @@ export function scratchPsq(): i32 {
   return max(3 - f, f - 4) + max(3 - r, r - 4);
 }
 
-const DARK: u64 = 0xaa55aa55aa55aa55;
 const KINGSIDE: u64 = 0xf0f0f0f0f0f0f0f0;
 const QUEENSIDE: u64 = ~KINGSIDE;
 

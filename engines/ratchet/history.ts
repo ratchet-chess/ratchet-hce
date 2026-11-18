@@ -11,12 +11,13 @@
  * The tables last between moves of a game (Stockfish 946fa476 id_loop) and are emptied
  * by newGame; a fresh go() empties them too, so a node signature starts clean.
  */
-import { BISHOP, FILE_A, KING, KNIGHT, MAX_PLY, PAWN, QUEEN, ROOK, moveFrom, moveTo } from "../../core/constants";
+import { BISHOP, KING, KNIGHT, MAX_PLY, PAWN, QUEEN, ROOK, moveFrom, moveTo } from "../../core/constants";
 import { bb, hash, side } from "../../core/position";
 import { KING_ATT, KNIGHT_ATT, bishopAttacks, rookAttacks } from "../../core/tables";
 import {
   HIST_BONUS_MAX, HIST_BONUS_MUL, HIST_BONUS_SUB, HIST_MALUS_MAX, HIST_MALUS_MUL, HIST_MALUS_SUB, HIST_PAWN_MAX, THREAT_HISTORY,
 } from "./params";
+import { pawnAttacks } from "./geometry";
 import { pawnKey } from "./state";
 
 export const HIST_MAX = 16384;
@@ -30,7 +31,6 @@ export const pawnHist = changetype<StaticArray<i16>>(memory.data(sizeof<i16>() *
 /** a ply's attacked squares and the position they were made for, so a node makes them once */
 const threatSet = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * (MAX_PLY + 2)));
 const threatKey = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * (MAX_PLY + 2)));
-const FILE_H: u64 = FILE_A << 7;
 /** (previous piece << 6 | its square) << 10 | (piece << 6 | square): 16 piece codes, so 2 MiB */
 export const contHist = changetype<StaticArray<i16>>(memory.data(sizeof<i16>() * 1024 * 1024));
 /** (piece << 6 | square) << 3 | victim type */
@@ -85,7 +85,7 @@ function makeThreats(p: i32): u64 {
   const c = (side ^ 1) << 3;
   const occ = unchecked(bb[0] | bb[8]);
   const pawns = unchecked(bb[c | PAWN]);
-  let t = c == 0 ? ((pawns << 7) & ~FILE_H) | ((pawns << 9) & ~FILE_A) : ((pawns >> 9) & ~FILE_H) | ((pawns >> 7) & ~FILE_A);
+  let t = pawnAttacks(pawns, c >> 3);
   t |= unchecked(KING_ATT[<i32>ctz(bb[c | KING])]);
   let n = unchecked(bb[c | KNIGHT]);
   while (n) {

@@ -6,7 +6,7 @@
 import { BISHOP, FLAG_CASTLE, FLAG_EP, KING, KNIGHT, MAX_PLY, PAWN, QUEEN, ROOK, moveFrom, movePromo, moveTo } from "../../core/constants";
 import { ROOK_SQ, board, castleIndex, make, makeNull, ply, unmake, unmakeNull } from "../../core/position";
 import { Z_PIECE } from "../../core/zobrist";
-import { PSQ, scratchPsq } from "./eval";
+import { PSQ, scratchPsq } from "./psq";
 
 /** the board's packed material and PSQT sum, White's view */
 export let psq: i32 = 0;

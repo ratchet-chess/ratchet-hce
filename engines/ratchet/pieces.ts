@@ -12,7 +12,7 @@
 import { BISHOP, FILE_A, KING, KNIGHT, PAWN, QUEEN, ROOK } from "../../core/constants";
 import { bb, castling } from "../../core/position";
 import { KING_ATT, KNIGHT_ATT, bishopAttacks, bit, rookAttacks } from "../../core/tables";
-import { S, egOf, mgOf } from "./eval";
+import { DARK, FILE_H, RANK_1, distance, pawnAttacks, pawnAttacks2, relRank } from "./geometry";
 import {
   BEHIND_BISHOP_EG, BEHIND_BISHOP_MG, BEHIND_KNIGHT_EG, BEHIND_KNIGHT_MG, BISHOP_LONG_EG, BISHOP_LONG_MG, BISHOP_PAIR_EG, BISHOP_PAIR_MG,
   BISHOP_PAWNS_EG, BISHOP_PAWNS_MG, BISHOP_RAMMED_EG, BISHOP_RAMMED_MG, FAR_KNIGHT_EG, FAR_KNIGHT_MG, FLANK_ATTACK_EG, FLANK_ATTACK_MG,
@@ -31,13 +31,11 @@ import {
   THREAT_PUSH_MG, THREAT_QUEEN_EG, THREAT_QUEEN_MG, THREAT_ROOK_BY_KING_EG, THREAT_ROOK_BY_KING_MG, THREAT_ROOK_BY_LESSER_EG,
   THREAT_ROOK_BY_LESSER_MG, THREAT_WEAK_PAWN_EG, THREAT_WEAK_PAWN_MG,
 } from "./params";
-import { FORWARD, passedOf, pawnAttacks, pawnAttacks2, relRank, safetyOf, spanOf } from "./pawns";
+import { FORWARD, passedOf, safetyOf, spanOf } from "./pawns";
+import { S, egOf, mgOf } from "./score";
 
 // ---------------------------------------------------------------- masks
 
-const FILE_H: u64 = FILE_A << 7;
-const RANK_1: u64 = 0xff;
-const DARK: u64 = 0xaa55aa55aa55aa55;
 const CENTER: u64 = 0x0000001818000000;
 const LONG_DIAGONALS: u64 = 0x8142241818244281;
 
@@ -178,10 +176,6 @@ export let kingSafetyEg = 0;
     pieces &= pieces - 1;
   }
   return v;
-}
-
-@inline function distance(a: i32, b: i32): i32 {
-  return max(abs((a & 7) - (b & 7)), abs((a >> 3) - (b >> 3)));
 }
 
 /** bishops: Ethereal 12.75 evaluateBishops, seeing through own bishops and queens; the same-color pawn terms are Laser 1.7 evaluate's BISHOP_PAWN_COLOR_PENALTY, the mobility table Stash 37 BishopMobility */
