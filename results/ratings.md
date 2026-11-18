@@ -16,42 +16,16 @@ each rated version keeps its row.
 
 | player | rating | ± | games | score | anchors | protocol | commit | date |
 |---|---|---|---|---|---|---|---|---|
-| chess-4.6-schaigorodsky@4 | 1320 | 39 | 500 | 27.2% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | ee11ef9 | 2026-11-03 |
-| chess-4.6-schaigorodsky@5 | 1529 | 38 | 500 | 47.5% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | ee11ef9 | 2026-11-03 |
-| chess-4.6-schaigorodsky@6 | 1704 | 39 | 500 | 64.3% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | ee11ef9 | 2026-11-03 |
-| chess-4.6-schaigorodsky@7 | 1907 | 42 | 500 | 80.3% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | ee11ef9 | 2026-11-03 |
-| chess-4.6-selfplay@4 | 1323 | 38 | 500 | 27.5% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 084ac68 | 2026-11-02 |
-| chess-4.6-selfplay@5 | 1534 | 38 | 500 | 48.0% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 084ac68 | 2026-11-02 |
-| chess-4.6-selfplay@6 | 1712 | 40 | 500 | 65.0% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 084ac68 | 2026-11-02 |
-| chess-4.6-selfplay@7 | 1877 | 44 | 500 | 78.2% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 084ac68 | 2026-11-02 |
-| chess-4.6-zurichess@4 | 1316 | 39 | 500 | 26.9% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | fbe9180 | 2026-11-03 |
-| chess-4.6-zurichess@5 | 1531 | 36 | 500 | 47.7% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | fbe9180 | 2026-11-03 |
-| chess-4.6-zurichess@6 | 1730 | 38 | 500 | 66.6% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | fbe9180 | 2026-11-03 |
-| chess-4.6-zurichess@7 | 1852 | 42 | 500 | 76.4% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | fbe9180 | 2026-11-03 |
-| chess-4.6@4 | 1304 | 40 | 500 | 25.8% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | fbe9180 | 2026-11-03 |
-| chess-4.6@5 | 1506 | 36 | 500 | 45.2% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | fbe9180 | 2026-11-03 |
-| chess-4.6@6 | 1615 | 34 | 500 | 56.0% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | fbe9180 | 2026-11-03 |
-| chess-4.6@7 | 1818 | 40 | 500 | 73.9% | blunders-0.1.0, vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | fbe9180 | 2026-11-03 |
-| fruit-2.1 | 2698 | 60 | 100 | 57.5% | stash-19.0, floyd-0.9, blunder-8.5.5, stash-21.0, velvet-1.2.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 66899f5 | 2026-11-02 |
-| gnuchess-1987 | 1836 | 89 | 100 | 58.5% | vividmind-1.1.0, rustic-alpha1, stash-11.0.1, stash-13.0.1, stash-15.3 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | fbe9180 | 2026-11-03 |
-| phalanx-xii | 2237 | 33 | 500 | 75.7% | rustic-alpha1, stash-11.0.1, stash-13.0.1, stash-15.3, crucible-1.0.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | fbe9180 | 2026-11-03 |
-| phalanx-xii-zurichess | 2327 | 37 | 500 | 82.4% | rustic-alpha1, stash-11.0.1, stash-13.0.1, stash-15.3, crucible-1.0.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | fbe9180 | 2026-11-03 |
-| ratchet-0.1.0 | 2955 | 26 | 500 | 60.0% | stash-21.0, velvet-1.2.0, clovis-iii, stash-25.0, stash-30.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 3724c4d | 2026-11-03 |
-| ratchet-0.2.0 | 3208 | 21 | 700 | 62.6% | zurichess-neuchatel, stash-25.0, polaris-1.8.1, texel-1.07, stash-30.0, simbelmyne-1.10.0, mantissa-3.7.2 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 20787fb | 2026-11-04 |
-| ratchet-0.3.0 | 3351 | 19 | 700 | 61.2% | stash-30.0, priessnitz-2.0, halogen-10, simbelmyne-1.10.0, weiss-2.0, xiphos-0.6, stash-37.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | cac79b5 | 2026-11-04 |
-| ratchet-0.3.3 | 3351 | 16 | 704 | 47.0% | weiss-2.0, xiphos-0.6, perseus-1.1, stash-37.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 2b6d278 | 2026-11-05 |
-| ratchet-0.3.4 | 3402 | 21 | 400 | 50.0% | xiphos-0.6, perseus-1.1, stash-37.0, blackcore-6.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 392f458 | 2026-11-07 |
-| ratchet-0.3.5 | 3397 | 15 | 800 | 49.4% | xiphos-0.6, perseus-1.1, stash-37.0, blackcore-6.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 6abcb83 | 2026-11-10 |
-| ratchet-0.3.6 | 3414 | 14 | 800 | 51.7% | xiphos-0.6, perseus-1.1, stash-37.0, blackcore-6.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 45dd228 | 2026-11-11 |
-| ratchet-0.3.7 | 3424 | 13 | 800 | 50.6% | perseus-1.1, stash-37.0, ethereal-12.75, blackcore-6.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 5e3ffab | 2026-11-11 |
-| ratchet-0.3.9 | 3436 | 14 | 800 | 52.4% | perseus-1.1, stash-37.0, ethereal-12.75, blackcore-6.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | a05adac | 2026-11-11 |
-| ratchet-0.3.11 | 3443 | 11 | 1200 | 51.7% | perseus-1.1, stash-37.0, ethereal-12.75, blackcore-6.0, clockwork-20260705, marvin-6.3.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 9b527cd | 2026-11-13 |
-| ratchet-0.3.12 | 3452 | 14 | 800 | 51.4% | ethereal-12.75, blackcore-6.0, clockwork-20260705, marvin-6.3.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 4d2720e | 2026-11-14 |
-| ratchet-0.3.13 | 3466 | 15 | 800 | 51.5% | blackcore-6.0, clockwork-20260705, marvin-6.3.0, midnight-9 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 90cfd51 | 2026-11-15 |
-| ratchet-0.3.15 | 3470 | 14 | 800 | 52.1% | blackcore-6.0, clockwork-20260705, marvin-6.3.0, midnight-9 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 57a668e | 2026-11-18 |
-| sargon-1978@1 | 582 | 95 | 100 | 9.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
-| sargon-1978@2 | 785 | 66 | 100 | 21.5% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
-| sargon-1978@3 | 860 | 61 | 100 | 28.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
-| sargon-1978@4 | 981 | 55 | 100 | 40.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
-| sargon-1978@5 | 1168 | 66 | 100 | 59.5% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
-| sargon-1978@6 | 1212 | 63 | 100 | 64.0% | missingpawn-1, megalodon-1.0.0, dragontooth-0.2, blunders-0.1.0, vividmind-1.1.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign, own clock 3600+10 | 6cb8528 | 2026-10-30 |
+| ratchet-0.1.0 | 2955 | 26 | 500 | 60.0% | stash-21.0, velvet-1.2.0, clovis-iii, stash-25.0, stash-30.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | c7dd806 | 2026-11-03 |
+| ratchet-0.2.0 | 3208 | 21 | 700 | 62.6% | zurichess-neuchatel, stash-25.0, polaris-1.8.1, texel-1.07, stash-30.0, simbelmyne-1.10.0, mantissa-3.7.2 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 2c7c11c | 2026-11-04 |
+| ratchet-0.3.0 | 3351 | 19 | 700 | 61.2% | stash-30.0, priessnitz-2.0, halogen-10, simbelmyne-1.10.0, weiss-2.0, xiphos-0.6, stash-37.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | e1beea5 | 2026-11-04 |
+| ratchet-0.3.3 | 3351 | 16 | 704 | 47.0% | weiss-2.0, xiphos-0.6, perseus-1.1, stash-37.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | ccadff0 | 2026-11-05 |
+| ratchet-0.3.4 | 3402 | 21 | 400 | 50.0% | xiphos-0.6, perseus-1.1, stash-37.0, blackcore-6.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 4736d2e | 2026-11-07 |
+| ratchet-0.3.5 | 3397 | 15 | 800 | 49.4% | xiphos-0.6, perseus-1.1, stash-37.0, blackcore-6.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 3675ef4 | 2026-11-10 |
+| ratchet-0.3.6 | 3414 | 14 | 800 | 51.7% | xiphos-0.6, perseus-1.1, stash-37.0, blackcore-6.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 41cd521 | 2026-11-11 |
+| ratchet-0.3.7 | 3424 | 13 | 800 | 50.6% | perseus-1.1, stash-37.0, ethereal-12.75, blackcore-6.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | a389085 | 2026-11-11 |
+| ratchet-0.3.9 | 3436 | 14 | 800 | 52.4% | perseus-1.1, stash-37.0, ethereal-12.75, blackcore-6.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | fc8ca51 | 2026-11-11 |
+| ratchet-0.3.11 | 3443 | 11 | 1200 | 51.7% | perseus-1.1, stash-37.0, ethereal-12.75, blackcore-6.0, clockwork-20260705, marvin-6.3.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | f7f505e | 2026-11-13 |
+| ratchet-0.3.12 | 3452 | 14 | 800 | 51.4% | ethereal-12.75, blackcore-6.0, clockwork-20260705, marvin-6.3.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 4b960f9 | 2026-11-14 |
+| ratchet-0.3.13 | 3466 | 15 | 800 | 51.5% | blackcore-6.0, clockwork-20260705, marvin-6.3.0, midnight-9 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | f1d9776 | 2026-11-15 |
+| ratchet-0.3.15 | 3470 | 14 | 800 | 52.1% | blackcore-6.0, clockwork-20260705, marvin-6.3.0, midnight-9 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 2522202 | 2026-11-18 |

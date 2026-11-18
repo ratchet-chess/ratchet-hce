@@ -30,7 +30,7 @@ only when those times match.
 | perseus-1.1 | stop | 101 | 97.0% | 0 | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | polaris-1.8.1 | stop | 100 | 97.6% | 0 | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | priessnitz-2.0 | movetime | 100 | 97.6% | 0 | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| ratchet@41ac7fa | stop | 101 | 97.1% | 0 | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| ratchet@75eafc0 | stop | 101 | 97.1% | 0 | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | simbelmyne-1.10.0 | stop | 101 | 96.7% | 0 | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-19.0 | stop | 101 | 95.2% | 0 | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-21.0 | stop | 101 | 95.3% | 0 | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
@@ -78,7 +78,7 @@ only when those times match.
 | priessnitz-2.0 v weiss-2.0 | 144 | 51.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | weiss-2.0 v stash-37.0 | 100 | 51.4% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | priessnitz-2.0 v stash-37.0 | 244 | 51.3% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| priessnitz-2.0 v ratchet@41ac7fa | - | 51.2% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| priessnitz-2.0 v ratchet@75eafc0 | - | 51.2% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | polaris-1.8.1 v texel-1.07 | 81 | 51.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-21.0 v stash-30.0 | 439 | 51.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | weiss-2.0 v perseus-1.1 | 79 | 51.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
@@ -88,7 +88,7 @@ only when those times match.
 | texel-1.07 v laser-1.7 | 162 | 50.8% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | clovis-iii v texel-1.07 | 302 | 50.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | priessnitz-2.0 v perseus-1.1 | 223 | 50.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| stash-37.0 v ratchet@41ac7fa | - | 50.5% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| stash-37.0 v ratchet@75eafc0 | - | 50.5% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | xiphos-0.6 v stash-37.0 | 64 | 50.5% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | priessnitz-2.0 v xiphos-0.6 | 180 | 50.4% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | texel-1.07 v weiss-2.0 | 188 | 50.4% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
@@ -106,10 +106,10 @@ only when those times match.
 | clovis-iii v laser-1.7 | 464 | 49.8% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | clovis-iii v weiss-2.0 | 490 | 49.8% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | weiss-2.0 v marvin-6.3.0 | 140 | 49.8% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| laser-1.7 v ratchet@41ac7fa | - | 49.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| laser-1.7 v ratchet@75eafc0 | - | 49.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | polaris-1.8.1 v stash-30.0 | 104 | 49.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | velvet-1.2.0 v zurichess-neuchatel | 155 | 49.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| weiss-2.0 v ratchet@41ac7fa | - | 49.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| weiss-2.0 v ratchet@75eafc0 | - | 49.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | blunder-8.5.5 v stash-25.0 | 270 | 49.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | clovis-iii v priessnitz-2.0 | 346 | 49.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | laser-1.7 v perseus-1.1 | 105 | 49.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
@@ -118,7 +118,7 @@ only when those times match.
 | stash-30.0 v simbelmyne-1.10.0 | 86 | 49.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | zurichess-neuchatel v stash-25.0 | 14 | 49.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | perseus-1.1 v stash-37.0 | 21 | 49.4% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| xiphos-0.6 v ratchet@41ac7fa | - | 49.4% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| xiphos-0.6 v ratchet@75eafc0 | - | 49.4% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | clovis-iii v stash-25.0 | 105 | 49.3% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | laser-1.7 v stash-37.0 | 126 | 49.3% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-25.0 v weiss-2.0 | 385 | 49.3% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
@@ -127,7 +127,7 @@ only when those times match.
 | stash-25.0 v perseus-1.1 | 464 | 49.2% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | xiphos-0.6 v perseus-1.1 | 43 | 49.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | blunder-8.5.5 v velvet-1.2.0 | 101 | 49.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| clovis-iii v ratchet@41ac7fa | - | 49.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| clovis-iii v ratchet@75eafc0 | - | 49.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | halogen-10 v weiss-2.0 | 108 | 49.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-25.0 v simbelmyne-1.10.0 | 306 | 49.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-25.0 v texel-1.07 | 197 | 49.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
@@ -135,16 +135,16 @@ only when those times match.
 | clovis-iii v stash-37.0 | 590 | 48.9% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | halogen-10 v laser-1.7 | 82 | 48.9% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | texel-1.07 v perseus-1.1 | 267 | 48.9% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| texel-1.07 v ratchet@41ac7fa | - | 48.8% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| texel-1.07 v ratchet@75eafc0 | - | 48.8% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | zurichess-neuchatel v simbelmyne-1.10.0 | 320 | 48.8% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| simbelmyne-1.10.0 v ratchet@41ac7fa | - | 48.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| simbelmyne-1.10.0 v ratchet@75eafc0 | - | 48.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | zurichess-neuchatel v priessnitz-2.0 | 255 | 48.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | blunder-8.5.5 v zurichess-neuchatel | 256 | 48.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | clovis-iii v simbelmyne-1.10.0 | 411 | 48.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-30.0 v laser-1.7 | 139 | 48.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | zurichess-neuchatel v stash-30.0 | 234 | 48.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | clovis-iii v zurichess-neuchatel | 91 | 48.5% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| perseus-1.1 v ratchet@41ac7fa | - | 48.5% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| perseus-1.1 v ratchet@75eafc0 | - | 48.5% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | polaris-1.8.1 v laser-1.7 | 243 | 48.5% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | zurichess-neuchatel v texel-1.07 | 211 | 48.5% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | clovis-iii v xiphos-0.6 | 526 | 48.3% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
@@ -168,19 +168,19 @@ only when those times match.
 | priessnitz-2.0 v halogen-10 | 36 | 47.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | simbelmyne-1.10.0 v stash-37.0 | 179 | 47.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-25.0 v laser-1.7 | 359 | 47.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| stash-30.0 v ratchet@41ac7fa | - | 47.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| stash-30.0 v ratchet@75eafc0 | - | 47.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | xiphos-0.6 v marvin-6.3.0 | 104 | 47.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | laser-1.7 v midnight-9 | 184 | 47.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| polaris-1.8.1 v ratchet@41ac7fa | - | 47.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| polaris-1.8.1 v ratchet@75eafc0 | - | 47.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | weiss-2.0 v carp-3.0.1 | 207 | 47.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| marvin-6.3.0 v ratchet@41ac7fa | - | 47.5% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| marvin-6.3.0 v ratchet@75eafc0 | - | 47.5% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | polaris-1.8.1 v xiphos-0.6 | 305 | 47.5% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | priessnitz-2.0 v carp-3.0.1 | 351 | 47.5% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | halogen-10 v stash-37.0 | 208 | 47.4% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | polaris-1.8.1 v halogen-10 | 161 | 47.4% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | priessnitz-2.0 v willow-4.0 | 357 | 47.4% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-25.0 v priessnitz-2.0 | 241 | 47.4% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| halogen-10 v ratchet@41ac7fa | - | 47.3% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| halogen-10 v ratchet@75eafc0 | - | 47.3% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-37.0 v midnight-9 | 58 | 47.3% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-37.0 v willow-4.0 | 113 | 47.3% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | weiss-2.0 v willow-4.0 | 213 | 47.3% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
@@ -192,14 +192,14 @@ only when those times match.
 | stash-25.0 v halogen-10 | 277 | 47.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-37.0 v carp-3.0.1 | 107 | 47.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | velvet-1.2.0 v simbelmyne-1.10.0 | 475 | 47.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| zurichess-neuchatel v ratchet@41ac7fa | - | 47.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| zurichess-neuchatel v ratchet@75eafc0 | - | 47.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | velvet-1.2.0 v stash-30.0 | 389 | 47.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | laser-1.7 v carp-3.0.1 | 233 | 46.9% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-21.0 v velvet-1.2.0 | 50 | 46.9% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-21.0 v zurichess-neuchatel | 205 | 46.9% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | halogen-10 v xiphos-0.6 | 144 | 46.8% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | laser-1.7 v willow-4.0 | 239 | 46.8% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| carp-3.0.1 v ratchet@41ac7fa | - | 46.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| carp-3.0.1 v ratchet@75eafc0 | - | 46.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | zurichess-neuchatel v perseus-1.1 | 478 | 46.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | halogen-10 v simbelmyne-1.10.0 | 29 | 46.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | texel-1.07 v marvin-6.3.0 | 328 | 46.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
@@ -218,9 +218,9 @@ only when those times match.
 | velvet-1.2.0 v clovis-iii | 64 | 46.2% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | zurichess-neuchatel v xiphos-0.6 | 435 | 46.2% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-21.0 v polaris-1.8.1 | 335 | 46.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| midnight-9 v ratchet@41ac7fa | - | 46.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| midnight-9 v ratchet@75eafc0 | - | 46.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | priessnitz-2.0 v mantissa-3.7.2 | 137 | 46.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| stash-25.0 v ratchet@41ac7fa | - | 46.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| stash-25.0 v ratchet@75eafc0 | - | 46.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-37.0 v blackcore-6.0 | 20 | 46.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | laser-1.7 v blackcore-6.0 | 146 | 45.9% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | blunder-8.5.5 v clovis-iii | 165 | 45.8% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
@@ -241,8 +241,8 @@ only when those times match.
 | polaris-1.8.1 v marvin-6.3.0 | 409 | 45.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | simbelmyne-1.10.0 v midnight-9 | 237 | 45.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-21.0 v weiss-2.0 | 604 | 45.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| willow-4.0 v ratchet@41ac7fa | - | 45.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| blackcore-6.0 v ratchet@41ac7fa | - | 45.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| willow-4.0 v ratchet@75eafc0 | - | 45.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| blackcore-6.0 v ratchet@75eafc0 | - | 45.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | laser-1.7 v mantissa-3.7.2 | 19 | 45.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-19.0 v stash-21.0 | 240 | 45.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-19.0 v stash-25.0 | 459 | 45.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
@@ -258,14 +258,14 @@ only when those times match.
 | stash-30.0 v willow-4.0 | 378 | 44.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-21.0 v clovis-iii | 114 | 44.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | texel-1.07 v mantissa-3.7.2 | 181 | 44.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| velvet-1.2.0 v ratchet@41ac7fa | - | 44.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| velvet-1.2.0 v ratchet@75eafc0 | - | 44.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | zurichess-neuchatel v stash-37.0 | 499 | 44.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | simbelmyne-1.10.0 v blackcore-6.0 | 199 | 44.5% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | simbelmyne-1.10.0 v willow-4.0 | 292 | 44.5% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | velvet-1.2.0 v perseus-1.1 | 633 | 44.3% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | mantissa-3.7.2 v perseus-1.1 | 86 | 44.2% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | velvet-1.2.0 v laser-1.7 | 528 | 44.2% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| mantissa-3.7.2 v ratchet@41ac7fa | - | 44.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| mantissa-3.7.2 v ratchet@75eafc0 | - | 44.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-21.0 v priessnitz-2.0 | 460 | 44.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | simbelmyne-1.10.0 v mantissa-3.7.2 | 72 | 44.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-21.0 v laser-1.7 | 578 | 43.9% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
@@ -292,7 +292,7 @@ only when those times match.
 | polaris-1.8.1 v mantissa-3.7.2 | 262 | 42.7% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-21.0 v xiphos-0.6 | 640 | 42.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | zurichess-neuchatel v midnight-9 | 557 | 42.5% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| blunder-8.5.5 v ratchet@41ac7fa | - | 42.4% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| blunder-8.5.5 v ratchet@75eafc0 | - | 42.4% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | zurichess-neuchatel v carp-3.0.1 | 606 | 42.4% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | blunder-8.5.5 v laser-1.7 | 629 | 42.3% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | zurichess-neuchatel v mantissa-3.7.2 | 392 | 42.3% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
@@ -302,7 +302,7 @@ only when those times match.
 | zurichess-neuchatel v blackcore-6.0 | 519 | 42.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | velvet-1.2.0 v marvin-6.3.0 | 694 | 42.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | floyd-0.9 v stash-25.0 | 350 | 41.9% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| stash-21.0 v ratchet@41ac7fa | - | 41.9% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| stash-21.0 v ratchet@75eafc0 | - | 41.9% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-25.0 v carp-3.0.1 | 592 | 41.9% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | velvet-1.2.0 v midnight-9 | 712 | 41.9% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-21.0 v stash-37.0 | 704 | 41.8% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
@@ -344,7 +344,7 @@ only when those times match.
 | stash-19.0 v perseus-1.1 | 923 | 38.3% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-21.0 v blackcore-6.0 | 724 | 38.2% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-19.0 v laser-1.7 | 818 | 38.1% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| floyd-0.9 v ratchet@41ac7fa | - | 38.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| floyd-0.9 v ratchet@75eafc0 | - | 38.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-19.0 v priessnitz-2.0 | 700 | 38.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-21.0 v carp-3.0.1 | 811 | 37.9% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-19.0 v halogen-10 | 736 | 37.8% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
@@ -358,7 +358,7 @@ only when those times match.
 | floyd-0.9 v mantissa-3.7.2 | 728 | 37.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | stash-19.0 v stash-37.0 | 944 | 37.0% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | floyd-0.9 v xiphos-0.6 | 771 | 36.9% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
-| stash-19.0 v ratchet@41ac7fa | - | 36.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
+| stash-19.0 v ratchet@75eafc0 | - | 36.6% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | floyd-0.9 v marvin-6.3.0 | 875 | 36.5% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | floyd-0.9 v carp-3.0.1 | 942 | 36.4% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
 | floyd-0.9 v midnight-9 | 893 | 36.4% | 8238 positions (sim03-positions.txt 71e062b2), 100 ms by stop, by movetime where a player ignores stop, 2 passes, ucinewgame each, Hash 16, local at 14 slots |
