@@ -68,7 +68,9 @@ bun bench/eval.ts --against <ref>  # the eval alone in ns per call, read in seco
 bun run web  # the play page: rebuilds any stale wasm, builds web/dist/, serves http://127.0.0.1:8080/
 ```
 
-`bin/ratchet` is the UCI engine for a GUI or a match runner: `bin/ratchet [bun|node|deno] --release <name>`.
+`bin/ratchet` is the UCI engine for a GUI or a match runner: `bin/ratchet [bun|node|deno] --release <name>`. It
+plays a release's WASI build when the release has one, so a match rates the file that ships. Any other release, a
+release at a `--level` and a tuning build play through `host/uci/`.
 
 A release with an `engines/<release>/wasi.ts` also builds to `build/wasi/<release>.wasm`, its WASI build: a WASI
 preview-1 module with the UCI front end inside, which speaks UCI on stdin and stdout (UCI over WASI). Its `bench`

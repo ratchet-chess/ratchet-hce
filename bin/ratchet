@@ -1,12 +1,31 @@
 #!/bin/sh
-# UCI launcher. Usage: ratchet [node|bun|deno] --release <name> [--nodestime N] [--level N]   (default bun)
-# Arguments after the runtime go to the UCI front end (host/uci/main.ts).
+# UCI launcher. Usage: ratchet [node|bun|deno] --release <name> [--nodestime N] [--level N] [--tunables <path>]   (default bun)
+#
+# A release that has a WASI build, build/wasi/<name>.wasm, plays that build under host/wasi/main.ts: the file
+# that ships is the file a match rates. The build reads --nodestime from its own command line and ignores the
+# words it does not know, so it gets the arguments as they came.
+#
+# Every other start goes to the UCI front end, host/uci/main.ts, with the arguments after the runtime: a release
+# without a WASI build, a release at a --level, and a tuning build, which --release names by its path and
+# --tunables by its options file.
 dir=$(dirname "$(readlink -f "$0")")/..
 runtime=${1:-bun}
 [ $# -gt 0 ] && shift
+release='' prev='' front=wasi
+for a in "$@"; do
+  [ "$prev" = --release ] && release=$a
+  case "$a" in --level | --tunables) front=uci ;; esac
+  prev=$a
+done
+wasi="$dir/build/wasi/$release.wasm"
+if [ "$front" = wasi ] && [ -n "$release" ] && [ -f "$wasi" ]; then
+  set -- "$dir/host/wasi/main.ts" "$wasi" "$@"
+else
+  set -- "$dir/host/uci/main.ts" "$@"
+fi
 case "$runtime" in
-  node) exec node "$dir/host/uci/main.ts" "$@" ;;
-  bun) exec bun "$dir/host/uci/main.ts" "$@" ;;
-  deno) exec deno run -A "$dir/host/uci/main.ts" "$@" ;;
+  node) exec node "$@" ;;
+  bun) exec bun "$@" ;;
+  deno) exec deno run -A "$@" ;;
   *) echo "unknown runtime: $runtime" >&2; exit 2 ;;
 esac

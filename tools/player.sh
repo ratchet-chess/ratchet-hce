@@ -23,7 +23,8 @@
 # ref is ext:<tree> and its release is its PLAYER name.
 #
 # launcher writes a wrapper in the snapshot that starts bin/ratchet with the
-# release and its arguments, and prints its path. The match tools start an
+# release and its arguments, and prints its path. The snapshot's own bin/ratchet
+# chooses the front end, so a ref plays behind the front end it was committed with. The match tools start an
 # engine through it, because fastchess's args= does not survive ssh's word
 # splitting. The wrapper takes the runtime as its one argument, which an
 # external player's ignores. It is written to a temporary name and renamed,
