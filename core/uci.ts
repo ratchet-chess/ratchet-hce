@@ -2,7 +2,8 @@
  * The WASI build's UCI front end: the conversation a GUI or a match runner holds
  * with the engine over stdin and stdout. It is the AssemblyScript form of
  * host/uci/main.ts and host/uci/worker.ts, and says what they say, line for
- * line, so a WASI build and bin/ratchet play alike.
+ * line, so a release plays alike behind either. bin/ratchet starts a release's
+ * WASI build when it has one, and host/uci otherwise.
  *
  * A release's `wasi.ts` fills a UciEngine with its functions and calls uciMain.
  * The search reaches this file through core/host.ts: its clock (uciClock), its
@@ -710,17 +711,30 @@ function argIs(i: i32, s: string): bool {
   return load<u8>(p + <usize>s.length) == 0;
 }
 
-/** command-line argument `i` as a whole number; -1 if it is not one */
+/**
+ * Command-line argument `i` as a number written in digits, with a point and a fraction if it has one; -1 if it
+ * is not one. The digits are read as one whole number and divided once by the fraction's power of ten, so the
+ * value is the one JavaScript's Number reads from the same text: tools/pool.ts passes a node clock's rate in
+ * hundredths, and both front ends must count one clock from it.
+ */
 function argNumber(i: i32): f64 {
   const p = arg(i);
   let v: f64 = 0;
-  let k = 0;
-  for (; load<u8>(p + <usize>k) != 0; k++) {
+  let scale: f64 = 0;
+  let digits = 0;
+  for (let k = 0; load<u8>(p + <usize>k) != 0; k++) {
     const c = <i32>load<u8>(p + <usize>k);
+    if (c == 46 && scale == 0) {
+      scale = 1;
+      continue;
+    }
     if (c < 48 || c > 57) return -1;
     v = v * 10 + <f64>(c - 48);
+    scale *= 10;
+    digits++;
   }
-  return k > 0 ? v : -1;
+  if (digits == 0) return -1;
+  return scale > 1 ? v / scale : v;
 }
 
 /**
