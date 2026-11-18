@@ -38,9 +38,16 @@ export let ttDepth = 0;
 export let ttBound = 0;
 export let ttPv = false;
 
-/** a new table of `mb` megabytes, emptied */
+/**
+ * The largest table, four buckets short of 1 GiB. AssemblyScript's stub runtime refuses a block of 1 GiB less its
+ * header, or more (std/assembly/rt/common.ts BLOCK_MAXSIZE), and the block is the table and 64 bytes to align it.
+ * A Hash of 1024, the option's maximum, gets this size.
+ */
+const MAX_BYTES: u64 = (1 << 30) - 4 * BUCKET_BYTES;
+
+/** a new table of `mb` megabytes, emptied; at most MAX_BYTES */
 export function ttAlloc(mb: i32): void {
-  const bytes = <usize>max(1, mb) << 20;
+  const bytes = <usize>min<u64>(<u64>max(1, mb) << 20, MAX_BYTES);
   if (block) heap.free(block);
   block = heap.alloc(bytes + 64);
   table = (block + 63) & ~<usize>63;
