@@ -1,123 +1,141 @@
-# Ratchet
+# Ratchet HCE
 
-Ratchet is a collection of historical chess programs, each rebuilt as it stood at one dated version
-or event: a **release**. A release with surviving code is a port of it; one known only from papers
-and descriptions is a reconstruction. Each is tested against its original, and the match tools
-measure the distance between releases. Taken in order, the releases are the history of computer
-chess.
+**Ratchet HCE** is a UCI chess engine built for the browser, with a hand-written eval. It is one WebAssembly
+module, written in AssemblyScript. The aim is the strongest engine a web page can run, and the CCRL Blitz rating
+is the ruler.
 
-Iterative Deepening, an open edutainment incremental game, plays through the same history. Each
-engine there is a release here.
+It is the hand-written eval line of Ratchet. It was copied from `ratchet` at version 0.3.15, and it is developed
+as its own engine. `ratchet` is the line that gets a net.
 
-## How a release is built
+Ratchet HCE is developed with AI coding agents throughout. The user directs the work. The agents write the code,
+run the tests and keep the records. These rules decide where the engine's knowledge comes from:
 
-- **The inventory comes first.** Each release has a record in `inventory/`. It holds:
-  - the release's date and its receipt;
-  - where its source is, and under which license;
-  - every mechanism it has, in search, eval, move ordering, tables and time use, with its constants;
-  - what each mechanism depends on.
-- **A release owns everything above the board.** Its search, eval and time use are its own, tuned
-  as its authors tuned them.
-- **A release keeps its original's board when its play depends on it.** Move order breaks ties
-  between equal moves, and some programs read their own list orders and memory layout. Sargon
-  (1978) keeps its 10x12 board and its byte tables.
-- **The core is the shared board:** Ratchet's bitboards, move generation and hashing. It referees
-  every game for the host, checks each release's own move generator by perft, and is the board of
-  each release built on it.
-- **A release is tested for fidelity:** how closely it plays like its original. The original runs in
-  a runner container (`tools/ws.ts`), and the release must play its moves.
+* **Sources are read first:** before an agent writes a feature, it reads the feature's page in the vendored
+  Chess Programming Wiki. It also reads the code of two other engines.
+* **Every function cites its origin:** its comment names the form it follows and the form it rejected, by engine,
+  revision and symbol. `engines/ratchet/SOURCES.md` maps each revision to an exact commit.
+* **No code is ported:** the engine's code is its own, in its own structure.
+* **Some constants started elsewhere:** a search constant may start from a cited engine's value, scaled to
+  the engine's units. SPSA then tunes it on the engine's own games.
 
-`AGENTS.md` has the working rules and terms.
+`AGENTS.md` holds these rules and the others the agents work under.
 
-## Layout
+The language models that do the work were trained on this literature, and probably on public engine code too.
+These rules cannot undo that. They govern what an agent reads while it works, and what the code must cite.
 
-- `core/`: the board, in AssemblyScript: bitboards, magic sliders, legal move generation, Zobrist hashing and perft. It compiles to `build/core.wasm`. It also holds the WASI build's UCI front end (`uci.ts`, `wasi.ts`) and the calls a release makes to its host (`host.ts`).
-- `engines/`: one directory per release, each compiled with the core to `build/<release>.wasm`, with its fidelity reference; and `engines/ratchet/`, the own engine, Ratchet's own program on the core.
-- `inventory/`: one record per release.
-- `results/`: measured results that change as protocols change, such as ratings, anchor checks and timings; the tools write their rows.
-- `host/`: the TypeScript host: the WASM wrapper, FEN, and the UCI front end, which passes each `go`'s limits and a clock to the release. `host/wasi/` runs a WASI build, Ratchet's or another engine's: the seven WASI calls a build may rely on, fixed answers for the rest of preview 1, and two ways to deliver input to a running search: a ring in shared memory, or suspending the build where a page has no shared memory.
-- `bin/`: the UCI launcher.
-- `web/`: a browser page to play a release or the own engine, or to watch two play, on a real clock or a node budget, on a chessground board. Each engine searches in a Web Worker, and the core referees.
-- `test/`: the gates: perft, incremental state, each release's own move generator, the own engine's eval mirror and its window gate; and the 0x88 board the perft gate checks the core against.
-- `bench/`: the perft benchmark, the search benchmark over the releases' shared position set, and the own engine's eval benchmark.
-- `helper/`: the poll helper that another engine links to become a WASI build, in C, Rust and Go: its search runs on the UCI thread and reads its input through the helper.
-- `tools/`: fidelity checks, matches, ratings, the conversion suite, and readers of match PGNs and time logs.
-- `flake.nix` and `nix/`: the containers. The runner plays matches on the workers; the local runner plays them on the host and builds the anchor tree (`nix/anchors.sh`); the workspace is for work on originals. `tools/ws.ts` builds, loads and runs them. `nix/anchor-tree` and `nix/syzygy` pin the anchor tree and the Syzygy tables in the Nix store.
-- `vendor/fastchess/`: the match runner, as a submodule.
+**The name:** Ratchet started as the strength-building side project of Iterative Deepening, an open edutainment
+incremental game that walks through the history of chess engines. The programs of that history are in
+`ratchet-historical`. HCE is short for hand-crafted evaluation, the field's name for an eval written by hand.
 
-## Build and test
+**Status:** Ratchet HCE is in development, and no release is published yet. `results/ratings.md` has the rating
+of each rated version, and the tag `v<version>` marks its commit. The versions up to 0.3.15 are Ratchet's, from before the copy.
 
-Bun installs the dependencies and runs every script, test and tool. The TypeScript runs without a
-build step, so it also runs under Node's type stripping. Only the WASM builds and fastchess need a
-build.
+**License:** Ratchet HCE is free software under the GNU General Public License, version 3 or any later version. See
+`LICENSE`.
+
+## Download
+
+No release is published yet. `tools/package.ts` builds these files for one version:
+
+| File | For |
+|---|---|
+| `ratchetHCE-X.Y.Z.wasm` | Any WASI host. This is the WASI build: UCI on stdin and stdout, as UCI over WASI states. |
+| `ratchetHCE-X.Y.Z.js` | A web page. This Worker script loads the `.wasm` beside it. |
+| `ratchetHCE-X.Y.Z-linux-x86-64` | Linux, x86-64. A native build, statically linked. |
+| `ratchetHCE-X.Y.Z-linux-x86-64-v3` | Linux, x86-64-v3. |
+| `ratchetHCE-X.Y.Z-windows-x86-64.exe` | Windows, x86-64. A native build. |
+| `ratchetHCE-X.Y.Z-windows-x86-64-v3.exe` | Windows, x86-64-v3. |
+| `ratchetHCE-X.Y.Z-bun-<os>-<arch>` | A Bun executable: Bun with the WASI build and its host inside. |
+| `SHA256SUMS` | The sha256 of each file. |
+
+A native build is the WASI build translated to C by wasm2c, with no runtime. The x86-64-v3 files need AVX2 and
+BMI2 (Intel Haswell or AMD Zen 1 and later). Every file plays the same search: `bench` prints one node signature
+for all of them. The ratings in `results/ratings.md` are measured on the WASI build under Bun.
+
+`docs/uci-over-wasi.md` states what a WASI host must give the module.
+
+## Features
+
+* **Board:** bitboards with magic sliders, legal move generation and Zobrist hashing.
+* **Search:** iterative deepening with aspiration windows, a principal variation search, a quiescence search
+  and a transposition table.
+* **Pruning:** null-move pruning, reverse futility pruning, razoring, futility and late-move pruning, SEE
+  pruning and ProbCut.
+* **Reductions and extensions:** late-move reductions, internal iterative reductions and singular extensions.
+* **Move ordering:** a staged move picker. It reads a killer, butterfly history that knows attacked squares,
+  continuation history, pawn history and capture history.
+* **Correction history:** search results correct the static eval. The tables are keyed by pawn structure, by
+  each side's pieces, by minor and major pieces, and by the last two moves.
+* **Eval:** hand-written and tapered between middlegame and endgame. Its terms are material and piece-square
+  tables, pawn structure, passed pawns, mobility, piece terms, king safety, threats and endgame scaling. Texel's
+  method tunes its values.
+* **Draws:** repetition is seen one move before it happens, by van Kervinck's cuckoo method.
+* **Time use:** a soft and a hard limit. The soft limit moves with the best move's share of the nodes and with
+  a falling score.
+* **Chess960.**
+* **Not included:** more than one thread, endgame tablebases and pondering.
+
+## UCI options
+
+| Option | Default | |
+|---|---|---|
+| `Hash` | 16 | Transposition table size in MB (1-1024). |
+| `Threads` | 1 | Search threads. Only 1 is accepted. |
+| `UCI_Chess960` | false | Play Chess960 positions. |
+| `TimeRecord` | false | Developer option: print the engine's record of its time use after each search. |
+
+A tuning build also takes its tuned values as options. No packaged file is a tuning build.
+
+## Command line
+
+Every packaged file but the Worker script takes these, and so does `bun host/wasi/main.ts build/wasi/ratchet.wasm`:
+
+* `bench [depth]`: searches a fixed position set, then prints the node signature and the speed.
+* `--nodestime N`: the engine counts its clock in nodes, at N nodes per millisecond. A match on this clock does
+  not depend on the host's speed.
+
+The scripts in `tools/`, `bench/` and `test/` are development tools. Each one's header comment states its options.
+
+## Building
+
+You need [Bun](https://bun.sh), at the version `package.json` names.
 
 ```sh
-bun install                  # dev dependencies
-git submodule update --init  # fetch fastchess
-make -C vendor/fastchess     # build it
-tools/fetch-book.sh          # opening books for matches, into books/
-bun run build:wasm           # compile the core and every release into build/; tests and benches need it
-bun run typecheck
-bun run test                 # the perft, incremental-state, release-generator, eval-mirror, window and WASI-signature gates (`bun test` is Bun's own test runner)
-bun test/perft.ts --full     # every perft depth in the suite
-bun test/window.ts --depth 6 # the own engine's window gate deeper than `bun run test` runs it
-bun run bench:all            # perft throughput under Bun, Node and Deno
-bun run bench:search:all     # each engine's node signature and search speed under Bun, Node and Deno
-bun bench/search.ts --engine ratchet --against <ref>  # the build's SPEED over the same engine built from <ref>, for tools/pool.ts
-bun bench/eval.ts --against <ref>  # the eval alone in ns per call, read in seconds, for a speed edit to the own engine
-bun run web  # the play page: rebuilds any stale wasm, builds web/dist/, serves http://127.0.0.1:8080/
+bun install
+bun run build:wasm                             # build/wasi/ratchet.wasm, the WASI build, and the wasm the tools load
+bun host/wasi/main.ts build/wasi/ratchet.wasm  # the engine: UCI on stdin and stdout
 ```
 
-`bin/ratchet` is the UCI engine for a GUI or a match runner: `bin/ratchet [bun|node|deno] --release <name>`. It
-plays a release's WASI build when the release has one, so a match rates the file that ships. Any other release, a
-release at a `--level` and a tuning build play through `host/uci/`.
+`bin/ratchet [bun|node|deno] --release ratchet` starts the same engine for a GUI or a match runner. `bun run test`
+runs the gates. `bun tools/package.ts` builds the files of § Download; the native builds also need Nix, gcc and
+MinGW's gcc.
 
-A release with an `engines/<release>/wasi.ts` also builds to `build/wasi/<release>.wasm`, its WASI build: a WASI
-preview-1 module with the UCI front end inside, which speaks UCI on stdin and stdout (UCI over WASI). Its `bench`
-prints the release's node signature:
+## Credits
 
-```sh
-bun host/wasi/main.ts build/wasi/ratchet.wasm             # UCI on stdin and stdout, under Bun or Node
-bun host/wasi/main.ts build/wasi/ratchet.wasm bench       # the node signature over bench/positions.txt
-bun tools/package.ts --release ratchet                    # dist/: the .wasm, the browser Worker, native builds, Bun executables
-bun tools/wasi-check.ts build/wasi/ratchet.wasm           # a WASI build's handling of input during a search
-```
+Ratchet HCE is built, tested and tuned with these tools:
 
-`docs/uci-over-wasi.md` states what such a module must do and what its host must answer. `helper/README.md` is the
-how-to for adapting another engine. `docs/wasm-limits.md` lists what the WebAssembly target limits, for an
-engine written for it and for an adapted engine.
+* [AssemblyScript](https://www.assemblyscript.org): the language and its compiler.
+* [Bun](https://bun.sh): runs the build, the tools and the rated games. The TypeScript also runs under Node and
+  Deno.
+* `ratchet-bench`: the testing platform. Its queue plays the SPRT matches, the SPSA tunes and the rating runs.
+* [fastchess](https://github.com/Disservin/fastchess) by Disservin: plays the matches.
+* [WABT](https://github.com/WebAssembly/wabt)'s wasm2c and [SIMDe](https://github.com/simd-everywhere/simde):
+  the native builds.
+* The [Chess Programming Wiki](https://www.chessprogramming.org): the first source read for every feature.
+* [CCRL](https://computerchess.org.uk/ccrl/404/): the published Blitz ratings of the anchor engines, which set
+  the rating scale.
+* Texel's tuning method, by Peter Österlund. Its data is the quiet-labeled positions of the
+  [zurichess tuner](https://bitbucket.org/zurichess/tuner), by Alexandru Moșoi (BSD-3-Clause), and positions from
+  the engine's own games.
 
-## Fidelity
+### Engines we learned from
 
-- `tools/positions.ts`: a fixed position set, drawn from the opening books;
-- `tools/reference.ts`: runs an original over a position set inside a runner container, and records each depth's move and node count, and the search's time;
-- `tools/fidelity.ts`: checks a release against that reference, and against published games its original played. Over a timed reference it also compares the two speeds, for `results/speed.md`.
+The engine's code is its own, and it builds on forms that other engines published. Each is credited in the comment
+of the function that follows it. `engines/ratchet/SOURCES.md` pins every citation to a commit.
 
-Each release keeps its reference in `engines/<release>/fidelity/`.
+* **GPL-3.0:** Alexandria, Berserk, Ethereal, Koivisto, Laser, Stash, Stockfish, Weiss, Xiphos.
+* **AGPL-3.0:** Clockwork.
+* **GPL-2.0-or-later:** Fruit 2.1.
 
-## Matches and ratings
-
-The match tools play releases with fastchess, each side from a snapshot of its commit. A player is `[ref:]release[@level]` (`tools/player.sh`), such as `phalanx-xii` or `HEAD:sargon-1978@3`:
-
-- `tools/pool.ts`: an SPRT match, or a race of several candidates, over the hosts HOSTS names. Every run has a row in the run index, `<archive>/sprt/index.md`, which `tools/runs.ts` reads, and a run takes its openings from seeds no earlier run played;
-- `tools/calibrate.sh`: a rating on the CCRL Blitz scale, against anchor engines with published ratings;
-- `tools/mate-suite.sh`: the conversion suite, KQK and KRK starts to mate;
-- `tools/player-perft.ts`: an external player's perft counts against the core's, on the hosts it plays on;
-- `tools/depth.ts`: the mean depth of a match's PGNs.
-- `tools/similarity.ts`: how often engines choose the same move over one position set, for `results/similarity.md`.
-- `tools/host-speed.ts`: each host's speed at game load, for the pinned ratios that scale a worker's time control, in `results/host-speed.md`.
-- `tools/speed-read.ts`: a `SPEED` read on one host, through the queue, so the other hosts keep playing; two external players are read through their own benchmark;
-- `tools/admit.ts`: the admission chain of one own-engine change in one command: the `SPEED` read, the conversion suite and the SPRT, with one summary;
-- `tools/browser-bench.ts`: an engine's speed in real browsers by hash size, its cold start, and what each browser offers an engine, in `results/browser.md`. It runs under an exclusive allocation on this host, or as an exclusive unit on a worker in the `browser` image.
-- `tools/spsa.ts`: an SPSA tune of a map's constants, in one queue job, or with `--screen` a factorial screen of flags, which reads each flag's effect and, against a random opponent mix, each pair's; `tools/texel/main.ts write` puts a tune's values in the engine for an SPRT;
-- `tools/queue.ts`: the CPU manager's queue, which hands every host its units in priority order and drains a host for a priority job. The manager (`tools/queue/manager.ts`) runs in a container on this host, and an agent on each host (`tools/queue/agent.ts`) claims units and runs them. `tools/pool.ts` and `tools/calibrate.sh` submit their games there; Texel and benchmarks run on this host under an allocation (`queue.ts alloc`), which keeps the queue's units off it.
-
-Each tool's header comment documents its options. `nix/anchors.sh` builds every anchor, and `tools/anchors.ts` lists them with their CCRL ratings.
-
-## License
-
-Ratchet is free software under the GNU General Public License, version 3 or any
-later version. See `LICENSE`.
-
-The poll helper in `helper/` is under the MIT License, so an engine under any license can link it. Each of its
-files has the license's text, and so does `helper/LICENSE`.
+These are credited for forms and ideas, and for the starting values named above. If you see a problem with a
+credit or a license, please open an issue.

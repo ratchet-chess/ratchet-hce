@@ -1,6 +1,6 @@
 # Agent instructions
 
-`README.md` has the goal, the layout and the commands. This file has the terms and the working rules. Where
+`README.md` describes the engine for its users. This file has the terms, the layout and the working rules. Where
 another text disagrees with this file, one of them is stale; correct it. A user decision newer than this file
 holds until this file records it.
 
@@ -27,6 +27,30 @@ The rows for **release**, **`SPEED`**, **conversion suite**, **player** and **tr
 | **conversion suite** | `tools/mate-suite.sh`: KQK and KRK starts to mate | mate test |
 | **player** | one name that a tree's `PLAYER` lists, as a match plays it: by ref, `[<ref>:][<name>][@<level>]`, or by tree, `tree:<tree>[:<name>][@<level>]` | external player |
 | **tree** | one built commit in the code export, which the runners mount | snapshot |
+
+## Layout
+
+- `core/`: the board, in AssemblyScript: bitboards, magic sliders, legal move generation, Zobrist hashing and perft. It also holds the WASI build's UCI front end (`uci.ts`, `wasi.ts`) and the calls an engine makes to its host (`host.ts`).
+- `engines/ratchet/`: the own engine. Its `README.md` holds the invariants that span its files.
+- `host/`: the TypeScript host: the wasm wrapper, FEN, and the UCI front end for a tuning build (`host/uci/`). `host/wasi/` runs a WASI build under Bun or Node, in a browser Worker, and as a native build.
+- `bin/`: `ratchet`, the UCI launcher, and `engine`, the tree's launcher.
+- `test/`: the gates: perft, incremental state, the eval mirror, the window gate and the WASI build's node signature. `test/boards/` holds the boards the perft gate checks the core against.
+- `bench/`: the perft benchmark, the search benchmark, which prints the node signature, and the eval benchmark.
+- `tools/`: the build, the tree's build, the packages, the Texel tuner (`tools/texel/`), the citation check and the PGN readers. Each tool's header comment states its options.
+- `results/`: the tables the tools write.
+- `docs/`: UCI over WASI and the WebAssembly limits, until uci-over-wasi holds them.
+
+```sh
+bun install
+bun run build:wasm            # the core and the own engine into build/, and the WASI build into build/wasi/
+bun run typecheck
+bun run test                  # the gates (`bun test` is Bun's own test runner)
+bun test/perft.ts --full      # every perft depth in the suite
+bun test/window.ts --depth 6  # the window gate deeper than `bun run test` runs it
+bun run bench:search:all      # the node signature and the search speed under Bun, Node and Deno
+bun tools/citations.ts        # the citations that `engines/ratchet/SOURCES.md` does not resolve
+bun tools/package.ts          # dist/: the .wasm, the browser Worker, native builds and Bun executables
+```
 
 ## Own engine
 
