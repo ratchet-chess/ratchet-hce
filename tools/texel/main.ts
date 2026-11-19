@@ -360,7 +360,8 @@ if (step === "map" || step === "build" || step === "write") {
     writeFileSync(join(runs, `${id}.values.json`), `${JSON.stringify(values, null, 2)}\n`);
     console.log(`${join(runs, id)}.json; values for write: ${join(runs, id)}.values.json`);
     const commit = spawnSync("git", ["rev-parse", "--short", "HEAD"], { cwd: REPO, encoding: "utf8" }).stdout.trim();
-    const r = spawnSync("bun", [join(REPO, "tools", "results.ts"), "tuning", m.map.subject, commit, result.protocol], { input: JSON.stringify(result), encoding: "utf8" });
+    // the testing platform's results tool writes the row into the worktree it is started in
+    const r = spawnSync("bun", [join(bench(), "tools", "results.ts"), "tuning", m.map.subject, commit, result.protocol], { cwd: REPO, input: JSON.stringify(result), encoding: "utf8" });
     if (r.status !== 0) console.error(`results.ts tuning failed: ${r.stderr}`);
   }
   await adapter.close();
