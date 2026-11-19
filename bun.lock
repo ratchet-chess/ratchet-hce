@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "ratchet",
+      "name": "ratchet-hce",
       "dependencies": {
         "chessground": "^9.2.1",
       },
