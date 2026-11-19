@@ -23,7 +23,7 @@
  * nodes, the warm-up included when it is the whole set, so a build that is not
  * deterministic as driven fails instead of reporting a number.
  *
- * With --against, the base is built by tools/snapshot.sh into tmp/bench/<sha>/ and reused
+ * With --against, the base is the ref's tree, built once into tmp/bench/ (bench/common.ts), and reused
  * after that. Each round benches each build once, in its own fresh process on this runtime,
  * the order swapped every round, so a drift in the machine's speed falls on both alike.
  * One process never hosts both builds: under Bun the module instantiated second ran 2-4%

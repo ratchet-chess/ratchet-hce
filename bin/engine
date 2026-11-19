@@ -1,0 +1,32 @@
+#!/bin/sh
+# This repo's launcher in a tree. The testing platform, ratchet-bench, starts a player through it, and its
+# tools/player.sh states the arguments a tree's bin/engine takes:
+#
+#   bin/engine [bun|node] [--player ratchet] [--nodestime <n> | --bench | --perft <depth> <fen>]
+#
+# With no command it speaks UCI, behind bin/ratchet. --bench prints "nodes <count> nps <rate>" from
+# bench/search.ts. --perft prints the core's count (host/perft.ts). In a tuning build's tree, which has
+# tunables.json at its root (tools/tree.sh), it starts the tuning build. It works in a checkout too, after a build.
+d=$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)
+runtime=${1:-bun}
+[ $# -gt 0 ] && shift
+case "$runtime" in bun | node) ;; *) echo "runtime $runtime is not one of: bun node" >&2; exit 2 ;; esac
+if [ "${1:-}" = --player ]; then
+  [ "${2:-}" = ratchet ] || { echo "no player ${2:-} here; the one player is ratchet" >&2; exit 2; }
+  shift 2
+fi
+case "${1:-}" in
+  --bench)
+    cd "$d" && "$runtime" bench/search.ts --engine ratchet --repeat 1 |
+      awk '$2 ~ /^d[0-9]+$/ && $4 == "nodes" { print "nodes", $3, "nps", $5 * 1000; exit }'
+    exit
+    ;;
+  --perft)
+    shift
+    cd "$d" && exec "$runtime" host/perft.ts "$@"
+    ;;
+esac
+if [ -f "$d/tunables.json" ]; then
+  exec "$d/bin/ratchet" "$runtime" --release "$d/build/ratchet-spsa.wasm" --tunables "$d/tunables.json" "$@"
+fi
+exec "$d/bin/ratchet" "$runtime" --release ratchet "$@"

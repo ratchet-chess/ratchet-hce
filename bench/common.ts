@@ -1,6 +1,6 @@
 /** What the benchmarks that compare two builds share: the runtime's name, a median, and the base's build. */
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 export const root = join(import.meta.dirname, "..");
@@ -19,15 +19,19 @@ export function median(xs: number[]): number {
   return s.length % 2 ? s[h] : (s[h - 1] + s[h]) / 2;
 }
 
-/** the base build of `name` at `ref`, built once into tmp/bench/<sha>/ */
+/**
+ * the base build of `name` at `ref`: the ref's tree in tmp/bench/, built once. The testing platform exports the ref
+ * and starts this repo's tools/tree.sh, as it does for a match; BENCH in tools/local.env names its checkout.
+ */
 export function baseBuild(name: string, ref: string): { sha: string; wasm: string } {
   const rev = spawnSync("git", ["rev-parse", "--short", `${ref}^{commit}`], { cwd: root, encoding: "utf8" });
   if (rev.status !== 0) throw new Error(`not a commit: ${ref}`);
   const sha = rev.stdout.trim();
-  const dir = join(root, "tmp/bench", sha);
-  const built = spawnSync(join(root, "tools/snapshot.sh"), [dir, sha], { stdio: "inherit" });
+  const bench = /^BENCH=(.+)$/m.exec(readFileSync(join(root, "tools/local.env"), "utf8"))?.[1];
+  if (!bench) throw new Error("tools/local.env has no BENCH, the testing platform's checkout");
+  const built = spawnSync("bun", [join(bench, "tools/engine.ts"), "build", join(root, "tmp/bench"), sha], { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "inherit"] });
   if (built.status !== 0) throw new Error(`could not build ${sha}`);
-  const wasm = join(dir, "build", `${name}.wasm`);
+  const wasm = join(root, "tmp/bench", built.stdout.trim().split("\n").at(-1)!, "build", `${name}.wasm`);
   if (!existsSync(wasm)) throw new Error(`${sha} has no engine ${name}`);
   return { sha, wasm };
 }

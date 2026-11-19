@@ -1,7 +1,7 @@
 /**
  * Prints the core's leaf count for one position, as one line of digits. The own engine plays with the core's move
  * generator, so this is its perft. The testing platform's perft check asks it through the tree's launcher
- * (engine.json's perft entry).
+ * (bin/engine).
  *
  *   bun host/perft.ts <depth> "<fen>"     (or node)
  */
