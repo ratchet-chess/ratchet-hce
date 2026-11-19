@@ -1,7 +1,7 @@
 #!/bin/sh
 # UCI launcher. Usage: ratchet [node|bun|deno] --release <name> [--nodestime N] [--level N] [--tunables <path>]   (default bun)
 #
-# A release that has a WASI build, build/wasi/<name>.wasm, plays that build under host/wasi/main.ts: the file
+# A release that has a WASI build, build/wasi/<name>.wasm, plays that build under vendor/uci-over-wasi/main.ts: the file
 # that ships is the file a match rates. The build reads --nodestime from its own command line and ignores the
 # words it does not know, so it gets the arguments as they came.
 #
@@ -19,7 +19,7 @@ for a in "$@"; do
 done
 wasi="$dir/build/wasi/$release.wasm"
 if [ "$front" = wasi ] && [ -n "$release" ] && [ -f "$wasi" ]; then
-  set -- "$dir/host/wasi/main.ts" "$wasi" "$@"
+  set -- "$dir/vendor/uci-over-wasi/main.ts" "$wasi" "$@"
 else
   set -- "$dir/host/uci/main.ts" "$@"
 fi

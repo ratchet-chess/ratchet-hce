@@ -24,7 +24,7 @@ for (const file of readdirSync(join(root, "build/wasi")).filter((f) => f.endsWit
   const found = /d(\d+)\s+signature (\d+)/.exec(run(["bench/search.ts", "--engine", release, "--repeat", "1", "--warmup", "1"]));
   if (!found) throw new Error(`no signature for ${release} from bench/search.ts`);
   const [depth, signature] = [found[1], Number(found[2])];
-  const nodes = Number(/Nodes searched\s*:\s*(\d+)/.exec(run(["host/wasi/main.ts", join("build/wasi", file), "bench", depth]))?.[1]);
+  const nodes = Number(/Nodes searched\s*:\s*(\d+)/.exec(run(["vendor/uci-over-wasi/main.ts", join("build/wasi", file), "bench", depth]))?.[1]);
   const equal = nodes === signature;
   failed ||= !equal;
   console.log(`${equal ? "ok  " : "FAIL"} ${release}: WASI build ${nodes} nodes at depth ${depth}, bench/search.ts ${signature}`);

@@ -6,10 +6,10 @@
  *
  * Into <out>/<name>/ it writes:
  *   <name>.wasm                   the WASI build itself: UCI over WASI, for any WASI host
- *   <name>.js                     the browser Worker (host/wasi/browser.ts); it loads <name>.wasm beside it
+ *   <name>.js                     the browser Worker (vendor/uci-over-wasi/browser.ts); it loads <name>.wasm beside it
  *   <name>-<os>-<arch>[.exe]      native builds: the WASI build through wasm2c and a C compiler, with
  *                                 host/wasi/native.c, and no runtime
- *   <name>-bun-<os>-<arch>[.exe]  Bun executables: Bun with host/wasi/ and the build inside
+ *   <name>-bun-<os>-<arch>[.exe]  Bun executables: Bun with the host (vendor/uci-over-wasi/) and the build inside
  *   SHA256SUMS
  * where <name> is <release>-<version>, and the own engine's is ratchetHCE-<version>, so its files differ from
  * ratchet's. Run `bun run build:wasm` first.
@@ -61,7 +61,7 @@ const files: string[] = [];
 // the WASI build and the browser Worker
 copyFileSync(wasi, join(dir, `${name}.wasm`));
 files.push(`${name}.wasm`);
-run("bun", ["build", "host/wasi/browser.ts", "--outfile", join(dir, `${name}.js`), "--format", "iife", "--target", "browser"]);
+run("bun", ["build", "vendor/uci-over-wasi/browser.ts", "--outfile", join(dir, `${name}.js`), "--format", "iife", "--target", "browser"]);
 files.push(`${name}.js`);
 
 // native builds: one translation to C, compiled per target
@@ -84,7 +84,7 @@ if (nativeTargets.length) {
   }
 }
 
-// Bun executables: a generated entry embeds the build; Bun keeps host/wasi/thread.ts at host/wasi/thread.js
+// Bun executables: a generated entry embeds the build; Bun keeps vendor/uci-over-wasi/thread.ts at vendor/uci-over-wasi/thread.js
 // under the common root of its two entry points, which is the repo's
 const bunTargets = (opt("--bun") ?? `bun-${process.platform}-${process.arch}`).split(",").filter(Boolean);
 if (bunTargets.length) {
@@ -95,13 +95,13 @@ if (bunTargets.length) {
     entry,
     `import { readFileSync } from "node:fs";\n` +
       `import wasm from ${JSON.stringify(wasi)} with { type: "file" };\n` +
-      `import { runEngine } from ${JSON.stringify(join(root, "host/wasi/main.ts"))};\n\n` +
-      `runEngine(readFileSync(wasm), [${JSON.stringify(name)}, ...process.argv.slice(2)], new URL("./host/wasi/thread.js", import.meta.url));\n`,
+      `import { runEngine } from ${JSON.stringify(join(root, "vendor/uci-over-wasi/main.ts"))};\n\n` +
+      `runEngine(readFileSync(wasm), [${JSON.stringify(name)}, ...process.argv.slice(2)], new URL("./vendor/uci-over-wasi/thread.js", import.meta.url));\n`,
   );
   for (const target of bunTargets) {
     const os = target.replace(/^bun-/, "").replace("darwin", "macos").replace("x64", "x86-64");
     const file = `${name}-bun-${os}${target.includes("windows") ? ".exe" : ""}`;
-    run("bun", ["build", "--compile", `--target=${target}`, entry, join(root, "host/wasi/thread.ts"), "--outfile", join(dir, file)]);
+    run("bun", ["build", "--compile", `--target=${target}`, entry, join(root, "vendor/uci-over-wasi/thread.ts"), "--outfile", join(dir, file)]);
     files.push(file);
   }
 }
@@ -115,7 +115,7 @@ const wine = spawnSync("sh", ["-c", "command -v wine64"], { encoding: "utf8" }).
 const hostOs = process.platform === "win32" ? "windows" : process.platform === "darwin" ? "macos" : process.platform;
 for (const f of files) {
   let cmd: string[] | undefined;
-  if (f.endsWith(".wasm")) cmd = ["bun", "host/wasi/main.ts", join(dir, f)];
+  if (f.endsWith(".wasm")) cmd = ["bun", "vendor/uci-over-wasi/main.ts", join(dir, f)];
   else if (f.endsWith(".exe") && hostOs !== "windows") cmd = wine ? [wine, join(dir, f)] : undefined;
   else if (!f.endsWith(".js") && f.includes(`-${hostOs}-`)) cmd = [join(dir, f)];
   if (!cmd) {

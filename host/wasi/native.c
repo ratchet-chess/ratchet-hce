@@ -7,7 +7,7 @@
  *   cc -O3 -I<wabt include> -I. engine.c host/wasi/native.c <wabt>/wasm-rt-impl.c <wabt>/wasm-rt-mem-impl.c \
  *     <wabt>/wasm-rt-exceptions-impl.c -lpthread -lm
  *
- * tools/package.ts runs these steps. As in host/wasi/wasi.ts, a reader thread
+ * tools/package.ts runs these steps. As in vendor/uci-over-wasi/wasi.ts, a reader thread
  * moves stdin into a buffer, and the engine's poll_oneoff reads that buffer
  * without blocking, so a `stop` reaches a running search.
  *

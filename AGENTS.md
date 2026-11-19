@@ -14,14 +14,15 @@ where, ask the user.
 
 The rows for **release**, **`SPEED`**, **conversion suite**, **player** and **tree** quote the
 `AGENTS.md` of ratchet-historical and of ratchet-bench, which own those things.
+The rows for **WASI build** and **adapted engine** quote uci-over-wasi's.
 
 | term | meaning | not |
 |---|---|---|
 | **own engine** | Ratchet's own program, `engines/ratchet/`: Ratchet's code on the core, with no original | release, variant |
 | **core** | the shared board code in `core/`: board, move generation, hashing, perft | base, engine |
 | **node signature** | a build's total node count over a fixed position set | bench, node count |
-| **WASI build** | a WASI preview-1 command module that speaks UCI on stdin and stdout, as UCI over WASI states; a release's is `build/wasi/<release>.wasm` | |
-| **adapted engine** | another engine with the edits that make it a module of UCI over WASI; the how-to is `helper/README.md` in uci-over-wasi | port, WASI port |
+| **WASI build** | a WASI preview-1 command module that speaks UCI on stdin and stdout, as UCI over WASI states; the spec calls it a module | |
+| **adapted engine** | another engine with the edits that make it a module of UCI over WASI; the how-to is `helper/README.md` | port, WASI port |
 | **release** | one program as it stood at one dated version or event; the unit of the inventory and of `engines/` | exhibit, snapshot, edition, version |
 | **`SPEED`** | a candidate's search speed over a base's, which scales its node budget in a match | speed ratio |
 | **conversion suite** | `tools/mate-suite.sh`: KQK and KRK starts to mate | mate test |
@@ -32,13 +33,13 @@ The rows for **release**, **`SPEED`**, **conversion suite**, **player** and **tr
 
 - `core/`: the board, in AssemblyScript: bitboards, magic sliders, legal move generation, Zobrist hashing and perft. It also holds the WASI build's UCI front end (`uci.ts`, `wasi.ts`) and the calls an engine makes to its host (`host.ts`).
 - `engines/ratchet/`: the own engine. Its `README.md` holds the invariants that span its files.
-- `host/`: the TypeScript host: the wasm wrapper, FEN, and the UCI front end for a tuning build (`host/uci/`). `host/wasi/` runs a WASI build under Bun or Node, in a browser Worker, and as a native build.
+- `host/`: the TypeScript host: the wasm wrapper, FEN, and the UCI front end for a tuning build (`host/uci/`). `host/wasi/native.c` is the WASI build's native host.
+- `vendor/uci-over-wasi/`: a copy of uci-over-wasi's host, which runs a WASI build under Bun or Node and in a browser Worker. Its `README.md` names the commit. Fix the host in uci-over-wasi, never in the copy.
 - `bin/`: `ratchet`, the UCI launcher, and `engine`, the tree's launcher.
 - `test/`: the gates: perft, incremental state, the eval mirror, the window gate and the WASI build's node signature. `test/boards/` holds the boards the perft gate checks the core against.
 - `bench/`: the perft benchmark, the search benchmark, which prints the node signature, and the eval benchmark.
 - `tools/`: the build, the tree's build, the packages, the Texel tuner (`tools/texel/`), the citation check and the PGN readers. Each tool's header comment states its options.
 - `results/`: the tables the tools write.
-- `docs/`: UCI over WASI and the WebAssembly limits, until uci-over-wasi holds them.
 
 ```sh
 bun install

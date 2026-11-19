@@ -23,6 +23,8 @@ version=$(sed -nE 's/^const VERSION = \(([0-9]+) << 16\) \| \(([0-9]+) << 8\) \|
 [ -n "$version" ] || { echo "no VERSION in engines/ratchet/index.ts" >&2; exit 2; }
 mkdir -p "$out"
 cp -R bin build host bench "$out/"
+# the copy of uci-over-wasi's host, which the launcher runs a WASI build under; an older ref has its host in host/
+[ ! -d vendor/uci-over-wasi ] || { mkdir -p "$out/vendor" && cp -R vendor/uci-over-wasi "$out/vendor/"; }
 cp "$here/bin/engine" "$out/bin/engine"
 echo "bun node" > "$out/RUNTIMES"
 if [ -n "$map" ]; then

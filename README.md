@@ -52,7 +52,7 @@ A native build is the WASI build translated to C by wasm2c, with no runtime. The
 BMI2 (Intel Haswell or AMD Zen 1 and later). Every file plays the same search: `bench` prints one node signature
 for all of them. The ratings in `results/ratings.md` are measured on the WASI build under Bun.
 
-`docs/uci-over-wasi.md` states what a WASI host must give the module.
+The spec, in the `uci-over-wasi` repo, states what a WASI host must give the module.
 
 ## Features
 
@@ -88,7 +88,7 @@ A tuning build also takes its tuned values as options. No packaged file is a tun
 
 ## Command line
 
-Every packaged file but the Worker script takes these, and so does `bun host/wasi/main.ts build/wasi/ratchet.wasm`:
+Every packaged file but the Worker script takes these, and so does `bun vendor/uci-over-wasi/main.ts build/wasi/ratchet.wasm`:
 
 * `bench [depth]`: searches a fixed position set, then prints the node signature and the speed.
 * `--nodestime N`: the engine counts its clock in nodes, at N nodes per millisecond. A match on this clock does
@@ -103,7 +103,7 @@ You need [Bun](https://bun.sh), at the version `package.json` names.
 ```sh
 bun install
 bun run build:wasm                             # build/wasi/ratchet.wasm, the WASI build, and the wasm the tools load
-bun host/wasi/main.ts build/wasi/ratchet.wasm  # the engine: UCI on stdin and stdout
+bun vendor/uci-over-wasi/main.ts build/wasi/ratchet.wasm  # the engine: UCI on stdin and stdout
 ```
 
 `bin/ratchet [bun|node|deno] --release ratchet` starts the same engine for a GUI or a match runner. `bun run test`
