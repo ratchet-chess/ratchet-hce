@@ -51,8 +51,8 @@
  * `dataset` reads only sets in tools/texel/sets.json, the allow-list of sets with
  * open terms. Their downloads are in the workspace volume, so it runs there:
  *
- *   bun tools/ws.ts fetch <url> <sha256>          once per set, as sets.json pins it
- *   bun tools/ws.ts run -- bun tools/texel/main.ts dataset --set <name>
+ *   bun <BENCH>/tools/ws.ts fetch <url> <sha256>          once per set, as sets.json pins it
+ *   bun <BENCH>/tools/ws.ts run -- bun tools/texel/main.ts dataset --set <name>
  */
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -163,7 +163,7 @@ if (step === "map" || step === "build" || step === "write") {
     const name = opt("--set") ?? die(usage);
     set = sets.find((s) => s.name === name) ?? die(`${name} is not in tools/texel/sets.json, the allow-list`);
     const archive = join(DOWNLOADS, set.archive);
-    if (!existsSync(archive)) die(`${archive} is missing: bun tools/ws.ts fetch ${set.url} ${set.sha256}`);
+    if (!existsSync(archive)) die(`${archive} is missing: bun <BENCH>/tools/ws.ts fetch ${set.url} ${set.sha256}`);
     const seen = sha256(archive);
     if (seen !== set.sha256) die(`${archive} has sha256 ${seen}, not the pinned ${set.sha256}`);
     file = archive;
