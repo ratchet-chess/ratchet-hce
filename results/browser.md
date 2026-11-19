@@ -1,9 +1,10 @@
 # Browser
 
-An engine's search speed in real browsers, and what each browser offers an engine.
-`tools/browser-bench.ts` measures both, and `tools/results.ts browser` writes the rows. Bun and Node
-run the same passes beside the browsers. The tool stops if a browser's node signature differs from
-Bun's, so the speeds in one set of rows are of the same searches.
+An engine's search speed in real browsers, and what each browser offers an engine. The testing
+platform, ratchet-bench, measures both with its `tools/browser-bench.ts`, and its `tools/results.ts
+browser` writes the rows. Bun and Node run the same passes beside the browsers. The tool stops if a
+browser's node signature differs from Bun's, so the speeds in one set of rows are of the same
+searches.
 
 - **passes:** `fresh` is a fresh `go(depth)` per position, as in `results/runtimes.md`. `kept` plays
   the set as one game with its tables kept, so the transposition table fills as it does in play.

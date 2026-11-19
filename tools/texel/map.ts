@@ -57,8 +57,8 @@ export interface Block {
   ties?: "files" | number[][];
   /**
    * the value of every element that turns the block off; its defaults are on. A flag
-   * screen (tools/spsa.ts --screen) plays it unless the block is fixed, and the window
-   * gate's plain configuration (test/window.ts) sets it either way
+   * screen (ratchet-bench's tools/spsa.ts --screen) plays it unless the block is fixed,
+   * and the window gate's plain configuration (test/window.ts) sets it either way
    */
   off?: number;
 }

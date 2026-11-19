@@ -9,7 +9,7 @@ node_modules/
 /config.json
 # chessprogramming.org wiki dump, CC BY-SA: local reference only
 /vendor/cpw/
-# worker ssh targets for tools/sprt.sh, and local settings such as ARCHIVE
+# worker ssh targets, and local settings such as BENCH and ARCHIVE
 /tools/hosts
 /tools/local.env
 # local copies of the CCRL Blitz list, which is not redistributed here

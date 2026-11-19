@@ -1,7 +1,7 @@
 /**
  * Makes a map's tuning build for the testing platform (tools/tree.sh): build/ratchet-spsa.wasm, and
- * tunables.json at the root, which tools/spsa.ts reads in place of the map. Each entry has the element's name, id,
- * value and bounds, and for a flag its off value and its block, which a screen moves together.
+ * tunables.json at the root, which ratchet-bench's tools/spsa.ts reads in place of the map. Each entry has the
+ * element's name, id, value and bounds, and for a flag its off value and its block, which a screen moves together.
  *
  *   bun tools/tuning-build.ts <map.json>
  */

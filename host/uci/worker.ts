@@ -38,7 +38,7 @@ let timeRecord = false;
  * charges nodes / nodesTime and credits the increment, whatever the wall clock
  * says. Searches stay deterministic in nodes and independent of the machine.
  * If nodesTime exceeds the host's speed, the GUI's real clock runs down faster than
- * this one, so the GUI needs a margin, as tools/pool.ts gives it.
+ * this one, so the GUI needs a margin, as ratchet-bench's tools/pool.ts gives it.
  */
 const nodesTime: number = workerData.nodesTime;
 

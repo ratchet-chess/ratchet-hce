@@ -20,10 +20,10 @@
  *                                                           validation share, repeats merged as in dataset
  *   bun tools/texel/main.ts info <dataset.bin>              a dataset's header and label counts
  * eval, trace and tune take this host's cores, so each runs under a batch allocation
- * of the CPU manager's queue (tools/queue.ts alloc, decision batch-hold): it starts
- * once no wall-clock match plays here, and none starts beside it. An allocation waits
- * behind the jobs queued before it; QUEUE_PRIORITY above 0 puts it ahead, which
- * needs the user's word or the CPU owner's.
+ * of the CPU manager's queue (ratchet-bench's tools/queue.ts alloc, decision
+ * batch-hold): it starts once no wall-clock match plays here, and none starts beside
+ * it. An allocation waits behind the jobs queued before it; QUEUE_PRIORITY above 0
+ * puts it ahead, which needs the user's word or the CPU owner's.
  *
  * eval, trace and tune take --adapter wasm (default; --workers <n>) or uci
  * (--processes <n>, default 8; the map's uci section, uci.ts).

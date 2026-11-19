@@ -1,7 +1,8 @@
 # Move similarity
 
-How often two engines choose the same move over one position set, after one short search each.
-`tools/similarity.ts run` plays the positions and `tools/results.ts similarity` writes these tables.
+How often two engines choose the same move over one position set, after one short search each. The
+testing platform, ratchet-bench, plays the positions with its `tools/similarity.ts run`, and its
+`tools/results.ts similarity` writes these tables.
 
 A percentage holds only for its position set, its time and its pool of engines, so compare rows of one
 protocol, and never with a published threshold. Strength and search time shift agreement, so

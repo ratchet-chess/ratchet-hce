@@ -2,8 +2,8 @@
 
 Texel tuning runs (`tools/texel/main.ts tune`), one row per subject and protocol. A run fits K at the
 subject's defaults, then moves its tuned elements by the optimizer the protocol names, rounds them to
-the subject's storage, and scores the result through the subject itself. `tools/results.ts tuning`
-writes the row.
+the subject's storage, and scores the result through the subject itself. The testing platform,
+ratchet-bench, writes the row with its `tools/results.ts tuning`.
 
 - **train** and **valid** are the mean squared error of σ(K·score) against the game results, on the
   training positions and on the held-out validation positions (a hash split of the dataset).

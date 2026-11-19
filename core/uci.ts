@@ -714,8 +714,8 @@ function argIs(i: i32, s: string): bool {
 /**
  * Command-line argument `i` as a number written in digits, with a point and a fraction if it has one; -1 if it
  * is not one. The digits are read as one whole number and divided once by the fraction's power of ten, so the
- * value is the one JavaScript's Number reads from the same text: tools/pool.ts passes a node clock's rate in
- * hundredths, and both front ends must count one clock from it.
+ * value is the one JavaScript's Number reads from the same text: ratchet-bench's tools/pool.ts passes a node clock's
+ * rate in hundredths, and both front ends must count one clock from it.
  */
 function argNumber(i: i32): f64 {
   const p = arg(i);

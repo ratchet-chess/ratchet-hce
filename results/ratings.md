@@ -1,12 +1,12 @@
 # Ratings
 
-Ratings on the CCRL Blitz scale, fitted by `tools/fit-rating.ts` against anchors held at their
-published ratings. `tools/calibrate.sh` writes a gauntlet's row at the end of its run, through
-`tools/results.ts`. A row is keyed by player and protocol: a new run replaces the row with the same
-key, and a run under another protocol adds its own. The own engine's player names its version, so
-each rated version keeps its row.
+Ratings on the CCRL Blitz scale, fitted by ratchet-bench's `tools/fit-rating.ts` against anchors held
+at their published ratings. The testing platform's `tools/calibrate.sh` writes a gauntlet's row at the
+end of its run, through ratchet-bench's `tools/results.ts`. A row is keyed by player and protocol: a
+new run replaces the row with the same key, and a run under another protocol adds its own. The own
+engine's player names its version, so each rated version keeps its row.
 
-- **player** is `release[@level]`, as the match tools name it (`tools/player.sh`).
+- **player** is `release[@level]`, as the match tools name it (ratchet-bench's `tools/player.sh`).
 - **±** is the fit's 95% interval, from the spread of its residuals over color-swapped pairs. It covers
   sampling only, not the anchors' published errors or the scale's stretch.
 - **score** is the player's share of the points against the anchors. At 0% or 100% the fit has no

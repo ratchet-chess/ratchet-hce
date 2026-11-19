@@ -2,8 +2,8 @@
 
 Each engine's search speed under each runtime, over the same searches. `bench/search.ts` runs a
 fresh `go(depth)` from every position of `bench/positions.txt`, the set the releases' references
-use, and `tools/results.ts runtimes` writes its rows. Runtime rankings differ by workload and by
-engine, so every engine is measured under Bun, Node and Deno.
+use, and ratchet-bench's `tools/results.ts runtimes` writes its rows. Runtime rankings differ by
+workload and by engine, so every engine is measured under Bun, Node and Deno.
 
 - **node signature** is the engine's total node count over the set at that depth. It is equal
   under every runtime, or the writer refuses the run, so the speeds in one engine's rows are of

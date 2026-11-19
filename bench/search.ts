@@ -17,7 +17,8 @@
  *                          load that comes and goes on this host
  *   --wasm <file>          with --engine: bench this build of the engine instead of build/<engine>.wasm
  *   --against <ref>        compare --engine's build/<engine>.wasm, the candidate, with the same engine
- *                          built from a git ref, the base, and print the candidate's SPEED for tools/pool.ts
+ *                          built from a git ref, the base, and print the candidate's SPEED for ratchet-bench's
+ *                          tools/pool.ts
  *
  * The warm-up pass is untimed. Every pass over the whole set must return the same
  * nodes, the warm-up included when it is the whole set, so a build that is not
