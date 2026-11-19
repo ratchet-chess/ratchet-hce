@@ -4,14 +4,15 @@
  *
  *   bun tools/package.ts [--release ratchet] [--out dist] [--native linux-x86-64,...] [--bun bun-linux-x64,...]
  *
- * Into <out>/<release>-<version>/ it writes:
+ * Into <out>/<name>/ it writes:
  *   <name>.wasm                   the WASI build itself: UCI over WASI, for any WASI host
  *   <name>.js                     the browser Worker (host/wasi/browser.ts); it loads <name>.wasm beside it
  *   <name>-<os>-<arch>[.exe]      native builds: the WASI build through wasm2c and a C compiler, with
  *                                 host/wasi/native.c, and no runtime
  *   <name>-bun-<os>-<arch>[.exe]  Bun executables: Bun with host/wasi/ and the build inside
  *   SHA256SUMS
- * where <name> is <release>-<version>. Run `bun run build:wasm` first.
+ * where <name> is <release>-<version>, and the own engine's is ratchetHCE-<version>, so its files differ from
+ * ratchet's. Run `bun run build:wasm` first.
  *
  * --native lists the native targets (default every one in NATIVE). wasm2c is wabt's, from the flake's pinned
  * nixpkgs. --bun lists Bun's --target names (default the host's own). A target other than the host's makes Bun
@@ -49,7 +50,9 @@ const NATIVE: Record<string, { cc: string; flags: string[]; exe: string }> = {
 const run = (cmd: string, argv: string[], cwd = root) => execFileSync(cmd, argv, { cwd, stdio: ["ignore", "pipe", "inherit"], encoding: "utf8" });
 
 const version = (await Engine.load(release)).version;
-const name = version ? `${release}-${version}` : release;
+/** the name in the files: this repo packages the own engine, engines/ratchet/, as ratchetHCE */
+const product = release === "ratchet" ? "ratchetHCE" : release;
+const name = version ? `${product}-${version}` : product;
 const dir = join(out, name);
 rmSync(dir, { recursive: true, force: true });
 mkdirSync(dir, { recursive: true });
