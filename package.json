@@ -20,8 +20,5 @@
     "@types/node": "^26.6.5",
     "assemblyscript": "^0.28.20",
     "typescript": "^7.0.2"
-  },
-  "dependencies": {
-    "chessground": "^9.2.1"
   }
 }
