@@ -14,11 +14,8 @@ export const BETWEEN = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 
 /** the full edge-to-edge line through a and b when aligned, at a * 64 + b */
 export const LINE = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 4096));
 
-/** per-record magic data; rooks use records 0..63, bishops 64..127 */
-export const MAGIC_MASK = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 128));
-export const MAGIC_MUL = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 128));
-export const MAGIC_SHIFT = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 128));
-export const MAGIC_OFF = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 128));
+/** per-record magic data, 32 bytes each (mask, mul, shift, offset): rooks 0..63, bishops 64..127 */
+const MAGIC = memory.data(32 * 128, 64);
 /** sum of 2^(mask bits) over all rook and bishop squares */
 export const SLIDER_ATT = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 107648));
 
@@ -149,10 +146,11 @@ export function initTables(): void {
         }
       }
       if (!ok) continue;
-      MAGIC_MASK[k] = mask;
-      MAGIC_MUL[k] = magic;
-      MAGIC_SHIFT[k] = shift;
-      MAGIC_OFF[k] = offset;
+      const e = MAGIC + (<usize>k << 5);
+      store<u64>(e, mask);
+      store<u64>(e, magic, 8);
+      store<u64>(e, shift, 16);
+      store<i32>(e, offset, 24);
       for (let j = 0; j < n; j++) {
         if (used[j] == epoch) SLIDER_ATT[offset + j] = stored[j];
       }
@@ -162,11 +160,17 @@ export function initTables(): void {
   }
 }
 
+/** a record's magic number */
+export function magicAt(k: i32): u64 {
+  return load<u64>(MAGIC + (<usize>k << 5), 8);
+}
+
 @inline export function rookAttacks(s: i32, occ: u64): u64 {
-  return SLIDER_ATT[MAGIC_OFF[s] + <i32>(((occ & MAGIC_MASK[s]) * MAGIC_MUL[s]) >> MAGIC_SHIFT[s])];
+  const e = MAGIC + (<usize>s << 5);
+  return SLIDER_ATT[load<i32>(e, 24) + <i32>(((occ & load<u64>(e)) * load<u64>(e, 8)) >> load<u64>(e, 16))];
 }
 
 @inline export function bishopAttacks(s: i32, occ: u64): u64 {
-  const k = 64 + s;
-  return SLIDER_ATT[MAGIC_OFF[k] + <i32>(((occ & MAGIC_MASK[k]) * MAGIC_MUL[k]) >> MAGIC_SHIFT[k])];
+  const e = MAGIC + 2048 + (<usize>s << 5);
+  return SLIDER_ATT[load<i32>(e, 24) + <i32>(((occ & load<u64>(e)) * load<u64>(e, 8)) >> load<u64>(e, 16))];
 }

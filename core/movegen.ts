@@ -32,23 +32,23 @@ const GEN_QUIETS = 3;
 
 /** Writes legal moves into `out` from index `start`; returns the index past the last move. */
 export function generateMoves(out: StaticArray<i32>, start: i32, quiets: bool): i32 {
-  return quiets ? generate(out, start, GEN_ALL) : generate(out, start, GEN_NOISY);
+  if (side == 0) return quiets ? generate(out, start, GEN_ALL, 0) : generate(out, start, GEN_NOISY, 0);
+  return quiets ? generate(out, start, GEN_ALL, 1) : generate(out, start, GEN_NOISY, 1);
 }
 
 /** Writes the legal captures, en passant and every promotion of a capture included, from `start`; returns the end. */
 export function generateCaptures(out: StaticArray<i32>, start: i32): i32 {
-  return generate(out, start, GEN_CAPTURES);
+  return side == 0 ? generate(out, start, GEN_CAPTURES, 0) : generate(out, start, GEN_CAPTURES, 1);
 }
 
 /** Writes the legal moves that capture nothing, from `start`; returns the end. */
 export function generateQuiets(out: StaticArray<i32>, start: i32): i32 {
-  return generate(out, start, GEN_QUIETS);
+  return side == 0 ? generate(out, start, GEN_QUIETS, 0) : generate(out, start, GEN_QUIETS, 1);
 }
 
-@inline function generate(out: StaticArray<i32>, start: i32, mode: i32): i32 {
+@inline function generate(out: StaticArray<i32>, start: i32, mode: i32, us: i32): i32 {
   const quiets = mode == GEN_ALL || mode == GEN_QUIETS;
   const captures = mode != GEN_QUIETS;
-  const us = side;
   const them = us ^ 1;
   const us8 = us << 3;
   const th8 = them << 3;

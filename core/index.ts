@@ -8,7 +8,7 @@
 import { generateMoves } from "./movegen";
 import { MAX_MOVES, MAX_PLY } from "./constants";
 import { addPiece, attackedWith, bb, castling, clear, ep, halfmove, hash, inCheck, initPosition, make, playMove, ply, setCastleRooks, setState, side, unmake, board } from "./position";
-import { MAGIC_MUL, initTables } from "./tables";
+import { initTables, magicAt } from "./tables";
 import { Z_CASTLE, Z_EP, Z_PIECE, Z_SIDE, initZobrist } from "./zobrist";
 
 const moves = new StaticArray<i32>(MAX_PLY * MAX_MOVES);
@@ -114,5 +114,5 @@ export function checkedWalk(depth: i32): i32 {
 
 /** magic multiplier of record k, for tools/gen-magics.ts */
 export function magicNumber(k: i32): u64 {
-  return MAGIC_MUL[k];
+  return magicAt(k);
 }
