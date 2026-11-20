@@ -421,8 +421,9 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     }
   }
 
-  // internal iterative reduction, Berserk 03cebd6 Negamax
-  if ((pvNode || cutNode) && depth >= IIR_DEPTH && !tMove) depth--;
+  // internal iterative reduction, Berserk 03cebd6 Negamax; skipped in an excluded search as Clockwork 641d9f5
+  // Worker::search does, where Stockfish 15 search and Weiss 95b0951 AlphaBeta reduce excluded cut nodes too
+  if ((pvNode || cutNode) && depth >= IIR_DEPTH && !tMove && excl == 0) depth--;
 
   const cm = ssCont[p + SS - 1];
   const fm = ssCont[p + SS - 2];
