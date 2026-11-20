@@ -118,34 +118,28 @@ export function resumeAfterTT(ply: i32, ttMove: i32, killer: i32, cm: i32, fm: i
 /** first index of the maximum score in [from, to), where to - from >= 8, using wasm simd128 */
 function bestIndexSimd(from: i32, to: i32): i32 {
   const base = changetype<usize>(SCORES);
-  let i = from;
-  let vmax = v128.load(base + (<usize>i << 2));
-  i += 4;
-  const limit = to - 4;
-  while (i <= limit) {
-    vmax = i32x4.max_s(vmax, v128.load(base + (<usize>i << 2)));
-    i += 4;
+  const pStart = base + (<usize>from << 2);
+  const pEnd = base + (<usize>(to - 4) << 2);
+  let vmax0 = v128.load(pStart);
+  let vmax1 = v128.load(pEnd);
+  let p = pStart + 16;
+  while (p + 16 < pEnd) {
+    vmax0 = i32x4.max_s(vmax0, v128.load(p));
+    vmax1 = i32x4.max_s(vmax1, v128.load(p + 16));
+    p += 32;
   }
+  if (p < pEnd) vmax0 = i32x4.max_s(vmax0, v128.load(p));
+  const vmax = i32x4.max_s(vmax0, vmax1);
   const vmax2 = i32x4.max_s(vmax, v128.shuffle<i32>(vmax, vmax, 2, 3, 0, 1));
   const vmax4 = i32x4.max_s(vmax2, v128.shuffle<i32>(vmax2, vmax2, 1, 0, 3, 2));
-  let bs = i32x4.extract_lane(vmax4, 0);
-  let best = -1;
-  while (i < to) {
-    const s = unchecked(SCORES[i]);
-    if (s > bs) {
-      bs = s;
-      best = i;
-    }
-    i++;
+  let p2 = pStart;
+  while (p2 < pEnd) {
+    const mask = i32x4.bitmask(i32x4.eq(v128.load(p2), vmax4));
+    if (mask) return <i32>((p2 - base) >> 2) + <i32>ctz(mask);
+    p2 += 16;
   }
-  if (best >= 0) return best;
-  const vbs = i32x4.splat(bs);
-  let j = from;
-  while (true) {
-    const mask = i32x4.bitmask(i32x4.eq(v128.load(base + (<usize>j << 2)), vbs));
-    if (mask) return j + <i32>ctz(mask);
-    j += 4;
-  }
+  const mask = i32x4.bitmask(i32x4.eq(v128.load(pEnd), vmax4));
+  return to - 4 + <i32>ctz(mask);
 }
 
 /** moves the best-scored move of [from, to) to `from` */
@@ -252,29 +246,31 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
         }
         const from = end[ply];
         const e = generateQuiets(MOVES, from);
-        const cm = cmOf[ply];
-        const fm = fmOf[ply];
-        const f4 = f4Of[ply];
-        const f6 = f6Of[ply];
-        const threats = threatsAt(ply);
-        const ph = pawnHistRow();
-        const sb = side << 12;
-        for (let i = from; i < e; i++) {
-          const m = unchecked(MOVES[i]);
-          const promo = movePromo(m);
-          if (promo) {
-            unchecked((SCORES[i] = promo == QUEEN ? PROMO_SCORE : -PROMO_SCORE));
-            continue;
+        if (from < e) {
+          const cm = cmOf[ply];
+          const fm = fmOf[ply];
+          const f4 = f4Of[ply];
+          const f6 = f6Of[ply];
+          const threats = threatsAt(ply);
+          const ph = pawnHistRow();
+          const sb = side << 12;
+          for (let i = from; i < e; i++) {
+            const m = unchecked(MOVES[i]);
+            const promo = movePromo(m);
+            if (promo) {
+              unchecked((SCORES[i] = promo == QUEEN ? PROMO_SCORE : -PROMO_SCORE));
+              continue;
+            }
+            const pt = pieceTo(m);
+            const bits = (<i32>((threats >> <u64>moveFrom(m)) & 1) << 1) | <i32>((threats >> <u64>moveTo(m)) & 1);
+            let s = <i32>unchecked(butterfly[(bits << 13) | sb | (m & 4095)]);
+            if (PAWN_HISTORY != 0) s += <i32>unchecked(pawnHist[ph | pt]);
+            if (cm >= 0) s += <i32>unchecked(contHist[cm + pt]);
+            if (fm >= 0) s += <i32>unchecked(contHist[fm + pt]);
+            if (f4 >= 0) s += <i32>unchecked(contHist[f4 + pt]);
+            if (f6 >= 0) s += <i32>unchecked(contHist[f6 + pt]);
+            unchecked((SCORES[i] = s));
           }
-          const pt = pieceTo(m);
-          const bits = (<i32>((threats >> <u64>moveFrom(m)) & 1) << 1) | <i32>((threats >> <u64>moveTo(m)) & 1);
-          let s = <i32>unchecked(butterfly[(bits << 13) | sb | (m & 4095)]);
-          if (PAWN_HISTORY != 0) s += <i32>unchecked(pawnHist[ph | pt]);
-          if (cm >= 0) s += <i32>unchecked(contHist[cm + pt]);
-          if (fm >= 0) s += <i32>unchecked(contHist[fm + pt]);
-          if (f4 >= 0) s += <i32>unchecked(contHist[f4 + pt]);
-          if (f6 >= 0) s += <i32>unchecked(contHist[f6 + pt]);
-          unchecked((SCORES[i] = s));
         }
         cur[ply] = from;
         end[ply] = e;
@@ -287,8 +283,25 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
         if (!skipQuiets) {
           const k = killerOf[ply];
           while (c < e) {
-            selectBest(c, e);
-            const m = unchecked(MOVES[c]);
+            let best: i32;
+            if (e - c >= 8) {
+              best = bestIndexSimd(c, e);
+            } else {
+              best = c;
+              let bs = unchecked(SCORES[c]);
+              for (let i = c + 1; i < e; i++) {
+                const s = unchecked(SCORES[i]);
+                if (s > bs) {
+                  bs = s;
+                  best = i;
+                }
+              }
+            }
+            const m = unchecked(MOVES[best]);
+            if (best != c) {
+              unchecked((MOVES[best] = MOVES[c]));
+              unchecked((SCORES[best] = SCORES[c]));
+            }
             c++;
             if (m == tt || m == k || (PROMO_NOISY != 0 && movePromo(m) == QUEEN)) continue;
             cur[ply] = c;
