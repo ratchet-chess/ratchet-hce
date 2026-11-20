@@ -16,3 +16,5 @@ for dir in engines/*/; do
     bunx --bun asc "${dir}wasi.ts" -o "build/wasi/$name.wasm" $flags $wasi
   fi
 done
+# a copy of the own engine that keeps the wasm name section, for tools/profile.ts
+bunx --bun asc engines/ratchet/index.ts -o build/ratchet.names.wasm $flags --debug
