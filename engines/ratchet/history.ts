@@ -114,9 +114,14 @@ function makeThreats(p: i32): u64 {
   return (bits << 13) | (side << 12) | (m & 4095);
 }
 
+/** the node's pawn-history row offset */
+@inline export function pawnHistRow(): i32 {
+  return (<i32>pawnKey & (PAWN_STRUCTURES - 1)) << 10;
+}
+
 /** a quiet's pawn-history entry: `pt` is its piece and square, as pieceTo gives them */
 @inline export function pawnHistIndex(pt: i32): i32 {
-  return ((<i32>pawnKey & (PAWN_STRUCTURES - 1)) << 10) | pt;
+  return pawnHistRow() | pt;
 }
 
 /** moves a quiet's pawn-history entry by `bonus` */

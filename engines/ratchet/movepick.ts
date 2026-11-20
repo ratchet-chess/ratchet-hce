@@ -12,7 +12,7 @@
 import { FLAG_EP, MAX_MOVES, MAX_PLY, PAWN, QUEEN, moveFrom, movePromo, moveTo } from "../../core/constants";
 import { generateCaptures, generateQuiets, isLegal } from "../../core/movegen";
 import { bb, board, side } from "../../core/position";
-import { butterfly, butterflyIndex, captureHist, contHist, pawnHist, pawnHistIndex, threatsAt } from "./history";
+import { butterfly, butterflyIndex, captureHist, contHist, pawnHist, pawnHistIndex, pawnHistRow, threatsAt } from "./history";
 import { GOOD_CAPTURE_DIV, MVV, PAWN_HISTORY, PROMO_NOISY } from "./params";
 import { seeGe } from "./see";
 
@@ -68,7 +68,7 @@ export let pickedStage = 0;
 }
 
 /** a capture's order: the victim's value plus capture history; a queen promotion adds a queen */
-export function captureScore(m: i32): i32 {
+@inline export function captureScore(m: i32): i32 {
   let s = MVV[victimOf(m)] + <i32>captureHist[captureIndex(m)];
   const promo = movePromo(m);
   if (promo == QUEEN) s += MVV[QUEEN];
@@ -82,7 +82,7 @@ export function captureScore(m: i32): i32 {
  * history (Stockfish b0658f09 MovePicker::score<QUIETS>, Weiss 20c95ce GetQuietHistory); `cm`, `fm`, `f4` and `f6` are -1 when there is no such move, and `threats` is
  * the node's attacked squares
  */
-export function quietScore(m: i32, cm: i32, fm: i32, f4: i32, f6: i32, threats: u64): i32 {
+@inline export function quietScore(m: i32, cm: i32, fm: i32, f4: i32, f6: i32, threats: u64): i32 {
   const promo = movePromo(m);
   if (promo) return promo == QUEEN ? PROMO_SCORE : -PROMO_SCORE;
   const pt = pieceTo(m);
@@ -148,13 +148,20 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
       }
       case STAGE_GEN_NOISY: {
         let e = generateCaptures(MOVES, base);
-        // the core lists a queen promotion without a capture among the quiets; a pawn that can promote is rare, so the
-        // quiets are listed here only then, and those promotions are kept (Stockfish 10 make_promotions, Stash 37 extmove_generate_pawn_noisy)
-        if (PROMO_NOISY != 0 && (unchecked(bb[(side << 3) | PAWN]) & (side == 0 ? RANK_7 : RANK_2)) != 0) {
-          const q = generateQuiets(MOVES, e);
-          for (let i = e; i < q; i++) {
-            const m = unchecked(MOVES[i]);
-            if (movePromo(m) == QUEEN) unchecked((MOVES[e++] = m));
+        // the core lists a queen promotion without a capture among the quiets; check unblocked 7th-rank pawns directly
+        // in square order so noisy generation avoids a full quiet pass (Stockfish 10 make_promotions, Stash 37 extmove_generate_pawn_noisy)
+        if (PROMO_NOISY != 0) {
+          let pawns = unchecked(bb[(side << 3) | PAWN]) & (side == 0 ? RANK_7 : RANK_2);
+          if (pawns) {
+            const occ = unchecked(bb[0] | bb[8]);
+            pawns &= side == 0 ? ~(occ >> 8) : ~(occ << 8);
+            const fwd = side == 0 ? 8 : -8;
+            while (pawns) {
+              const from = <i32>ctz(pawns);
+              pawns &= pawns - 1;
+              const m = from | ((from + fwd) << 6) | (QUEEN << 12);
+              if (isLegal(m)) unchecked((MOVES[e++] = m));
+            }
           }
         }
         for (let i = base; i < e; i++) unchecked((SCORES[i] = captureScore(MOVES[i])));
@@ -210,7 +217,25 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
         const f4 = f4Of[ply];
         const f6 = f6Of[ply];
         const threats = threatsAt(ply);
-        for (let i = from; i < e; i++) unchecked((SCORES[i] = quietScore(MOVES[i], cm, fm, f4, f6, threats)));
+        const ph = pawnHistRow();
+        const sb = side << 12;
+        for (let i = from; i < e; i++) {
+          const m = unchecked(MOVES[i]);
+          const promo = movePromo(m);
+          if (promo) {
+            unchecked((SCORES[i] = promo == QUEEN ? PROMO_SCORE : -PROMO_SCORE));
+            continue;
+          }
+          const pt = pieceTo(m);
+          const bits = (<i32>((threats >> <u64>moveFrom(m)) & 1) << 1) | <i32>((threats >> <u64>moveTo(m)) & 1);
+          let s = <i32>unchecked(butterfly[(bits << 13) | sb | (m & 4095)]);
+          if (PAWN_HISTORY != 0) s += <i32>unchecked(pawnHist[ph | pt]);
+          if (cm >= 0) s += <i32>unchecked(contHist[cm + pt]);
+          if (fm >= 0) s += <i32>unchecked(contHist[fm + pt]);
+          if (f4 >= 0) s += <i32>unchecked(contHist[f4 + pt]);
+          if (f6 >= 0) s += <i32>unchecked(contHist[f6 + pt]);
+          unchecked((SCORES[i] = s));
+        }
         cur[ply] = from;
         end[ply] = e;
         stage[ply] = STAGE_QUIET;
