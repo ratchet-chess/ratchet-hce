@@ -173,7 +173,7 @@ export function buildTuning(m: LoadedMap): string {
   const refresh = m.map.refresh ? `  ${m.map.refresh}();\n` : "";
   files.set("index.ts", `${index}\n${imports.join("\n")}\n\n/** sets tuned element \`id\` of ${relative(REPO, m.path)} to \`value\` */\nexport function tuneSet(id: i32, value: f64): void {\n${calls.join("\n")}\n${refresh}}\n`);
   emit(m, files, src);
-  const flags = ["-O3", "--converge", "--noAssert", "--uncheckedBehavior", "always", "--runtime", "stub"];
+  const flags = ["-O3", "--converge", "--noAssert", "--uncheckedBehavior", "always", "--runtime", "stub", "--enable", "simd"];
   const r = spawnSync("bunx", ["--bun", "asc", join(src, "index.ts"), "-o", wasm, ...flags], { cwd: REPO, encoding: "utf8" });
   if (r.status !== 0) throw new Error(`asc failed for ${dirname(wasm)}:\n${r.stdout}${r.stderr}`);
   writeTunables();

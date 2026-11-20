@@ -115,15 +115,55 @@ export function resumeAfterTT(ply: i32, ttMove: i32, killer: i32, cm: i32, fm: i
   stage[ply] = STAGE_GEN_NOISY;
 }
 
-/** moves the best-scored move of [from, to) to `from` */
-@inline export function selectBest(from: i32, to: i32): void {
-  let best = from;
-  let bs = unchecked(SCORES[from]);
-  for (let i = from + 1; i < to; i++) {
+/** first index of the maximum score in [from, to), where to - from >= 8, using wasm simd128 */
+function bestIndexSimd(from: i32, to: i32): i32 {
+  const base = changetype<usize>(SCORES);
+  let i = from;
+  let vmax = v128.load(base + (<usize>i << 2));
+  i += 4;
+  const limit = to - 4;
+  while (i <= limit) {
+    vmax = i32x4.max_s(vmax, v128.load(base + (<usize>i << 2)));
+    i += 4;
+  }
+  const vmax2 = i32x4.max_s(vmax, v128.shuffle<i32>(vmax, vmax, 2, 3, 0, 1));
+  const vmax4 = i32x4.max_s(vmax2, v128.shuffle<i32>(vmax2, vmax2, 1, 0, 3, 2));
+  let bs = i32x4.extract_lane(vmax4, 0);
+  let best = -1;
+  while (i < to) {
     const s = unchecked(SCORES[i]);
     if (s > bs) {
       bs = s;
       best = i;
+    }
+    i++;
+  }
+  if (best >= 0) return best;
+  const vbs = i32x4.splat(bs);
+  let j = from;
+  while (true) {
+    const mask = i32x4.bitmask(i32x4.eq(v128.load(base + (<usize>j << 2)), vbs));
+    if (mask) return j + <i32>ctz(mask);
+    j += 4;
+  }
+}
+
+/** moves the best-scored move of [from, to) to `from` */
+@inline export function selectBest(from: i32, to: i32): void {
+  let best: i32;
+  let bs: i32;
+  if (to - from >= 8) {
+    best = bestIndexSimd(from, to);
+    bs = unchecked(SCORES[best]);
+  } else {
+    best = from;
+    bs = unchecked(SCORES[from]);
+    for (let i = from + 1; i < to; i++) {
+      const s = unchecked(SCORES[i]);
+      if (s > bs) {
+        bs = s;
+        best = i;
+      }
     }
   }
   if (best != from) {

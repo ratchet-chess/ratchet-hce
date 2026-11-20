@@ -4,7 +4,7 @@
 # (core/uci.ts). WASI=1 switches core/host.ts to the module's own answers, and abortWasi replaces env.abort.
 set -eu
 cd "$(dirname "$(readlink -f "$0")")/.."
-flags="-O3 --converge --noAssert --uncheckedBehavior always --runtime stub"
+flags="-O3 --converge --noAssert --uncheckedBehavior always --runtime stub --enable simd"
 wasi="--use WASI=1 --use abort=core/wasi/abortWasi --exportStart _start"
 bun tools/bench-fens.ts
 bunx --bun asc core/index.ts -o build/core.wasm $flags
