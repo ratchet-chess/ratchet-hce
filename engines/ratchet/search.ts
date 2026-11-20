@@ -243,7 +243,7 @@ function updateHistories(best: i32, depth: i32, bonusDepth: i32, p: i32, quiets:
         if (q != best) rewardQuiet(q, malus, p);
       }
     }
-  } else {
+  } else if (!movePromo(best)) {
     gravity(captureHist, captureIndex(best), bonus);
   }
   for (let i = 0; i < captures; i++) {
@@ -347,7 +347,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   }
   ssStatic[p + SS] = staticEval;
   ssRaw[p + SS] = raw;
-  ssDouble[p + SS] = ssDouble[p + SS - 1];
+  const parentDouble = ssDouble[p + SS - 1];
+  ssDouble[p + SS] = parentDouble;
   killers[p + 1] = 0;
 
   if (!pvNode && !check) {
@@ -609,6 +610,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       if (pvNode && v > alpha && v < beta) v = -search(-beta, -alpha, newDepth, false);
     }
     undoMove(m);
+    if (ext >= 2) ssDouble[p + SS] = parentDouble;
     if (stopped) return 0;
 
     if (root) {
@@ -658,9 +660,13 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     rewardPrior(p, bonusAt(depth));
   }
   const bound = best >= beta ? BOUND_LOWER : bestMove ? BOUND_EXACT : BOUND_UPPER;
-  // correction history, Stash 302136d search: not in check, no noisy best move, and the bound says the eval was wrong in that direction
+  // correction history, Stash 302136d search: not in check, not an excluded search (Clockwork 641d9f5 Worker::search;
+  // Stash f91e750 search updates there too), non-mate score (Stockfish 17 search; Stash 302136d has no mate guard),
+  // no noisy best move, and the bound says the eval was wrong in that direction
   if (
     !check &&
+    excl == 0 &&
+    abs(best) < MATE_IN_MAX &&
     !(bestMove && isNoisy(bestMove)) &&
     !(bound == BOUND_LOWER && best <= staticEval) &&
     !(bound == BOUND_UPPER && best >= staticEval)
