@@ -126,8 +126,10 @@ export function evalWith(psq: i32, cached: bool): i32 {
 
   let phase = wMinors + bMinors + 2 * <i32>popcnt(rooks) + 4 * <i32>popcnt(queens);
   if (phase > PHASE_MAX) phase = PHASE_MAX;
-  const kp = kingPawn(cached);
-  const s = psq + kp + pieceTerms() + (side == 0 ? S(TEMPO_MG, TEMPO_EG) : -S(TEMPO_MG, TEMPO_EG));
+  const wKing = <i32>ctz(bb[KING]);
+  const bKing = <i32>ctz(bb[8 | KING]);
+  const kp = kingPawn(cached, wKing, bKing);
+  const s = psq + kp + pieceTerms(wKing, bKing, pawns) + (side == 0 ? S(TEMPO_MG, TEMPO_EG) : -S(TEMPO_MG, TEMPO_EG));
   let v = mgOf(s) + kingSafetyMg;
   // at the full phase the endgame half weighs nothing
   if (phase < PHASE_MAX) {
@@ -138,8 +140,6 @@ export function evalWith(psq: i32, cached: bool): i32 {
   }
 
   // KXK: one side has its king alone, the other at least one piece
-  const wKing = <i32>ctz(bb[KING]);
-  const bKing = <i32>ctz(bb[8 | KING]);
   const wAlone = bb[0] == bb[KING];
   const bAlone = bb[8] == bb[8 | KING];
   if (wAlone != bAlone) {

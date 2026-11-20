@@ -12,7 +12,7 @@
 import { BISHOP, FILE_A, KING, KNIGHT, PAWN, QUEEN, ROOK } from "../../core/constants";
 import { bb, castling } from "../../core/position";
 import { KING_ATT, KNIGHT_ATT, bishopAttacks, bit, rookAttacks } from "../../core/tables";
-import { DARK, FILE_H, RANK_1, distance, pawnAttacks, pawnAttacks2, relRank } from "./geometry";
+import { DARK, FILE_H, RANK_1, distance, pawnAttacks, relRank } from "./geometry";
 import {
   BEHIND_BISHOP_EG, BEHIND_BISHOP_MG, BEHIND_KNIGHT_EG, BEHIND_KNIGHT_MG, BISHOP_LONG_EG, BISHOP_LONG_MG, BISHOP_PAIR_EG, BISHOP_PAIR_MG,
   BISHOP_PAWNS_EG, BISHOP_PAWNS_MG, BISHOP_RAMMED_EG, BISHOP_RAMMED_MG, FAR_KNIGHT_EG, FAR_KNIGHT_MG, FLANK_ATTACK_EG, FLANK_ATTACK_MG,
@@ -83,8 +83,8 @@ const attacked = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 2));
 const attacked2 = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 2));
 /** by color << 3 | piece type: squares that type attacks */
 const attackedBy = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 16));
-/** by color: the squares its pawns attack twice */
-const pawnDouble = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 2));
+/** by color: the king's area less squares its own pawns attack twice */
+const kingZone = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 2));
 /** by color: the squares its pieces' mobility counts */
 const mobility = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 2));
 /** by color: its own pawns rammed against an enemy pawn */
@@ -105,36 +105,13 @@ export let kingSafetyEg = 0;
   return us == 0 ? b << 8 : b >> 8;
 }
 
-/** the pawn and king entries of a color's maps, and its mobility area, Stash 37 evaldata_init_next: no enemy pawn attacks, own king, or own pawn that is blocked or on its low ranks */
-@inline function setup(us: i32, occ: u64): void {
-  const them = us ^ 1;
-  const ours = bb[(us << 3) | PAWN];
-  const theirs = bb[(them << 3) | PAWN];
-  const pawnAtt = pawnAttacks(ours, us);
-  const kingSq = <i32>ctz(bb[(us << 3) | KING]);
-  const kingAtt = KING_ATT[kingSq];
-  attackedBy[(us << 3) | PAWN] = pawnAtt;
-  attackedBy[(us << 3) | KING] = kingAtt;
-  attacked[us] = pawnAtt | kingAtt;
-  attacked2[us] = pawnAtt & kingAtt;
-  pawnDouble[us] = pawnAttacks2(ours, us);
-  const low = us == 0 ? (RANK_1 << 8) | (RANK_1 << 16) : (RANK_1 << 40) | (RANK_1 << 48);
-  const stuck = ours & (up(occ, them) | low);
-  mobility[us] = ~(pawnAttacks(theirs, them) | bit(kingSq) | stuck);
-  rammed[us] = ours & up(theirs, them);
-  behindPawn[us] = up(bb[PAWN] | bb[8 | PAWN], them);
-  kingArea[us] = KING_AREA[(us << 6) + kingSq];
-  zoneAttackers[us] = 0;
-  zoneWeight[us] = 0;
-}
-
 /** records a piece's attacks in the maps; attacks on the enemy king's area count past squares its pawns hold twice, Ethereal 12.75 evaluateKnights */
 @inline function record(us: i32, type: i32, att: u64, weight: i32): void {
   const them = us ^ 1;
   unchecked((attacked2[us] |= att & attacked[us]));
   unchecked((attacked[us] |= att));
   unchecked((attackedBy[(us << 3) | type] |= att));
-  const zone = att & unchecked(kingArea[them]) & ~unchecked(pawnDouble[them]);
+  const zone = att & unchecked(kingZone[them]);
   if (zone) {
     unchecked((zoneAttacks[them] += <i32>popcnt(zone)));
     unchecked((zoneAttackers[them] += 1));
@@ -153,10 +130,7 @@ export let kingSafetyEg = 0;
 }
 
 /** knights: Ethereal 12.75 evaluateKnights, less its pawn-king and closedness parts; the mobility table is Stash 37 KnightMobility */
-@inline function knights(us: i32): i32 {
-  const them = us ^ 1;
-  const ownKing = <i32>ctz(bb[(us << 3) | KING]);
-  const theirKing = <i32>ctz(bb[(them << 3) | KING]);
+@inline function knights(us: i32, ownKing: i32, theirKing: i32): i32 {
   const weight = S(SAFETY_KNIGHT_MG, SAFETY_KNIGHT_EG);
   unchecked((attackedBy[(us << 3) | KNIGHT] = 0));
   let v = 0;
@@ -179,10 +153,9 @@ export let kingSafetyEg = 0;
 }
 
 /** bishops: Ethereal 12.75 evaluateBishops, seeing through own bishops and queens; the same-color pawn terms are Laser 1.7 evaluate's BISHOP_PAWN_COLOR_PENALTY, the mobility table Stash 37 BishopMobility */
-@inline function bishops(us: i32, occ: u64): i32 {
+@inline function bishops(us: i32, occ: u64, pawns: u64): i32 {
   const o = us << 3;
   const seen = occ ^ (bb[o | BISHOP] | bb[o | QUEEN]);
-  const pawns = bb[PAWN] | bb[8 | PAWN];
   const weight = S(SAFETY_BISHOP_MG, SAFETY_BISHOP_EG);
   unchecked((attackedBy[o | BISHOP] = 0));
   let v = 0;
@@ -211,11 +184,11 @@ export let kingSafetyEg = 0;
 }
 
 /** rooks, seeing through own rooks and queens (Ethereal 12.75 evaluateRooks): file terms Ethereal 12.75 RookFile; the queen's file, trapped and mobility table Stash 37 RookXrayQueen, RookTrapped, RookBuried and RookMobility */
-@inline function rooks(us: i32, occ: u64): i32 {
+@inline function rooks(us: i32, occ: u64, kingSq: i32): i32 {
   const o = us << 3;
   const t = (us ^ 1) << 3;
   const seen = occ ^ (bb[o | ROOK] | bb[o | QUEEN]);
-  const kingFile = <i32>ctz(bb[o | KING]) & 7;
+  const kingFile = kingSq & 7;
   const weight = S(SAFETY_ROOK_MG, SAFETY_ROOK_EG);
   unchecked((attackedBy[o | ROOK] = 0));
   let v = 0;
@@ -270,12 +243,11 @@ export let kingSafetyEg = 0;
  * penalty that needs no attacker on the area, packed, the color's own view
  * (Stockfish 11 FlankAttacks).
  */
-@inline function kingSafety(us: i32, occ: u64): i32 {
+@inline function kingSafety(us: i32, occ: u64, kingSq: i32): i32 {
   const them = us ^ 1;
   const o = us << 3;
   const t = them << 3;
   const enemyQueens = bb[t | QUEEN];
-  const kingSq = <i32>ctz(bb[o | KING]);
   const ours1 = unchecked(attacked[us]);
   const ours2 = unchecked(attacked2[us]);
   const theirs1 = unchecked(attacked[them]);
@@ -287,12 +259,15 @@ export let kingSafetyEg = 0;
   if (unchecked(zoneAttackers[us]) <= 1 - <i32>popcnt(enemyQueens)) return flankValue;
   const weak = theirs1 & ~ours2 & (~ours1 | unchecked(attackedBy[o | QUEEN]) | unchecked(attackedBy[o | KING]));
   const safe = ~bb[t] & (~ours1 | (weak & theirs2));
-  const bishopRays = bishopAttacks(kingSq, occ);
-  const rookRays = rookAttacks(kingSq, occ);
+  const theirB = unchecked(attackedBy[t | BISHOP]);
+  const theirR = unchecked(attackedBy[t | ROOK]);
+  const theirQ = unchecked(attackedBy[t | QUEEN]);
+  const bishopRays = (theirB | theirQ) != 0 ? bishopAttacks(kingSq, occ) : 0;
+  const rookRays = (theirR | theirQ) != 0 ? rookAttacks(kingSq, occ) : 0;
   const knightChecks = unchecked(KNIGHT_ATT[kingSq]) & unchecked(attackedBy[t | KNIGHT]);
-  const bishopChecks = bishopRays & unchecked(attackedBy[t | BISHOP]);
-  const rookChecks = rookRays & unchecked(attackedBy[t | ROOK]);
-  const queenChecks = (bishopRays | rookRays) & unchecked(attackedBy[t | QUEEN]);
+  const bishopChecks = bishopRays & theirB;
+  const rookChecks = rookRays & theirR;
+  const queenChecks = (bishopRays | rookRays) & theirQ;
 
   // the endgame half can pass i16 in a large attack and wrap; a known, measured limit (README, Packed eval)
   let sum = unchecked(zoneWeight[us]) + unchecked(safetyOf[us]) + S(SAFETY_OFFSET_MG, SAFETY_OFFSET_EG);
@@ -321,11 +296,12 @@ export let kingSafetyEg = 0;
 
 /** each passer's room to advance, Ethereal 12.75 evaluatePassed; a rook behind it, Weiss c735b8f EvalPassedPawns. Rank and king distance are in pawns.ts. */
 @inline function passers(us: i32, occ: u64): i32 {
+  const mine = unchecked(passedOf[us]);
+  if (!mine) return 0;
   const them = us ^ 1;
   const o = us << 3;
   const enemy = bb[them << 3];
   const theirAtt = unchecked(attacked[them]);
-  const mine = unchecked(passedOf[us]);
   let v = 0;
   let b = mine;
   while (b) {
@@ -391,21 +367,55 @@ export let kingSafetyEg = 0;
 // ---------------------------------------------------------------- the whole
 
 /** the terms above as a packed sum, White's view, with king safety's halves in kingSafetyMg and kingSafetyEg */
-export function pieceTerms(): i32 {
+export function pieceTerms(wk: i32, bk: i32, pawns: u64): i32 {
   const occ = bb[0] | bb[8];
-  setup(0, occ);
-  setup(1, occ);
+  const wp = bb[PAWN];
+  const bp = bb[8 | PAWN];
+  const wL = (wp << 7) & ~FILE_H;
+  const wR = (wp << 9) & ~FILE_A;
+  const bL = (bp >> 9) & ~FILE_H;
+  const bR = (bp >> 7) & ~FILE_A;
+  const wpAtt = wL | wR;
+  const bpAtt = bL | bR;
+  const wkAtt = unchecked(KING_ATT[wk]);
+  const bkAtt = unchecked(KING_ATT[bk]);
+  unchecked((attackedBy[PAWN] = wpAtt));
+  unchecked((attackedBy[8 | PAWN] = bpAtt));
+  unchecked((attackedBy[KING] = wkAtt));
+  unchecked((attackedBy[8 | KING] = bkAtt));
+  unchecked((attacked[0] = wpAtt | wkAtt));
+  unchecked((attacked2[0] = wpAtt & wkAtt));
+  unchecked((attacked[1] = bpAtt | bkAtt));
+  unchecked((attacked2[1] = bpAtt & bkAtt));
+  // mobility area, Stash 37 evaldata_init_next: no enemy pawn attacks, own king, or own pawn that is blocked or on its low ranks
+  unchecked((mobility[0] = ~(bpAtt | bit(wk) | (wp & ((occ >> 8) | (RANK_1 << 8) | (RANK_1 << 16))))));
+  unchecked((mobility[1] = ~(wpAtt | bit(bk) | (bp & ((occ << 8) | (RANK_1 << 40) | (RANK_1 << 48))))));
+  unchecked((rammed[0] = wp & (bp >> 8)));
+  unchecked((rammed[1] = bp & (wp << 8)));
+  unchecked((behindPawn[0] = pawns >> 8));
+  unchecked((behindPawn[1] = pawns << 8));
+  const wArea = unchecked(KING_AREA[wk]);
+  const bArea = unchecked(KING_AREA[64 + bk]);
+  unchecked((kingArea[0] = wArea));
+  unchecked((kingArea[1] = bArea));
+  unchecked((kingZone[0] = wArea & ~(wL & wR)));
+  unchecked((kingZone[1] = bArea & ~(bL & bR)));
   // a color's pawns count on the other's king's area once both areas are set
-  unchecked((zoneAttacks[1] = <i32>popcnt(attackedBy[PAWN] & kingArea[1])));
-  unchecked((zoneAttacks[0] = <i32>popcnt(attackedBy[8 | PAWN] & kingArea[0])));
-  let v = knights(0) - knights(1);
-  v += bishops(0, occ) - bishops(1, occ);
-  v += rooks(0, occ) - rooks(1, occ);
+  unchecked((zoneAttacks[1] = <i32>popcnt(wpAtt & bArea)));
+  unchecked((zoneAttacks[0] = <i32>popcnt(bpAtt & wArea)));
+  unchecked((zoneAttackers[0] = 0));
+  unchecked((zoneAttackers[1] = 0));
+  unchecked((zoneWeight[0] = 0));
+  unchecked((zoneWeight[1] = 0));
+
+  let v = knights(0, wk, bk) - knights(1, bk, wk);
+  v += bishops(0, occ, pawns) - bishops(1, occ, pawns);
+  v += rooks(0, occ, wk) - rooks(1, occ, bk);
   v += queens(0, occ) - queens(1, occ);
   v += passers(0, occ) - passers(1, occ);
   v += threats(0, occ) - threats(1, occ);
   kingSafetyMg = 0;
   kingSafetyEg = 0;
-  v += kingSafety(0, occ) - kingSafety(1, occ);
+  v += kingSafety(0, occ, wk) - kingSafety(1, occ, bk);
   return v;
 }

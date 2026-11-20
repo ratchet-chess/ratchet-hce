@@ -75,9 +75,7 @@ export function clearPawns(): void {
  * probes and fills the table; the tuner and the gates pass false, since a tuning
  * build changes the constants under a filled table.
  */
-export function kingPawn(cached: bool): i32 {
-  const wk = <i32>ctz(bb[KING]);
-  const bk = <i32>ctz(bb[8 | KING]);
+export function kingPawn(cached: bool, wk: i32, bk: i32): i32 {
   // the pawn key with both kings, Stash 37 king_pawn_key; never 0 for a real board, so 0 marks an empty slot
   const key = pawnKey ^ unchecked(Z_PIECE[(KING << 6) + wk]) ^ unchecked(Z_PIECE[((8 | KING) << 6) + bk]);
   const entry = kpTable + (<usize>(key & <u64>(SIZE - 1)) << 6);
