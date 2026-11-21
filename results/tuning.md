@@ -16,6 +16,7 @@ ratchet-bench, writes the row with its `tools/results.ts tuning`.
 
 | subject | K | train before | train after | valid before | valid after | valid after (linear) | tuned | changed | protocol | commit | date |
 |---|---|---|---|---|---|---|---|---|---|---|---|
+| ratchet | 1.022 | 0.10314 | 0.10112 | 0.10332 | 0.10142 | 0.10149 | 1406 | 1401 | da2-uho102k-cw5-20261121; K held; hold TEMPO_,SAFETY_; adam α 0.5 cosine, at most 1200 epochs, patience 1200; trace Δ ×4, tol 2 cp; touched ≥ 100 | 68fb451 | 2026-11-21 |
 | ratchet | 1.436 | 0.06477 | 0.05911 | 0.06503 | 0.05958 | 0.05963 | 860 | 857 | zurichess-own-20261103; adam α 0.1, at most 2000 epochs, patience 100; trace Δ ×4, tol 2 cp; touched ≥ 100 | 7422bf2 | 2026-11-04 |
 | ratchet | 1.151 | 0.05322 | 0.05307 | 0.05366 | 0.05356 | 0.05358 | 1513 | 1498 | zurichess-own-20261103; adam α 0.1, at most 3000 epochs, patience 100; trace Δ ×4, tol 2 cp; touched ≥ 100 | 446d004 | 2026-11-04 |
 | ratchet | 1.166 | 0.06011 | 0.05322 | 0.06047 | 0.05366 | 0.05376 | 1514 | 1508 | zurichess-own-20261103; adam α 0.1, at most 6000 epochs, patience 100; trace Δ ×4, tol 2 cp; touched ≥ 100 | 446d004 | 2026-11-04 |

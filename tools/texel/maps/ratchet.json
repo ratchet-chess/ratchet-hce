@@ -1,7 +1,7 @@
 {
  "subject": "ratchet",
  "release": "ratchet",
- "k": 1.151,
+ "k": 1.022,
  "eval": {
   "form": "static"
  },
