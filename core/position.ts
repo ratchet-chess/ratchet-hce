@@ -272,12 +272,20 @@ export function playMove(m: i32): void {
   }
 }
 
-/** true if the current position occurred before within the halfmove window */
+/**
+ * True if the current position draws by repetition within the halfmove window (Stockfish 6b782211 Position::is_draw,
+ * Stash 079fcba game_is_drawn): once earlier strictly after the root (i > gameLen), or twice earlier at or before the
+ * root (i <= gameLen). Incipit be29d4f is_repetition also draws on one earlier match at the root itself, the form not taken.
+ */
 export function isRepetition(): bool {
   const cur = gameLen + ply;
   const stop = max(0, cur - halfmove);
+  let seen = false;
   for (let i = cur - 4; i >= stop; i -= 2) {
-    if (hashes[i] == hash) return true;
+    if (hashes[i] == hash) {
+      if (i > gameLen || seen) return true;
+      seen = true;
+    }
   }
   return false;
 }

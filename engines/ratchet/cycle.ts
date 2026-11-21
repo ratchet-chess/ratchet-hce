@@ -12,12 +12,13 @@
  * - Stockfish 91a76331 Position::has_game_cycle also answers when the opponent could have reached this position a
  *   move sooner ("no progress"), which is no draw for the side to move. Weiss fe8e513 HasCycle and Stash 079fcba
  *   game_has_cycle keep that case inside the tree.
- * - Those three ask for a second occurrence when the earlier position is at or before the root. The core's
- *   isRepetition draws on the first occurrence anywhere, so this walk does too.
+ * - Incipit be29d4f draws on a single match at the root itself; this walk follows Stockfish 6b782211
+ *   Position::upcoming_repetition and Stash 079fcba game_has_cycle, asking for a second occurrence when the earlier
+ *   position is at or before the root.
  * - Weiss 073eda5 AlphaBeta tests only a move that takes the last one back, with no table.
  */
 import { moveFrom, moveTo, BISHOP, KING, KNIGHT, QUEEN, ROOK } from "../../core/constants";
-import { bb, halfmove, hash, hashBack, pliesKept } from "../../core/position";
+import { bb, halfmove, hash, hashBack, pliesKept, ply } from "../../core/position";
 import { KING_ATT, KNIGHT_ATT, bishopAttacks, bit, rookAttacks } from "../../core/tables";
 import { Z_PIECE, Z_SIDE } from "../../core/zobrist";
 
@@ -118,6 +119,17 @@ export function upcomingRepetition(excluded: i32): bool {
       const b = <i32>cycleSquares[j] >> 6;
       const from = occupied & bit(a) ? a : b;
       if (moveFrom(excluded) == from && moveTo(excluded) == a + b - from) continue;
+    }
+    if (ply <= i) {
+      // the matched position is at or before the root, so a draw needs an earlier occurrence of it (Stockfish 6b782211)
+      let repeated = false;
+      for (let k = i + 4; k <= end; k += 2) {
+        if (hashBack(k) == then) {
+          repeated = true;
+          break;
+        }
+      }
+      if (!repeated) continue;
     }
     return true;
   }

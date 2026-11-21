@@ -31,6 +31,7 @@ and an exact commit. A revision is a commit prefix or a release's version; a ver
 | Ethereal | f71ac47 | https://github.com/AndyGrant/Ethereal | f71ac4769a4c9850782c02b6987f7e0187c0223f | - |
 | Ethereal | fcb6f77 | https://github.com/AndyGrant/Ethereal | fcb6f774674fbe1554a12534a64a2c3353d68a76 | - |
 | Fruit | 2.1 | fruit_21.zip, WBEC Ridderkerk (inventory/fruit-2.1.md) | sha256:45112b37d0c31db931d9d1c941dfbb9d0f453aec32ed27eb8afbaf3f75b4a7e2 | - |
+| Incipit | be29d4f | https://github.com/adamtwiss/incipit | be29d4f32f9abc720c92e0ef45dc5d318f85b808 | - |
 | Koivisto | 51747be9 | https://github.com/Luecx/Koivisto | 51747be9f239e611d60e1b736cd6ef8589041338 | - |
 | Laser | 1.7 | https://github.com/jeffreyan11/laser-chess-engine | 96bfbdba8d064442626e1bb23e02473a46559a2e | v1.7 |
 | Stash | 007850d | https://github.com/mhouppin/stash-bot | 007850df35d51bdad46a011fcd08f0d1c8687f6f | - |
