@@ -19,6 +19,7 @@ and an exact commit. A revision is a commit prefix or a release's version; a ver
 | Clockwork | 641d9f5 | https://github.com/official-clockwork/Clockwork | 641d9f54d681b33b5858c1a29fec96af907c8278 | - |
 | Clockwork | 662c568 | https://github.com/official-clockwork/Clockwork | 662c568a99ed4bb8d31c77515ba6470bd8fa034b | - |
 | Clockwork | 6bf993b | https://github.com/official-clockwork/Clockwork | 6bf993bec75bf4bcb96f0e4446fff908f9714e5f | - |
+| Clockwork | 8ee523a | https://github.com/official-clockwork/Clockwork | 8ee523ac768fbc75eafdfdeb2d6318f26edc5dd4 | - |
 | Clockwork | bedb1e8 | https://github.com/official-clockwork/Clockwork | bedb1e8b26fb28c64a6c506d9bec12613983c14c | - |
 | Clockwork | e774be4 | https://github.com/official-clockwork/Clockwork | e774be4d5cfe5d3420c8cbb432a5171bc4ab9224 | - |
 | Clockwork | f236181 | https://github.com/official-clockwork/Clockwork | f23618124cadc0c54bb3100ac1a46bec66e6e6e2 | - |

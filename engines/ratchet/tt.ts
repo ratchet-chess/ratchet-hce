@@ -1,9 +1,10 @@
 /**
- * The transposition table: 32-byte buckets of three 10-byte entries (Ethereal 0e47e9b
- * TTBucket, Alexandria 829daf4 TTBucket's layout), indexed by a 32 x 32 -> 64 multiply of the key's
- * low half, checked by its top 16 bits.
+ * The transposition table: 32-byte buckets holding one 64-bit word of three packed 21-bit key fragments and three
+ * 8-byte entries (Clockwork 8ee523a TTCluster), indexed by a 32 x 32 -> 64 multiply of the key's low half and checked
+ * by its top 21 bits (non-zero, with 0 marking an empty slot). Ethereal 0e47e9b TTBucket and Alexandria 829daf4
+ * TTBucket store three 10-byte entries with 16-bit keys and two bytes of padding, the form not taken.
  *
- * Entry: key16 u16 | move u16 | score i16 | raw eval i16 | depth u8 | flags u8,
+ * Entry (8 bytes): move u16 | score i16 | raw eval i16 | depth u8 | flags u8,
  * flags = bound (2 bits) | PV (1 bit) << 2 | generation (5 bits) << 3. Bound 0 is
  * an empty slot. The move keeps the core's low 15 bits and a castle bit above them; the
  * probe restores the other flags from the board. qsearch stores at depth 0.
@@ -21,8 +22,13 @@ export const BOUND_LOWER = 2;
 export const BOUND_EXACT = 3;
 
 const BUCKET_BYTES = 32;
-const ENTRY_BYTES = 10;
+const ENTRY_BYTES = 8;
 const ENTRIES = 3;
+const FRAG_WIDTH = 21;
+const FRAG_MASK: u64 = 0x1fffff;
+/** low and high bit of each 21-bit lane (0, 21, 42 and 20, 41, 62), for SWAR 3-way fragment lookup */
+const FRAG_LSB: u64 = 0x0000040000200001;
+const FRAG_MSB: u64 = 0x4000020000100000;
 
 /** the allocation, and the table inside it on a cache line, so no 32-byte bucket crosses one */
 let block: usize = 0;
@@ -76,6 +82,12 @@ export function ttNewSearch(): void {
   return table + <usize>(((key & 0xffffffff) * buckets) >> 32) * BUCKET_BYTES;
 }
 
+/** top 21 bits of `key`, mapped out of 0 so 0 uniquely marks an empty bucket slot */
+@inline function fragmentOf(key: u64): u64 {
+  const f = key >> 43;
+  return f ? f : 1;
+}
+
 /**
  * the permille of entries in the first 1000 buckets that this search stored, for UCI's hashfull: Weiss c735b8f
  * HashFull counts only the current generation, where Ethereal 0e47e9b tt_hashfull counts every filled entry
@@ -85,7 +97,7 @@ export function ttHashfull(): i32 {
   let used = 0;
   for (let i: usize = 0; i < n; i++) {
     for (let j = 0; j < ENTRIES; j++) {
-      const flags = <i32>load<u8>(table + i * BUCKET_BYTES + <usize>j * ENTRY_BYTES, 9);
+      const flags = <i32>load<u8>(table + i * BUCKET_BYTES + 8 + <usize>j * ENTRY_BYTES, 7);
       if (flags & 3 && flags >> 3 == generation) used++;
     }
   }
@@ -95,25 +107,25 @@ export function ttHashfull(): i32 {
 /** finds `key`; on a hit sets the tt* fields and returns true */
 export function ttProbe(key: u64): bool {
   const b = bucketOf(key);
-  const check = <u16>(key >> 48);
-  for (let i = 0; i < ENTRIES; i++) {
-    const e = b + <usize>i * ENTRY_BYTES;
-    const flags = <i32>load<u8>(e, 9);
-    if (load<u16>(e) == check && flags & 3) {
-      ttMove = <i32>load<u16>(e, 2);
-      ttScore = <i32>load<i16>(e, 4);
-      ttEval = <i32>load<i16>(e, 6);
-      ttDepth = <i32>load<u8>(e, 8);
-      ttBound = flags & 3;
-      ttPv = (flags & 4) != 0;
-      return true;
-    }
-  }
-  return false;
+  const frag = fragmentOf(key);
+  const zeros = (frag * FRAG_LSB) ^ load<u64>(b);
+  const matches = (zeros - FRAG_LSB) & ~zeros & FRAG_MSB;
+  if (!matches) return false;
+  // ctz(matches) is 20, 41 or 62 -> slot 0, 1 or 2 without division
+  const idx = (<i32>ctz(matches) * 3) >> 6;
+  const e = b + 8 + (<usize>idx << 3);
+  const flags = <i32>load<u8>(e, 7);
+  ttMove = <i32>load<u16>(e);
+  ttScore = <i32>load<i16>(e, 2);
+  ttEval = <i32>load<i16>(e, 4);
+  ttDepth = <i32>load<u8>(e, 6);
+  ttBound = flags & 3;
+  ttPv = (flags & 4) != 0;
+  return true;
 }
 
 /**
- * Stores a search result. The slot is the key's own, or else the one with the
+ * Stores a search result. The slot is the key's own, else an empty slot, else the one with the
  * least depth less 8 per generation of age (Stockfish 9dbb3ae8 TranspositionTable::probe). A result for the
  * same key that is not exact and is more than 2 plies shallower is dropped, and a
  * store without a move keeps the old one (Ethereal 0e47e9b tt_store).
@@ -122,30 +134,42 @@ export function ttStore(key: u64, move: i32, score: i32, rawEval: i32, depth: i3
   if (!ttEnabled) return;
   let stored = (move & 0x7fff) | (move & FLAG_CASTLE ? TT_CASTLE : 0);
   const b = bucketOf(key);
-  const check = <u16>(key >> 48);
-  let slot: usize = 0;
-  let worst = i32.MAX_VALUE;
-  for (let i = 0; i < ENTRIES; i++) {
-    const e = b + <usize>i * ENTRY_BYTES;
-    const flags = <i32>load<u8>(e, 9);
-    if (load<u16>(e) == check && flags & 3) {
-      if (bound != BOUND_EXACT && depth < <i32>load<u8>(e, 8) - 2 && (TT_AGE_STORE == 0 || flags >> 3 == generation)) return;
-      if (!stored) stored = <i32>load<u16>(e, 2);
-      slot = e;
-      break;
+  const frag = fragmentOf(key);
+  const frags = load<u64>(b);
+  const zeros = (frag * FRAG_LSB) ^ frags;
+  const matches = (zeros - FRAG_LSB) & ~zeros & FRAG_MSB;
+  let idx = 0;
+  if (matches) {
+    idx = (<i32>ctz(matches) * 3) >> 6;
+    const e = b + 8 + (<usize>idx << 3);
+    const flags = <i32>load<u8>(e, 7);
+    if (bound != BOUND_EXACT && depth < <i32>load<u8>(e, 6) - 2 && (TT_AGE_STORE == 0 || flags >> 3 == generation)) return;
+    if (!stored) stored = <i32>load<u16>(e);
+  } else {
+    const empty = (frags - FRAG_LSB) & ~frags & FRAG_MSB;
+    if (empty) {
+      idx = (<i32>ctz(empty) * 3) >> 6;
+    } else {
+      let worst = i32.MAX_VALUE;
+      for (let i = 0; i < ENTRIES; i++) {
+        const e = b + 8 + (<usize>i << 3);
+        const flags = <i32>load<u8>(e, 7);
+        const value = <i32>load<u8>(e, 6) - 8 * ((32 + generation - (flags >> 3)) & 31);
+        if (value < worst) {
+          worst = value;
+          idx = i;
+        }
+      }
     }
-    const value = flags & 3 ? <i32>load<u8>(e, 8) - 8 * ((32 + generation - (flags >> 3)) & 31) : i32.MIN_VALUE;
-    if (value < worst) {
-      worst = value;
-      slot = e;
-    }
+    const shift = <u64>(idx * FRAG_WIDTH);
+    store<u64>(b, (frags & ~(FRAG_MASK << shift)) | (frag << shift));
   }
-  store<u16>(slot, check);
-  store<u16>(slot, <u16>stored, 2);
-  store<i16>(slot, <i16>score, 4);
-  store<i16>(slot, <i16>rawEval, 6);
-  store<u8>(slot, <u8>depth, 8);
-  store<u8>(slot, <u8>(bound | (pv ? 4 : 0) | (generation << 3)), 9);
+  const slot = b + 8 + (<usize>idx << 3);
+  store<u16>(slot, <u16>stored);
+  store<i16>(slot, <i16>score, 2);
+  store<i16>(slot, <i16>rawEval, 4);
+  store<u8>(slot, <u8>depth, 6);
+  store<u8>(slot, <u8>(bound | (pv ? 4 : 0) | (generation << 3)), 7);
 }
 
 /** the table's stored move as a legal move of this position with its flags, or 0 */
