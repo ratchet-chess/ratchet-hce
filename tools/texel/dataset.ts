@@ -26,7 +26,7 @@ import { createGunzip } from "node:zlib";
 import { formatFen, parseFen } from "../../host/fen.ts";
 import type { Engine } from "../../host/wasm.ts";
 import { moveToUci } from "../../host/wasm.ts";
-import { parseGames } from "../pgn.ts";
+import { applyUci, parseGames } from "../pgn.ts";
 
 export interface Position {
   board: Uint8Array;
@@ -137,10 +137,38 @@ async function* readPgn(path: string, options: Record<string, number | string>, 
   const perGame = Number(options.perGame ?? 10);
   const before = options.before === undefined ? undefined : Number(options.before);
   const gamePermille = Number(options.gamePermille ?? 1000);
-  const replayer = { setPosition: (f: string, m: string[]) => core.setPosition(f, m), legalUci: () => core.legalMoves().map(moveToUci) };
+  const quiet = Number(options.quiet ?? 0) !== 0;
+  const maxCp = Number(options.maxCp ?? 2500);
+  const wasm = (core as unknown as { wasm: { playMove(m: number): void } }).wasm;
+  const play = (uci: string) => {
+    const m = core.legalMoves().find((x) => moveToUci(x) === uci);
+    if (m === undefined) throw new Error(`illegal move ${uci}`);
+    wasm.playMove(m);
+  };
+  let shownFen = "";
+  let shownMoves: string[] | null = null;
+  let played = 0;
+  const replayer = {
+    setPosition(f: string, m: string[]): void {
+      if (f === shownFen && m === shownMoves && m.length === played + 1) {
+        play(m[played]);
+        played++;
+        return;
+      }
+      core.setPosition(f, m);
+      shownFen = f;
+      shownMoves = m;
+      played = m.length;
+    },
+    legalUci: () => core.legalMoves().map(moveToUci),
+  };
   for await (const text of pgnGames(path)) {
     const result = RESULTS[/^\[Result "([^"]*)"\]/m.exec(text)?.[1] ?? ""];
     if (result === undefined) continue;
+    if (quiet) {
+      const term = /^\[Termination "([^"]*)"\]/m.exec(text)?.[1];
+      if (term !== undefined && term !== "normal" && term !== "adjudication") continue;
+    }
     if (before !== undefined) {
       const year = /^\[Date "(\d{4})/m.exec(text)?.[1];
       if (year === undefined || Number(year) >= before) continue;
@@ -153,16 +181,33 @@ async function* readPgn(path: string, options: Record<string, number | string>, 
       continue;
     }
     if (!game) continue;
-    const plies: { fen: string; key: number }[] = [];
-    for (let i = skip; i <= game.moves.length; i++) {
-      core.setPosition(game.fen, game.moves.slice(0, i));
-      if (core.inCheck()) continue;
-      const p = core.corePosition();
-      const fen = formatFen({ ...p, ep: p.ep === 64 ? -1 : p.ep, fullmove: 1 });
-      plies.push({ fen, key: fnv(fen) });
+    const plies: { fen: string; score: number; key: number }[] = [];
+    const start = parseFen(game.fen);
+    const board = start.board;
+    let side = start.side;
+    core.setPosition(game.fen, []);
+    shownMoves = null;
+    for (let i = 0; i < game.moves.length; i++) {
+      const uci = game.moves[i];
+      if (i >= skip) {
+        const to = uci.charCodeAt(2) - 97 + 8 * (uci.charCodeAt(3) - 49);
+        const from = uci.charCodeAt(0) - 97 + 8 * (uci.charCodeAt(1) - 49);
+        const noisy = board[to] !== 0 || uci.length === 5 || ((board[from] & 7) === 1 && (from & 7) !== (to & 7));
+        const sc = /^([+-]?\d+\.\d+)\/(\d+)/.exec(game.comments[i] ?? "");
+        const cp = sc ? Math.round(Number(sc[1]) * 100) * (side === 0 ? 1 : -1) : NaN;
+        const ok = quiet ? !!sc && !noisy && Math.abs(cp) <= maxCp && !core.inCheck() : !core.inCheck();
+        if (ok) {
+          const p = core.corePosition();
+          const fen = formatFen({ ...p, ep: p.ep === 64 ? -1 : p.ep, fullmove: 1 });
+          plies.push({ fen, score: cp, key: fnv(fen) });
+        }
+      }
+      applyUci(board, uci, side);
+      play(uci);
+      side ^= 1;
     }
     plies.sort((a, b) => a.key - b.key);
-    for (const p of plies.slice(0, perGame)) yield position(p.fen, result, NaN);
+    for (const p of plies.slice(0, perGame)) yield position(p.fen, result, p.score);
   }
 }
 

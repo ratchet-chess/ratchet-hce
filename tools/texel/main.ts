@@ -150,14 +150,21 @@ if (step === "map" || step === "build" || step === "write") {
   }
 } else if (step === "dataset") {
   let set: SetEntry;
-  let file: string;
-  const pgn = opt("--pgn");
-  if (pgn) {
-    // A set Ratchet made itself, such as a release's self-play games: it has no
-    // outside terms, so it is not on the allow-list.
-    file = resolve(pgn);
-    const options = Object.fromEntries(rest.flatMap((a, i) => (a === "--opt" ? [rest[i + 1].split("=")] : [])).map(([k, v]) => [k, Number.isNaN(Number(v)) ? v : Number(v)]));
-    set = { name: opt("--name") ?? die(usage), url: `file:${relative(REPO, file)}`, sha256: sha256(file), license: "Ratchet's own games", archive: basename(file), format: "pgn", options };
+  let files: string[];
+  const pgns = rest.flatMap((a, i) => (a === "--pgn" ? [rest[i + 1]] : []));
+  const rawFile = opt("--file");
+  const options = Object.fromEntries(rest.flatMap((a, i) => (a === "--opt" ? [rest[i + 1].split("=")] : [])).map(([k, v]) => [k, Number.isNaN(Number(v)) ? v : Number(v)]));
+  if (pgns.length) {
+    // Sets Ratchet made itself, such as self-play games: no outside terms, so not on the allow-list.
+    files = pgns.map((p) => resolve(p));
+    const h = createHash("sha256");
+    for (const f of files) h.update(sha256(f));
+    set = { name: opt("--name") ?? die(usage), url: files.length === 1 ? `file:${relative(REPO, files[0])}` : `files:${files.length}`, sha256: files.length === 1 ? sha256(files[0]) : h.digest("hex"), license: "Ratchet's own games", archive: basename(files[0]), format: "pgn", options };
+  } else if (rawFile) {
+    files = [resolve(rawFile)];
+    const format = (opt("--format") ?? die("--file requires --format")) as SetEntry["format"];
+    const license = opt("--license") ?? die("--file requires --license");
+    set = { name: opt("--name") ?? die(usage), url: opt("--url") ?? `file:${basename(files[0])}`, sha256: sha256(files[0]), license, archive: basename(files[0]), format, options };
   } else {
     const sets = JSON.parse(readFileSync(join(REPO, "tools", "texel", "sets.json"), "utf8")) as SetEntry[];
     const name = opt("--set") ?? die(usage);
@@ -166,25 +173,27 @@ if (step === "map" || step === "build" || step === "write") {
     if (!existsSync(archive)) die(`${archive} is missing: bun <BENCH>/tools/ws.ts fetch ${set.url} ${set.sha256}`);
     const seen = sha256(archive);
     if (seen !== set.sha256) die(`${archive} has sha256 ${seen}, not the pinned ${set.sha256}`);
-    file = archive;
-  }
-  if (set.member) {
-    const archive = file;
-    const dir = join(DOWNLOADS, set.name);
-    file = join(dir, set.member);
-    if (!existsSync(file)) {
-      mkdirSync(dir, { recursive: true });
-      const r = spawnSync("bsdtar", ["-xf", archive, "-C", dir, set.member], { encoding: "utf8" });
-      if (r.status !== 0) die(`bsdtar failed: ${r.stderr}`);
+    let file = archive;
+    if (set.member) {
+      const dir = join(DOWNLOADS, set.name);
+      file = join(dir, set.member);
+      if (!existsSync(file)) {
+        mkdirSync(dir, { recursive: true });
+        const r = spawnSync("bsdtar", ["-xf", archive, "-C", dir, set.member], { encoding: "utf8" });
+        if (r.status !== 0) die(`bsdtar failed: ${r.stderr}`);
+      }
     }
+    files = [file];
   }
   const validPermille = Number(opt("--valid") ?? 100);
   const limit = Number(opt("--limit") ?? Infinity);
   const core = await Engine.load("core");
   const read: Position[] = [];
-  for await (const p of readSet(file, set.format, set.options ?? {}, core)) {
-    read.push(p);
-    if (read.length >= limit) break;
+  outer: for (const file of files) {
+    for await (const p of readSet(file, set.format, set.options ?? {}, core)) {
+      read.push(p);
+      if (read.length >= limit) break outer;
+    }
   }
   const { positions, merged } = mergeAndSplit(read, validPermille);
   mkdirSync(DATASETS, { recursive: true });
@@ -271,11 +280,12 @@ if (step === "map" || step === "build" || step === "write") {
     const minTouch = Number(opt("--min-touch") ?? 100);
     const trace = over === "trace" ? await ensureTrace(m, dsPath, header.name, count, subset, adapter, deltaFactor, tol) : undefined;
     const base = trace ? trace.base : await adapter.eval();
-    const labels: Labels = { result: new Float64Array(count), valid: new Uint8Array(count) };
+    const labels: Labels = { result: new Float64Array(count), score: new Float64Array(count), valid: new Uint8Array(count) };
     const p = blankPosition();
     for (let i = 0; i < count; i++) {
       decodeRecord(records, i, p);
       labels.result[i] = p.result;
+      labels.score![i] = p.score;
       labels.valid[i] = p.valid ? 1 : 0;
     }
     const givenK = opt("--k") ?? m.map.k;
@@ -306,10 +316,13 @@ if (step === "map" || step === "build" || step === "write") {
       const alpha = Number(opt("--alpha") ?? 0.1);
       const epochs = Number(opt("--epochs") ?? 2000);
       const patience = Number(opt("--patience") ?? 100);
-      const r = adam(trace!, m, labels, K, ids, { alpha, epochs, patience }, (q) => console.log(`epoch ${q.epoch}: train ${q.train.toFixed(6)}, valid ${q.valid.toFixed(6)}`));
+      const cosine = rest.includes("--cosine");
+      const l2 = Number(opt("--l2") ?? 0);
+      const scoreWeight = Number(opt("--score-weight") ?? 0);
+      const r = adam(trace!, m, labels, K, ids, { alpha, epochs, patience, cosine, l2, scoreWeight }, (q) => console.log(`epoch ${q.epoch}: train ${q.train.toFixed(6)}, valid ${q.valid.toFixed(6)}`));
       theta = r.theta;
       console.log(`best epoch ${r.best.epoch}: valid ${r.best.valid.toFixed(6)} (linear)`);
-      protocol = `adam α ${alpha}, at most ${epochs} epochs, patience ${patience}`;
+      protocol = `adam α ${alpha}${cosine ? " cosine" : ""}${l2 > 0 ? ` l2 ${l2}` : ""}${scoreWeight > 0 ? ` sw ${scoreWeight}` : ""}, at most ${epochs} epochs, patience ${patience}`;
     } else {
       const passes = Number(opt("--passes") ?? 20);
       const grow = Number(opt("--grow") ?? 16);

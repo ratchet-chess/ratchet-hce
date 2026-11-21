@@ -27,6 +27,8 @@ import { type Trace, linearEval } from "./trace.ts";
 export interface Labels {
   /** result from White's view, NaN when the position has none or no usable score */
   result: Float64Array;
+  /** optional search score in centipawns from White's view, NaN when absent */
+  score?: Float64Array;
   valid: Uint8Array;
 }
 
@@ -96,18 +98,26 @@ export function adam(
   labels: Labels,
   K: number,
   ids: number[],
-  opts: { alpha: number; epochs: number; patience: number },
+  opts: { alpha: number; epochs: number; patience: number; cosine?: boolean; l2?: number; scoreWeight?: number },
   log: (p: Progress) => void,
 ): { theta: Float64Array; best: Progress } {
   const n = t.header.count;
   const theta = Float64Array.from(m.elements.map((e) => e.default));
   const lr = Float64Array.from(m.elements.map((e) => opts.alpha * e.step));
-  const tuned = new Uint8Array(m.elements.length);
-  for (const id of ids) tuned[id] = 1;
+  const l2 = opts.l2 ?? 0;
+  const sw = opts.scoreWeight ?? 0;
+  const cosine = opts.cosine ?? false;
   const mom = new Float64Array(m.elements.length);
   const vel = new Float64Array(m.elements.length);
   const grad = new Float64Array(m.elements.length);
   const scores = new Float64Array(n);
+  // precompute training targets once: pure game result, or mixed result + sigma(searchScore)
+  const target = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    const r = labels.result[i];
+    const sc = labels.score ? labels.score[i] : NaN;
+    target[i] = sw > 0 && !Number.isNaN(r) && !Number.isNaN(sc) ? (1 - sw) * r + sw * sigma(sc, K) : r;
+  }
   const b1 = 0.9;
   const b2 = 0.999;
   let best: Progress = { epoch: 0, train: Infinity, valid: Infinity };
@@ -117,7 +127,7 @@ export function adam(
     grad.fill(0);
     let count = 0;
     for (let i = 0; i < n; i++) {
-      const r = labels.result[i];
+      const r = target[i];
       if (Number.isNaN(r) || Number.isNaN(scores[i]) || labels.valid[i]) continue;
       count++;
       const sg = sigma(scores[i], K);
@@ -125,14 +135,16 @@ export function adam(
       const g = -2 * (r - sg) * sg * (1 - sg) * LN10 * (K / 400);
       for (let k = t.rowStart[i]; k < t.rowStart[i + 1]; k++) grad[t.col[k]] += g * t.val[k];
     }
+    const lrScale = cosine ? 0.01 + 0.99 * 0.5 * (1 + Math.cos((Math.PI * (epoch - 1)) / opts.epochs)) : 1;
     for (const id of ids) {
-      const gr = grad[id] / count;
+      // L2 penalty scaled to pawns (400 quarter-cp units) so sparse outliers shrink without biasing frequent terms
+      const gr = grad[id] / count + (l2 > 0 ? (l2 * theta[id]) / 160000 : 0);
       mom[id] = b1 * mom[id] + (1 - b1) * gr;
       vel[id] = b2 * vel[id] + (1 - b2) * gr * gr;
       const mh = mom[id] / (1 - Math.pow(b1, epoch));
       const vh = vel[id] / (1 - Math.pow(b2, epoch));
       const e = m.elements[id];
-      theta[id] = Math.min(e.max, Math.max(e.min, theta[id] - (lr[id] * mh) / (Math.sqrt(vh) + 1e-12)));
+      theta[id] = Math.min(e.max, Math.max(e.min, theta[id] - (lr[id] * lrScale * mh) / (Math.sqrt(vh) + 1e-12)));
     }
     linearEval(t, theta, scores);
     const p = { epoch, train: loss(scores, labels, K, false), valid: loss(scores, labels, K, true) };
