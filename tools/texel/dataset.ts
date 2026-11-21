@@ -55,7 +55,7 @@ export interface SetEntry {
   options?: Record<string, number | string>;
 }
 
-export type Format = "epd-c9" | "fen-result" | "fen-score-result" | "lichess-eval" | "pgn";
+export type Format = "epd-c9" | "fen-result" | "fen-score-result" | "fen-wdb" | "lichess-eval" | "pgn";
 
 export interface Header {
   format: "texel-dataset";
@@ -123,6 +123,12 @@ export async function* readSet(path: string, format: Format, options: Record<str
       const p = position(fen, result ? Number(result.replace(/[[\]]/g, "")) : NaN, Number(score));
       if (options.scoreView === "side" && p.side === 1) p.score = -p.score;
       yield p;
+    } else if (format === "fen-wdb") {
+      const semi = t.lastIndexOf(";");
+      if (semi <= 0) continue;
+      const code = t.slice(semi + 1).trim();
+      const res = code === "w" ? 1 : code === "d" ? 0.5 : code === "b" ? 0 : NaN;
+      if (!Number.isNaN(res)) yield position(t.slice(0, semi).trim(), res, NaN);
     } else if (format === "lichess-eval") {
       const j = JSON.parse(t) as { fen: string; evals: { depth: number; pvs: { cp?: number; mate?: number }[] }[] };
       const deepest = [...j.evals].sort((a, b) => b.depth - a.depth)[0];

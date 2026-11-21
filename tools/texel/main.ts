@@ -294,9 +294,10 @@ if (step === "map" || step === "build" || step === "write") {
     const train0 = loss(base, labels, K, false);
     const valid0 = loss(base, labels, K, true);
     console.log(`K ${K.toFixed(4)}${givenK !== undefined ? " (held)" : ""}; at defaults: train ${train0.toFixed(6)}, valid ${valid0.toFixed(6)}`);
-    const ids = tunable(m, trace, minTouch);
+    const holdPrefixes = (opt("--hold") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+    const ids = tunable(m, trace, minTouch).filter((i) => !holdPrefixes.some((pfx) => m.elements[i].name.startsWith(pfx)));
     const held = m.elements.filter((e) => !e.fixed && !ids.includes(e.id)).map((e) => e.name);
-    console.log(`${ids.length} elements tuned${held.length ? `; held for fewer than ${minTouch} positions touched: ${held.join(" ")}` : ""}`);
+    console.log(`${ids.length} elements tuned${held.length ? `; held (${holdPrefixes.length ? `hold=${holdPrefixes.join(",")} or ` : ""}< ${minTouch} touched): ${held.join(" ")}` : ""}`);
     const runs = join(REPO, "tmp", "texel", "runs");
     mkdirSync(runs, { recursive: true });
     const id = `${m.map.subject}-${new Date().toISOString().replace(/[:.]/g, "-")}`;
@@ -365,7 +366,7 @@ if (step === "map" || step === "build" || step === "write") {
       linearValid1: linear ? loss(linear, labels, K, true) : null,
       tuned: ids.length,
       changed: Object.keys(values).length,
-      protocol: `${header.name}${sample !== undefined ? `, sample ${sample}‰` : ""}${limit !== undefined ? `, first ${count}` : ""}; ${givenK !== undefined ? "K held; " : ""}${protocol}${trace ? `; trace Δ ×${deltaFactor}, tol ${tol} cp; touched ≥ ${minTouch}` : ""}`,
+      protocol: `${header.name}${sample !== undefined ? `, sample ${sample}‰` : ""}${limit !== undefined ? `, first ${count}` : ""}; ${givenK !== undefined ? "K held; " : ""}${holdPrefixes.length ? `hold ${holdPrefixes.join(",")}; ` : ""}${protocol}${trace ? `; trace Δ ×${deltaFactor}, tol ${tol} cp; touched ≥ ${minTouch}` : ""}`,
       values,
     };
     console.log(`after (true, rounded): train ${result.train1.toFixed(6)}, valid ${result.valid1.toFixed(6)}${linear ? `; linear: train ${result.linearTrain1!.toFixed(6)}, valid ${result.linearValid1!.toFixed(6)}` : ""}; ${result.changed} values changed`);
