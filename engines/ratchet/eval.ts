@@ -11,6 +11,7 @@
  */
 import { BISHOP, KING, KNIGHT, PAWN, QUEEN, ROOK } from "../../core/constants";
 import { bb, hash, side } from "../../core/position";
+import { KING_ATT } from "../../core/tables";
 import {
   COMPLEXITY_ENDGAME, COMPLEXITY_FLANKS, COMPLEXITY_OFFSET, COMPLEXITY_PAWNS, MAT_MG, MOPUP_CLOSE, MOPUP_EDGE, SCALE_BASE, SCALE_OCB, SCALE_OCB_PASSED,
   SCALE_OCB_PIECES, SCALE_OCB_PIECES_PER, SCALE_PER_PAWN, TEMPO_EG, TEMPO_MG,
@@ -56,12 +57,13 @@ const QUEENSIDE: u64 = ~KINGSIDE;
 }
 
 /**
- * The endgame half's scale out of 256, for the side it favors, Stash 37
- * eval_scale_endgame. Stash 37's endgame-specific scale functions (endgame.c) are
- * not in Ratchet; their endings take the general factor. So does its one-wing
- * rook ending, a rule no other engine read has in general form.
+ * The endgame half's scale out of 256, for the side it favors: Stash 37 eval_scale_endgame,
+ * one-wing rook scaling (Stockfish 16836f39 and 67818ee9), single-queen scaling (Stockfish
+ * c7194bd9 and 69d3be42), one-minor-one-pawn scaling (Lynx 1d3047b5), and general one-wing
+ * strong-pawn damping (Weiss b65b91e). Narrow 4-piece endgame-specific tables (Stash 37
+ * endgame.c) are not taken.
  */
-function endgameScale(eg: i32): i32 {
+function endgameScale(eg: i32, wKing: i32, bKing: i32, phase: i32): i32 {
   const strong = eg > 0 ? 0 : 1;
   const weak = strong ^ 1;
   const sPawns = bb[(strong << 3) | PAWN];
@@ -83,7 +85,24 @@ function endgameScale(eg: i32): i32 {
       ? SCALE_OCB_PIECES + SCALE_OCB_PIECES_PER * <i32>popcnt(bb[strong << 3])
       : SCALE_OCB + SCALE_OCB_PASSED * <i32>popcnt(passedOf[strong]);
   }
-  return min(SCALE_BASE + SCALE_PER_PAWN * <i32>popcnt(sPawns), 256);
+  const sPawnCount = <i32>popcnt(sPawns);
+  // one minor vs one minor with a single strong pawn, Lynx 1d3047b5
+  if (phase == 2 && sPawnCount == 1 && (bb[KNIGHT] | wb) != 0 && (bb[8 | KNIGHT] | bbish) != 0) return 128;
+  const oneWing = sPawns != 0 && (!(sPawns & KINGSIDE) || !(sPawns & QUEENSIDE));
+  // one-wing rook endgame with small pawn lead and defending king near its pawns, Stockfish 16836f39 and 67818ee9, Stash 37 eval_scale_endgame
+  if (phase == 4 && oneWing && popcnt(bb[ROOK]) == 1 && popcnt(bb[8 | ROOK]) == 1) {
+    const wPawns = bb[(weak << 3) | PAWN];
+    if (sPawnCount <= <i32>popcnt(wPawns) + 1 && (unchecked(KING_ATT[weak == 0 ? wKing : bKing]) & wPawns) != 0) return 130;
+  }
+  let scale = min(SCALE_BASE + SCALE_PER_PAWN * sPawnCount, 256);
+  // single-queen endgame scaled by enemy minor count, Stockfish c7194bd9 and 69d3be42
+  if (popcnt(bb[QUEEN] | bb[8 | QUEEN]) == 1) {
+    const oppMinors = bb[QUEEN] ? <i32>popcnt(bb[8 | KNIGHT] | bbish) : <i32>popcnt(bb[KNIGHT] | wb);
+    return min(scale, 148 + 12 * oppMinors);
+  }
+  // strong pawns on one wing only, Weiss b65b91e ScaleFactor
+  if (oneWing) scale = max(scale - 24, 32);
+  return scale;
 }
 
 /** the eval's bound, below the search's mate range by more than the correction history can add */
@@ -129,13 +148,13 @@ export function evalWith(psq: i32, cached: bool): i32 {
   const wKing = <i32>ctz(bb[KING]);
   const bKing = <i32>ctz(bb[8 | KING]);
   const kp = kingPawn(cached, wKing, bKing);
-  const s = psq + kp + pieceTerms(wKing, bKing, pawns) + (side == 0 ? S(TEMPO_MG, TEMPO_EG) : -S(TEMPO_MG, TEMPO_EG));
+  const s = psq + kp + pieceTerms(wKing, bKing, pawns, phase) + (side == 0 ? S(TEMPO_MG, TEMPO_EG) : -S(TEMPO_MG, TEMPO_EG));
   let v = mgOf(s) + kingSafetyMg;
   // at the full phase the endgame half weighs nothing
   if (phase < PHASE_MAX) {
     let eg = egOf(s) + kingSafetyEg;
     eg += complexity(eg, pawns);
-    eg = (eg * endgameScale(eg)) / 256;
+    eg = (eg * endgameScale(eg, wKing, bKing, phase)) / 256;
     v = (v * phase + eg * (PHASE_MAX - phase)) / PHASE_MAX;
   }
 

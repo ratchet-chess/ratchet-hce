@@ -1582,6 +1582,27 @@
      "symbol": "COMPLEXITY_OFFSET"
     }
    ]
-  }
+  },
+  { "name": "PAWN_DOUBLED2_MG", "sources": [{ "file": "params.ts", "symbol": "PAWN_DOUBLED2_MG" }] },
+  { "name": "PAWN_DOUBLED2_EG", "sources": [{ "file": "params.ts", "symbol": "PAWN_DOUBLED2_EG" }] },
+  { "name": "PAWN_ISOLATED_OPEN_MG", "sources": [{ "file": "params.ts", "symbol": "PAWN_ISOLATED_OPEN_MG" }] },
+  { "name": "PAWN_ISOLATED_OPEN_EG", "sources": [{ "file": "params.ts", "symbol": "PAWN_ISOLATED_OPEN_EG" }] },
+  { "name": "PAWN_BLOCKED_5_MG", "sources": [{ "file": "params.ts", "symbol": "PAWN_BLOCKED_5_MG" }] },
+  { "name": "PAWN_BLOCKED_5_EG", "sources": [{ "file": "params.ts", "symbol": "PAWN_BLOCKED_5_EG" }] },
+  { "name": "PAWN_BLOCKED_6_MG", "sources": [{ "file": "params.ts", "symbol": "PAWN_BLOCKED_6_MG" }] },
+  { "name": "PAWN_BLOCKED_6_EG", "sources": [{ "file": "params.ts", "symbol": "PAWN_BLOCKED_6_EG" }] },
+  { "name": "BISHOP_BAD_PAWNS_MG", "sources": [{ "file": "params.ts", "symbol": "BISHOP_BAD_PAWNS_MG" }] },
+  { "name": "BISHOP_BAD_PAWNS_EG", "sources": [{ "file": "params.ts", "symbol": "BISHOP_BAD_PAWNS_EG" }] },
+  { "name": "BISHOP_XRAY_PAWNS_MG", "sources": [{ "file": "params.ts", "symbol": "BISHOP_XRAY_PAWNS_MG" }] },
+  { "name": "BISHOP_XRAY_PAWNS_EG", "sources": [{ "file": "params.ts", "symbol": "BISHOP_XRAY_PAWNS_EG" }] },
+  { "name": "BISHOP_KING_RING_MG", "sources": [{ "file": "params.ts", "symbol": "BISHOP_KING_RING_MG" }] },
+  { "name": "BISHOP_KING_RING_EG", "sources": [{ "file": "params.ts", "symbol": "BISHOP_KING_RING_EG" }] },
+  { "name": "SPACE_MG", "sources": [{ "file": "params.ts", "symbol": "SPACE_MG" }] },
+  { "name": "SPACE_EG", "sources": [{ "file": "params.ts", "symbol": "SPACE_EG" }] },
+  { "name": "PASSED_ENEMY_ROOK_BEHIND_MG", "sources": [{ "file": "params.ts", "symbol": "PASSED_ENEMY_ROOK_BEHIND_MG" }] },
+  { "name": "PASSED_ENEMY_ROOK_BEHIND_EG", "sources": [{ "file": "params.ts", "symbol": "PASSED_ENEMY_ROOK_BEHIND_EG" }] },
+  { "name": "PASSED_DEFENDED_STOP_MG", "sources": [{ "file": "params.ts", "symbol": "PASSED_DEFENDED_STOP_MG" }] },
+  { "name": "PASSED_DEFENDED_STOP_EG", "sources": [{ "file": "params.ts", "symbol": "PASSED_DEFENDED_STOP_EG" }] },
+  { "name": "PASSED_SQUARE_EG", "sources": [{ "file": "params.ts", "symbol": "PASSED_SQUARE_EG" }] }
  ]
 }

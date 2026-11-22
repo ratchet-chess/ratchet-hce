@@ -15,11 +15,13 @@ import { bb } from "../../core/position";
 import { Z_PIECE } from "../../core/zobrist";
 import {
   PASSED_OUR_KING_EG, PASSED_OUR_KING_MG, PASSED_THEIR_KING_EG, PASSED_THEIR_KING_MG, PAWN_BACKWARD_EG, PAWN_BACKWARD_MG,
-  PAWN_BACKWARD_OPEN_EG, PAWN_BACKWARD_OPEN_MG, PAWN_CANDIDATE_EG, PAWN_CANDIDATE_MG, PAWN_DEFENDER_EG, PAWN_DEFENDER_MG, PAWN_DOUBLED_EG, PAWN_DOUBLED_MG, PAWN_ISOLATED_EG, PAWN_ISOLATED_MG, PAWN_PASSED_EG,
-  PAWN_PASSED_MG, PAWN_PHALANX_EG, PAWN_PHALANX_MG, SAFETY_SHELTER_EG, SAFETY_SHELTER_MG, SAFETY_STORM_EG, SAFETY_STORM_MG, SHELTER_EG, SHELTER_MG,
+  PAWN_BACKWARD_OPEN_EG, PAWN_BACKWARD_OPEN_MG, PAWN_BLOCKED_5_EG, PAWN_BLOCKED_5_MG, PAWN_BLOCKED_6_EG, PAWN_BLOCKED_6_MG,
+  PAWN_CANDIDATE_EG, PAWN_CANDIDATE_MG, PAWN_DEFENDER_EG, PAWN_DEFENDER_MG, PAWN_DOUBLED2_EG, PAWN_DOUBLED2_MG, PAWN_DOUBLED_EG,
+  PAWN_DOUBLED_MG, PAWN_ISOLATED_EG, PAWN_ISOLATED_MG, PAWN_ISOLATED_OPEN_EG, PAWN_ISOLATED_OPEN_MG, PAWN_PASSED_EG, PAWN_PASSED_MG,
+  PAWN_PHALANX_EG, PAWN_PHALANX_MG, SAFETY_SHELTER_EG, SAFETY_SHELTER_MG, SAFETY_STORM_EG, SAFETY_STORM_MG, SHELTER_EG, SHELTER_MG,
   STORM_EG, STORM_MG,
 } from "./params";
-import { FILE_H, distance, pawnAttacks, pawnAttacks2, relRank } from "./geometry";
+import { FILE_H, RANK_1, distance, pawnAttacks, pawnAttacks2, relRank } from "./geometry";
 import { S } from "./score";
 import { pawnKey } from "./state";
 
@@ -128,32 +130,47 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
 
   unchecked((spanOf[us] = span));
 
-  // isolated, per pawn, Weiss 2.0 EvalPawns; Stash 37 evaluate_doubled_isolated counts it once per file
+  // isolated, per pawn, split by open vs closed file (Stockfish 8c3d9d99 WeakUnopposed); flat Weiss 2.0 EvalPawns and file-count Stash 37 evaluate_doubled_isolated not taken
   let isolated: u64 = 0;
   for (let f = 0; f < 8; f++) {
     const file = FILE_A << <u64>f;
     const neighbors = ((file >> 1) & ~FILE_H) | ((file << 1) & ~FILE_A);
     if (!(neighbors & ours)) isolated |= ours & file;
   }
-  v += S(PAWN_ISOLATED_MG, PAWN_ISOLATED_EG) * <i32>popcnt(isolated);
 
-  // doubled, per directly stacked pawn, Weiss 2.0 EvalPawns; Stash 37 evaluate_doubled_isolated counts it once per file
+  // doubled, directly stacked (Weiss 2.0 EvalPawns) and spaced by one rank (Weiss 4024a5e PawnDoubled2); Lynx 8940a21e file-indexed table not taken
   v += S(PAWN_DOUBLED_MG, PAWN_DOUBLED_EG) * <i32>popcnt(ours & (ours << 8));
+  v += S(PAWN_DOUBLED2_MG, PAWN_DOUBLED2_EG) * <i32>popcnt(ours & (ours << 16));
+
+  // blocked pawns on relative ranks 5 and 6, Stockfish 7225d254 BlockedPawn
+  const blocked = ours & (us == 0 ? theirs >> 8 : theirs << 8);
+  if (blocked) {
+    const r5 = us == 0 ? RANK_1 << 32 : RANK_1 << 24;
+    const r6 = us == 0 ? RANK_1 << 40 : RANK_1 << 16;
+    v += S(PAWN_BLOCKED_5_MG, PAWN_BLOCKED_5_EG) * <i32>popcnt(blocked & r5);
+    v += S(PAWN_BLOCKED_6_MG, PAWN_BLOCKED_6_EG) * <i32>popcnt(blocked & r6);
+  }
 
   // backward, Stash 37 evaluate_backward's stop-square test: a stop square attacked by their pawns and out of our span. Not
   // isolated, and one value each for an open and a closed file (Ethereal 12.75 evaluatePawns PawnBackwards); Stash 37 scores only the open file
   const stops = us == 0 ? ours << 8 : ours >> 8;
   const stuck = stops & theirAtt & ~span;
-  let backward = (us == 0 ? stuck >> 8 : stuck << 8) & ~isolated;
-  if (backward) {
+  const backward = (us == 0 ? stuck >> 8 : stuck << 8) & ~isolated;
+  if (isolated | backward) {
     let closed: u64 = 0;
     b = theirs;
     while (b) {
       closed |= unchecked(FORWARD[(them << 6) + <i32>ctz(b)]);
       b &= b - 1;
     }
-    v += S(PAWN_BACKWARD_MG, PAWN_BACKWARD_EG) * <i32>popcnt(backward & closed);
-    v += S(PAWN_BACKWARD_OPEN_MG, PAWN_BACKWARD_OPEN_EG) * <i32>popcnt(backward & ~closed);
+    if (isolated) {
+      v += S(PAWN_ISOLATED_MG, PAWN_ISOLATED_EG) * <i32>popcnt(isolated & closed);
+      v += S(PAWN_ISOLATED_OPEN_MG, PAWN_ISOLATED_OPEN_EG) * <i32>popcnt(isolated & ~closed);
+    }
+    if (backward) {
+      v += S(PAWN_BACKWARD_MG, PAWN_BACKWARD_EG) * <i32>popcnt(backward & closed);
+      v += S(PAWN_BACKWARD_OPEN_MG, PAWN_BACKWARD_OPEN_EG) * <i32>popcnt(backward & ~closed);
+    }
   }
 
   // phalanx and defenders, Stash 37 evaluate_connected
@@ -170,16 +187,14 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
     defenders &= defenders - 1;
   }
 
-  // passed pawns, the plain mask: no enemy pawn ahead on its file or the next (Weiss 2.0 EvalPawns PassedMask), so a
-  // rear twin passes too, which Fruit 2.1 pawn_comp_info rejects. A candidate has its own table (Ethereal 12.75
-  // evaluatePawns PawnCandidatePasser) and is not in the passed set: the file ahead is free and their pawns' control of
-  // it is matched by ours (Stash 37 evaluate_passed, vendor/cpw/pages/Candidate_Passed_Pawn.wiki). Stash 37 merges the two
+  // passed pawns: most-advanced pawn on its file only (Stockfish f2430bf0, Fruit 2.1 pawn_comp_info; Weiss 2.0 EvalPawns rear twin not taken).
+  // A candidate has its own table (Ethereal 12.75 evaluatePawns PawnCandidatePasser) and is not in the passed set (Stash 37 evaluate_passed, vendor/cpw/pages/Candidate_Passed_Pawn.wiki).
   let passed: u64 = 0;
   b = ours;
   while (b) {
     const s = <i32>ctz(b);
     const path = unchecked(FORWARD[(us << 6) + s]);
-    if (!(path & theirs)) {
+    if (!(path & (ours | theirs))) {
       const r = relRank(s, us);
       if (!(unchecked(SPAN[(us << 6) + s]) & theirs)) {
         v += S(unchecked(PAWN_PASSED_MG[r]), unchecked(PAWN_PASSED_EG[r]));
@@ -203,7 +218,8 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
     b &= b - 1;
   }
 
-  return v + shelter(us, ours, theirs, ourKing);
+  // exclude pawns attacked by enemy pawns from shield and storm (Stockfish 7f2c8a2b evaluate_shelter, Lynx 21a3016e)
+  return v + shelter(us, ours & ~theirAtt, theirs & ~ourAtt, ourKing);
 }
 
 /**

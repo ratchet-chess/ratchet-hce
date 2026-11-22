@@ -337,6 +337,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   if (!check) {
     raw = hit && ttEval != EVAL_NONE ? ttEval : evalCached(psq);
     staticEval = raw + correction(side, corrCont);
+    // fifty-move damping outside evalCached and ttEval, Weiss a7d7783 CorrectEval (Stockfish 3af083a7)
+    if (halfmove > 12) staticEval = (staticEval * (256 - halfmove)) / 256;
     pruneEval = staticEval;
     // the TT score stands in only where a TT cut may, before the fifty-move count nears its end: Ratchet's guard
     if (hit && halfmove < 90 && (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > pruneEval : tScore < pruneEval))) pruneEval = tScore;
@@ -722,6 +724,7 @@ function qsearch(alpha: i32, beta: i32): i32 {
   if (!check) {
     raw = hit && ttEval != EVAL_NONE ? ttEval : evalCached(psq);
     best = raw + correction(side, contSlot(ssCont[p + SS - 1], ssCont[p + SS - 2]));
+    if (halfmove > 12) best = (best * (256 - halfmove)) / 256;
     if (hit && halfmove < 90 && (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > best : tScore < best))) best = tScore;
     if (best >= beta) return best;
     if (best > alpha) alpha = best;
