@@ -97,6 +97,7 @@ and an exact commit. A revision is a commit prefix or a release's version; a ver
 | Weiss | 20c95ce | https://github.com/TerjeKir/weiss | 20c95ce87fed07430f0e9f31ef91e07612fb055d | - |
 | Weiss | 216d6c1 | https://github.com/TerjeKir/weiss | 216d6c184cf1fb0cd8c727140ea28f42af13760d | - |
 | Weiss | 2568fb7 | https://github.com/TerjeKir/weiss | 2568fb7ad28554f762c41c01c96e52f237533c2d | - |
+| Weiss | 2a3f84c | https://github.com/TerjeKir/weiss | 2a3f84ca070b527f9157c6a347fe7143d0511cc8 | - |
 | Weiss | 3e95de9 | https://github.com/TerjeKir/weiss | 3e95de966decd29df00d0c73c5a44cda8454f60b | - |
 | Weiss | 3f9eb09 | https://github.com/TerjeKir/weiss | 3f9eb096a9c26158a43df3f5095cbcd8727644d8 | - |
 | Weiss | 4024a5e | https://github.com/TerjeKir/weiss | 4024a5ef54ea29fc48d16da70241ff398c297fb3 | - |

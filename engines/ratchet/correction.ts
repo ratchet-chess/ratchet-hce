@@ -15,7 +15,7 @@
  * The tables last between moves of a game and are emptied by newGame; a fresh
  * go() empties them too, so a node signature starts clean.
  */
-import { CORR_CONT, CORR_MAX, CORR_WEIGHT_MAX } from "./params";
+import { CORR_CONT, CORR_MAX, CORR_WEIGHT_MAX, CORR_W_CONT, CORR_W_MAJOR, CORR_W_MINOR, CORR_W_NONPAWN_THEM, CORR_W_NONPAWN_US, CORR_W_PAWN } from "./params";
 import { majorKey, minorKey, nonPawnKey, pawnKey } from "./state";
 
 const SIZE = 16384;
@@ -48,16 +48,16 @@ export function clearCorrection(): void {
   return (table * 2 + stm) * SIZE + <i32>(key & <u64>(SIZE - 1));
 }
 
-/** the summed correction for the side to move, in the engine's unit (Stash dcc25ed correction_hist_score, once per table) */
+/** the weighted sum of the six correction tables for the side to move, in the engine's unit (Weiss 2a3f84c GetCorrectionHistory; unweighted Stash dcc25ed sum not taken) */
 @inline export function correction(stm: i32, cont: i32): i32 {
-  return (
-    (cont >= 0 ? unchecked(contCorr[cont]) / GRAIN : 0) +
-    unchecked(corr[slot(0, stm, pawnKey)]) / GRAIN +
-    unchecked(corr[slot(1, stm, unchecked(nonPawnKey[0]))]) / GRAIN +
-    unchecked(corr[slot(2, stm, unchecked(nonPawnKey[1]))]) / GRAIN +
-    unchecked(corr[slot(3, stm, minorKey)]) / GRAIN +
-    unchecked(corr[slot(4, stm, majorKey)]) / GRAIN
-  );
+  const sum =
+    (cont >= 0 ? CORR_W_CONT * unchecked(contCorr[cont]) : 0) +
+    CORR_W_PAWN * unchecked(corr[slot(0, stm, pawnKey)]) +
+    CORR_W_NONPAWN_US * unchecked(corr[slot(1 + stm, stm, unchecked(nonPawnKey[stm]))]) +
+    CORR_W_NONPAWN_THEM * unchecked(corr[slot(1 + (stm ^ 1), stm, unchecked(nonPawnKey[stm ^ 1]))]) +
+    CORR_W_MINOR * unchecked(corr[slot(3, stm, minorKey)]) +
+    CORR_W_MAJOR * unchecked(corr[slot(4, stm, majorKey)]);
+  return sum / (GRAIN * WEIGHT_SCALE);
 }
 
 /** moves one entry toward `diff`, weighted by depth, within CORR_MAX (Stash dcc25ed correction_hist_update) */

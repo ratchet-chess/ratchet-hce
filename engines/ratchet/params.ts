@@ -828,12 +828,17 @@ export const QS_EVASIONS = 1;
 /** correction history, Stash f91e750 update_correction_histories: each table's entry within 32 at its PAWN_MG_SCORE 103 (CORRECTION_HISTORY_MAX); an update weighs 1 + depth, at most 16, of 256 */
 export const CORR_MAX = 163;
 /**
- * 1: a sixth table, by the last two moves, corrects the static eval with the other five's weight and update,
- * Clockwork e774be4 History::get_correction; 0 turns it off. Weiss 3f9eb09 GetCorrectionHistory gives it its own divisor,
- * the form not taken
+ * 1: a sixth table, by the last two moves, corrects the static eval (Clockwork e774be4 History::get_correction);
+ * 0 turns it off. Each table has its own weight out of 256 (Weiss 2a3f84c GetCorrectionHistory; unweighted Stash dcc25ed sum not taken).
  */
 export const CORR_CONT = 1;
 export const CORR_WEIGHT_MAX = 16;
+export const CORR_W_PAWN = 256;
+export const CORR_W_NONPAWN_US = 256;
+export const CORR_W_NONPAWN_THEM = 256;
+export const CORR_W_MINOR = 256;
+export const CORR_W_MAJOR = 256;
+export const CORR_W_CONT = 256;
 
 // ---------------------------------------------------------------- time
 

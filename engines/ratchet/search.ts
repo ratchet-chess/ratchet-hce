@@ -118,8 +118,8 @@ const highPv = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * MAX_PLY)
 export function initSearch(): void {
   for (let i = 1; i < 64; i++) LN[i] = <i32>Math.round(Math.log(<f64>i) * 1024);
   for (let d = 1; d < LMP_ROW; d++) {
-    LMP[d] = (LMP_BASE + LMP_PER_DEPTH * d + LMP_PER_DEPTH_SQ * d * d) >> 10;
-    LMP[LMP_ROW + d] = (LMP_IMPROVING_BASE + LMP_IMPROVING_PER_DEPTH * d + LMP_IMPROVING_PER_DEPTH_SQ * d * d) >> 10;
+    LMP[d] = max(1, (LMP_BASE + LMP_PER_DEPTH * d + LMP_PER_DEPTH_SQ * d * d) >> 10);
+    LMP[LMP_ROW + d] = max(1, (LMP_IMPROVING_BASE + LMP_IMPROVING_PER_DEPTH * d + LMP_IMPROVING_PER_DEPTH_SQ * d * d) >> 10);
   }
 }
 
