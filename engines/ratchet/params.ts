@@ -15,8 +15,8 @@ export const MAT_MG: StaticArray<i32> = [0, 267, 1757, 1460, 2014, 4376, 0];
 export const MAT_EG: StaticArray<i32> = [0, 700, 2463, 2508, 4596, 8075, 0];
 
 /** the side to move's bonus, added as a (middlegame, endgame) pair before the blend (Stash 37 Initiative) */
-export const TEMPO_MG = 152;
-export const TEMPO_EG = 276;
+export const TEMPO_MG = 132;
+export const TEMPO_EG = 309;
 
 /** KXK mop-up, vendor/cpw/pages/Mop-up_Evaluation.wiki: per step of the bare king's center distance, and per step the kings close */
 export const MOPUP_EDGE = 80;
@@ -388,22 +388,22 @@ export const SAFETY_STORM_EG: StaticArray<i32> = [
   0, 0, 658, -843, 654, 156, 3635, 1909,
 ];
 /** per attacker reaching the king's area */
-export const SAFETY_KNIGHT_MG = 200;
+export const SAFETY_KNIGHT_MG = 194;
 export const SAFETY_KNIGHT_EG = 1567;
-export const SAFETY_BISHOP_MG = 272;
+export const SAFETY_BISHOP_MG = 271;
 export const SAFETY_BISHOP_EG = 1258;
-export const SAFETY_ROOK_MG = 295;
+export const SAFETY_ROOK_MG = 311;
 export const SAFETY_ROOK_EG = 875;
-export const SAFETY_QUEEN_MG = 167;
+export const SAFETY_QUEEN_MG = 197;
 export const SAFETY_QUEEN_EG = 789;
 /** per attack on the area; Ethereal 12.75 SafetyAttackValue times 9/12, its rescale of the count to a 9-square area left out */
-export const SAFETY_ATTACK_MG = 77;
+export const SAFETY_ATTACK_MG = 85;
 export const SAFETY_ATTACK_EG = 120;
 /** per weak square of the area */
-export const SAFETY_WEAK_MG = 123;
+export const SAFETY_WEAK_MG = 173;
 export const SAFETY_WEAK_EG = -22;
 /** the attacker has no queen */
-export const SAFETY_NO_QUEEN_MG = -1511;
+export const SAFETY_NO_QUEEN_MG = -1391;
 export const SAFETY_NO_QUEEN_EG = -1390;
 /** per safe check */
 export const SAFETY_CHECK_QUEEN_MG = 219;
@@ -418,7 +418,7 @@ export const SAFETY_CHECK_KNIGHT_EG = 2829;
 export const SAFETY_UNSAFE_MG = 65;
 export const SAFETY_UNSAFE_EG = 102;
 /** the sum's offset */
-export const SAFETY_OFFSET_MG = -149;
+export const SAFETY_OFFSET_MG = -112;
 export const SAFETY_OFFSET_EG = -188;
 
 // The king's flank: its wing, four files wide, on its side's first five ranks (pieces.ts KING_FLANK). 0 turns a value off.
@@ -512,7 +512,7 @@ export const COMPLEXITY_OFFSET = -769;
 
 /** aspiration windows, Ethereal 0e47e9b aspirationWindow: from depth 4, delta 10 at its PawnValue 82, widened by half; search.ts think names where the form differs */
 export const ASP_DEPTH = 4;
-export const ASP_DELTA = 61;
+export const ASP_DELTA = 56;
 
 // ------------------------ search: table, draws and repetition
 
@@ -547,14 +547,14 @@ export const UPCOMING_REP = 2;
 
 /** reverse futility, Stash f91e750 search: depth <= 7, 86 per ply less 79 when improving, at its PAWN_MG_SCORE 103 */
 export const RFP_DEPTH = 7;
-export const RFP_MARGIN = 377;
-export const RFP_IMPROVING = 338;
+export const RFP_MARGIN = 339;
+export const RFP_IMPROVING = 281;
 
 /** razoring, Stash f91e750 search: depth <= 3, static eval + 120 per ply <= alpha, at its PAWN_MG_SCORE 103 */
 export const RAZOR_DEPTH = 3;
 /** at this depth or less, razoring returns qsearch's score without the null-window test */
 export const RAZOR_QS_DEPTH = 2;
-export const RAZOR_MARGIN = 673;
+export const RAZOR_MARGIN = 758;
 /**
  * 1: the last clause of Stash 13ac9e7 search's razoring. When the null-window qsearch does not fail low and beats beta by
  * one ply's margin, the node is searched a ply shallower. 0 turns it off. Clockwork 641d9f5 Worker::search tests qsearch
@@ -566,7 +566,7 @@ export const RAZOR_DROP = 1;
 export const NMP_DEPTH = 2;
 export const NMP_BASE = 4;
 export const NMP_DEPTH_DIV = 6;
-export const NMP_EVAL_DIV = 1144;
+export const NMP_EVAL_DIV = 1258;
 export const NMP_EVAL_MAX = 3;
 /**
  * 1: the null move is tried at an expected cut node only (Stash f91e750 search); 0 tries it at every non-PV node, as
@@ -584,12 +584,12 @@ export const NMP_EVAL_MARGIN = 149;
  * eases when improving, the form not taken.
  */
 export const NMP_STATIC = 1;
-export const NMP_STATIC_BASE = 648;
-export const NMP_STATIC_PER = 68;
+export const NMP_STATIC_BASE = 701;
+export const NMP_STATIC_PER = 66;
 
 /** ProbCut, Stash f91e750 search: depth >= 6, beta + 152 at its PAWN_MG_SCORE 103, a capture's reduced search at depth - 4 */
 export const PROBCUT_DEPTH = 6;
-export const PROBCUT_MARGIN = 833;
+export const PROBCUT_MARGIN = 812;
 export const PROBCUT_REDUCTION = 4;
 
 /** internal iterative reduction, Berserk 03cebd6 Negamax: PV or cut node, depth >= 4, no TT move */
@@ -612,7 +612,7 @@ export const SE_TT_DEPTH = 3;
 export const SE_MARGIN = 54;
 export const SE_MARGIN_DIV = 16;
 /** a double extension at a non-PV node whose singular search fails low by more than 14, while the line has at most 10: Stash f91e750 search at its PAWN_MG_SCORE 103 */
-export const SE_DOUBLE_MARGIN = 88;
+export const SE_DOUBLE_MARGIN = 113;
 export const SE_DOUBLE_MAX = 10;
 /**
  * a double extension becomes a triple when the TT move is quiet and the singular search fails low by more than this, Stash 4f1ccc1
@@ -641,17 +641,17 @@ export const CHECK_EXT = 1;
  * search.ts counts moves played against it, where Ethereal counts quiets seen.
  */
 export const LMP_DEPTH = 8;
-export const LMP_BASE = 2900;
-export const LMP_PER_DEPTH = 0;
-export const LMP_PER_DEPTH_SQ = 465;
-export const LMP_IMPROVING_BASE = 5400;
-export const LMP_IMPROVING_PER_DEPTH = -960;
-export const LMP_IMPROVING_PER_DEPTH_SQ = 1048;
+export const LMP_BASE = 2471;
+export const LMP_PER_DEPTH = -211;
+export const LMP_PER_DEPTH_SQ = 422;
+export const LMP_IMPROVING_BASE = 4823;
+export const LMP_IMPROVING_PER_DEPTH = -937;
+export const LMP_IMPROVING_PER_DEPTH_SQ = 1063;
 
 /** futility on the reduced depth, Ethereal 0e47e9b search: eval + 77 + 52 per ply <= alpha at its PawnValue 82; history limits by improving, Ethereal 12.75 FutilityPruningHistoryLimit */
 export const FUT_DEPTH = 8;
-export const FUT_BASE = 514;
-export const FUT_PER_DEPTH = 479;
+export const FUT_BASE = 501;
+export const FUT_PER_DEPTH = 567;
 export const FUT_HISTORY: StaticArray<i32> = [12000, 6000];
 
 /**
@@ -667,14 +667,14 @@ export const HIST_PRUNE_LIMIT: StaticArray<i32> = [-1000, -2500];
  * ply squared. As seeds, at its SEEPieceValues pawn 100, they are 256 and 76 in SEE_VALUE's unit
  */
 export const SEE_DEPTH = 9;
-export const SEE_QUIET = 174;
-export const SEE_NOISY = 84;
+export const SEE_QUIET = 125;
+export const SEE_NOISY = 77;
 /**
  * a quiet's bar moves by its history, in 1/1024 of SEE's unit per point: Clockwork f236181 Worker::search's form, at Clockwork
  * 641d9f5's see_pvs_hist_mult 17 and f236181 SEE::value's pawn 100, on a sum of tables with this limit; 0 turns it off.
  * Stockfish 17 search moves a capture's bar by its capture history, the form not taken
  */
-export const SEE_HISTORY = 85;
+export const SEE_HISTORY = 86;
 
 /**
  * futility for the bad captures, Clockwork 662c568 Worker::search: at depth <= 8, not in check, once the picker reaches them,
@@ -683,7 +683,7 @@ export const SEE_HISTORY = 85;
  * capture history, is the form not taken.
  */
 export const BAD_NOISY_FUT_DEPTH = 8;
-export const BAD_NOISY_FUT_MARGIN = 176;
+export const BAD_NOISY_FUT_MARGIN = 157;
 
 /**
  * the reduced depth futility and history pruning read: depth less one ply, less base + ln(depth) ln(moves) / div, the logs
@@ -691,8 +691,8 @@ export const BAD_NOISY_FUT_MARGIN = 176;
  * without moving the pruning. Its seeds are LMR's: Ethereal 12.75 initSearch's 0.75 less the ply that Ethereal counts for the
  * move itself, and 2.25, where 0e47e9b initSearch has 0.7844 and 2.4696
  */
-export const PRUNE_BASE = -318;
-export const PRUNE_DIV = 1527;
+export const PRUNE_BASE = -263;
+export const PRUNE_DIV = 1591;
 
 // ------------------------ search: reductions
 
@@ -704,45 +704,45 @@ export const PRUNE_DIV = 1527;
  * terms, and history moves the sum by whole steps, capped
  */
 export const LMR_MIN_DEPTH = 3;
-export const LMR_BASE = -226;
-export const LMR_DIV = 2321;
-export const LMR_NON_PV = 1204;
+export const LMR_BASE = -168;
+export const LMR_DIV = 2322;
+export const LMR_NON_PV = 1441;
 /**
  * 1: the non-PV term skips a node whose TT entry has the PV bit, a node that is or was on a PV (Berserk f05f9dc Negamax);
  * qsearch then keeps the bit when it stores. 0 turns it off. Clockwork 04f2f0e Worker::search takes a ply off at every
  * such node and adds one when the TT score is at or below alpha, the form not taken.
  */
 export const LMR_TT_PV = 1;
-export const LMR_NOT_IMPROVING = 1114;
+export const LMR_NOT_IMPROVING = 1050;
 export const LMR_EARLY_STAGE = 1037;
-export const LMR_HISTORY_STEP = 906;
-export const LMR_HISTORY_DIV = 5327;
+export const LMR_HISTORY_STEP = 1060;
+export const LMR_HISTORY_DIV = 5958;
 export const LMR_HISTORY_MAX = 2;
 /**
  * terms that reduce more, in 1/1024 ply, at Clockwork 641d9f5 Worker::search's tuned values: a cut node (Weiss 95b0951
  * AlphaBeta adds two plies); a quiet when the TT move is noisy; a node whose children have failed high more than LMR_FAIL_HIGH_COUNT times;
  * and each time a move has raised alpha here. 0 turns a term off
  */
-export const LMR_CUT_NODE = 1151;
-export const LMR_TT_NOISY = 936;
-export const LMR_FAIL_HIGH = 888;
+export const LMR_CUT_NODE = 1155;
+export const LMR_TT_NOISY = 971;
+export const LMR_FAIL_HIGH = 879;
 export const LMR_FAIL_HIGH_COUNT = 3;
-export const LMR_ALPHA_RAISE = 570;
+export const LMR_ALPHA_RAISE = 535;
 /**
  * late move reductions on noisy moves: their own base and divisor, Weiss 95b0951 InitReductions' 0.38 + ln d ln m / 3.76,
  * restated for a sum where 0 is no reduction and a node neither PV nor improving adds 2. Capture history moves it by whole
  * steps, at Weiss AlphaBeta's divisor 8870 scaled from its table's limit 14387 to 16384. A depth of 200 turns them off
  */
 export const LMR_NOISY_MIN_DEPTH = 3;
-export const LMR_NOISY_BASE = -1567;
-export const LMR_NOISY_DIV = 4063;
-export const LMR_NOISY_HISTORY_DIV = 9206;
+export const LMR_NOISY_BASE = -1580;
+export const LMR_NOISY_DIV = 4196;
+export const LMR_NOISY_HISTORY_DIV = 8600;
 /**
  * the re-search after a reduced search beats alpha: a ply deeper if it beat the best by more than LMR_DEEPER, Clockwork 641d9f5
  * Worker::search's 94 by its PAWN_MAT middlegame pawn 112; else a ply shallower if it beat the best by less than LMR_SHALLOWER per ply of depth.
  * 100000000 and 0 turn them off
  */
-export const LMR_DEEPER = 218;
+export const LMR_DEEPER = 214;
 export const LMR_SHALLOWER = 3;
 /** 1: a quiet's continuation history takes the re-search's result; 0 turns it off */
 export const LMR_CONT_UPDATE = 1;
@@ -776,7 +776,7 @@ export const PROMO_NOISY = 1;
 export const THREAT_HISTORY = 1;
 export const PAWN_HISTORY = 1;
 export const HIST_PAWN_MAX = 8192;
-export const HIST_DEEP_MARGIN = 234;
+export const HIST_DEEP_MARGIN = 233;
 
 /**
  * 1: the move six plies back orders quiets and takes their bonus, Clockwork 3dd022c History::get_conthist and
@@ -786,12 +786,12 @@ export const HIST_DEEP_MARGIN = 234;
 export const CONT6 = 1;
 
 /** history bonus and malus, Weiss c735b8f Bonus and Malus: min(2418, 251 d - 267) and min(693, 532 d - 163) */
-export const HIST_BONUS_MUL = 283;
-export const HIST_BONUS_SUB = 222;
-export const HIST_BONUS_MAX = 2555;
-export const HIST_MALUS_MUL = 544;
-export const HIST_MALUS_SUB = 169;
-export const HIST_MALUS_MAX = 644;
+export const HIST_BONUS_MUL = 336;
+export const HIST_BONUS_SUB = 224;
+export const HIST_BONUS_MAX = 2343;
+export const HIST_MALUS_MUL = 518;
+export const HIST_MALUS_SUB = 151;
+export const HIST_MALUS_MAX = 700;
 /**
  * 1: a fail high, or a TT cut on a lower bound, takes the malus of depth + 1 from the continuation entries of the parent's
  * move, when that move is quiet and was the first one played at its node (at a TT cut: the first or second). Stockfish 11
@@ -819,26 +819,26 @@ export const HIST_PRIOR_BONUS_DEPTH = 3;
  * (Weiss 95b0951 Quiescence); 0 searches every evasion, as Stash does. Stockfish 15 qsearch stops after two quiet evasions, the
  * form not taken.
  */
-export const QS_DELTA = 665;
+export const QS_DELTA = 620;
 export const QS_SEE = 1;
 export const QS_EVASIONS = 1;
 
 // ------------------------ search: correction history
 
 /** correction history, Stash f91e750 update_correction_histories: each table's entry within 32 at its PAWN_MG_SCORE 103 (CORRECTION_HISTORY_MAX); an update weighs 1 + depth, at most 16, of 256 */
-export const CORR_MAX = 163;
+export const CORR_MAX = 173;
 /**
  * 1: a sixth table, by the last two moves, corrects the static eval (Clockwork e774be4 History::get_correction);
  * 0 turns it off. Each table has its own weight out of 256 (Weiss 2a3f84c GetCorrectionHistory; unweighted Stash dcc25ed sum not taken).
  */
 export const CORR_CONT = 1;
-export const CORR_WEIGHT_MAX = 16;
-export const CORR_W_PAWN = 256;
-export const CORR_W_NONPAWN_US = 256;
-export const CORR_W_NONPAWN_THEM = 256;
-export const CORR_W_MINOR = 256;
-export const CORR_W_MAJOR = 256;
-export const CORR_W_CONT = 256;
+export const CORR_WEIGHT_MAX = 15;
+export const CORR_W_PAWN = 317;
+export const CORR_W_NONPAWN_US = 245;
+export const CORR_W_NONPAWN_THEM = 263;
+export const CORR_W_MINOR = 318;
+export const CORR_W_MAJOR = 318;
+export const CORR_W_CONT = 296;
 
 // ---------------------------------------------------------------- time
 
