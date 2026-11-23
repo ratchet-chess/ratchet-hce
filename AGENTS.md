@@ -64,7 +64,7 @@ bun tools/package.ts          # dist/: the .wasm, the browser Worker, native bui
 - **A rated version gets the tag `v<version>`,** at the commit that was rated.
 - **It has no fidelity bar.** It passes this repo's gates, `bun run test`, and the conversion suite.
 - **A search change passes the window gate,** `test/window.ts`. On the plain configuration with the table off, every windowed search is in Fishburn's relation to the full-window value. The plain configuration is every `off` value of the flag map.
-- **The table lookup cuts only.** A stored bound that does not cut is left alone, and the window is never tightened from it. `boundCuts` in `engines/ratchet/search.ts` names the verified form and the rejected one.
+- **The table lookup cuts only.** A stored bound that does not cut is left alone, and the window is never tightened from it. `boundCuts` in `engines/ratchet/search.ts` names the verified form and the rejected one. The table score may replace the static eval that pruning reads, and the stand pat in the quiescence search. Both uses are heuristics outside this rule.
 - **A change that keeps the node signature is a speed change.** Measure it on Bun and Node.
 - **Read a speed change and a match's `SPEED` on one quiet host,** with the testing platform's speed read.
 - **Any other change is admitted by SPRT against its parent.** Start with cheap tests, and go longer or deeper only when a result needs it.

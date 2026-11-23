@@ -70,8 +70,8 @@ const excludedAt = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX
 let rootDepth = 0;
 /**
  * mixed into the key of a node searched with a move left out, so its TT entries
- * are its own; Ratchet's multiplier, since the TT checks the key's top 16 bits,
- * which Stash f91e750 search's excluded_move << 16 leaves alone
+ * are its own; Ratchet's multiplier, since the TT checks the key's top bits (tt.ts
+ * fragmentOf), which Stash f91e750 search's excluded_move << 16 leaves alone
  */
 const EXCLUDED_MIX: u64 = 0x9e3779b97f4a7c15;
 const NULL_MOVE = 1 << 30;
@@ -165,7 +165,8 @@ export function hostScore(s: i32): i32 {
  * Algorithms, 2025): the result is an alpha-beta result of some expansion of the
  * tree, and the table stays valid. Marsland's form, raising alpha from a stored lower
  * bound, is rejected: with an entry from a deeper search it returns a value no
- * expansion of the tree has.
+ * expansion of the tree has. The table score that replaces the static eval the
+ * pruning reads, and the stand pat in qsearch, is a heuristic outside this rule.
  */
 @inline function boundCuts(bound: i32, s: i32, alpha: i32, beta: i32): bool {
   return bound == BOUND_EXACT || (bound == BOUND_LOWER ? s >= beta : s <= alpha);

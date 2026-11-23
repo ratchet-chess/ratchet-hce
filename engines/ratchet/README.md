@@ -23,9 +23,10 @@ invariants that span files.
 - **Incremental state.** `state.ts` keeps the packed sum beside the core's make and unmake. The
   search reads it; `evaluate` and the tuner recompute it from `params.ts`. `test/eval-mirror.ts`
   checks that the two agree at every node and that the eval is color-symmetric.
-- **TT entry.** Ten bytes, three to a 32-byte bucket: key16, move, score, raw eval, depth, and a
-  flags byte of bound (2 bits), PV (1) and generation (5). Bound 0 is an empty slot. The move keeps
-  the core's low 15 bits; a probe restores its flags from the board and checks it is legal. Mate
-  scores are stored relative to the node.
+- **TT entry.** Eight bytes, three to a 32-byte bucket, behind one word that holds their three
+  21-bit key fragments. An entry holds the move, the score, the raw eval, the depth, and a flags byte
+  of bound (2 bits), PV (1) and generation (5). A fragment of 0 marks an empty slot. The move keeps
+  the core's low 15 bits and a castle bit. A probe restores its other flags from the board and checks
+  that it is legal. Mate scores are stored relative to the node.
 - **Determinism.** `go(depth)` empties the TT, the histories and the correction history first, so its node signature depends
   only on the build and the position. `goClock` keeps them all between the moves of a game.

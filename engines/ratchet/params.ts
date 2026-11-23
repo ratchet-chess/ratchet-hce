@@ -23,7 +23,7 @@ export const MOPUP_EDGE = 80;
 export const MOPUP_CLOSE = 32;
 
 // Piece-square tables from White's side, indexed by square: a1 = 0, so rank 1 is the
-// first row. Hand-seeded, then Texel-tuned on the zurichess quiet set (results/tuning.md).
+// first row. Hand-seeded, then Texel-tuned; results/tuning.md names each fit's dataset.
 export const PAWN_MG: StaticArray<i32> = [
      0,   0,   0,   0,   0,   0,   0,   0,
      35,   65,   102, 70, 106,  171,  199,  28,
@@ -422,7 +422,7 @@ export const SAFETY_OFFSET_MG = -112;
 export const SAFETY_OFFSET_EG = -188;
 
 // The king's flank: its wing, four files wide, on its side's first five ranks (pieces.ts KING_FLANK). 0 turns a value off.
-// Values: fit alone with every other value fixed, results/tuning.md, 2026-11-12.
+// The SAFETY_FLANK_ values were fit alone with every other value fixed: results/tuning.md, the local-search row.
 /**
  * per flank square the enemy attacks, and per one it attacks twice, in the safety sum; Clockwork bedb1e8's four
  * KS_FLANK weights in its sum. Not taken: Stockfish 11 Evaluation::king's one count, squared, inside its king danger, since
@@ -439,7 +439,7 @@ export const SAFETY_FLANK_DEFENSE2_MG = -25;
 export const SAFETY_FLANK_DEFENSE2_EG = 32;
 /**
  * a penalty outside the sum, so it counts before two attackers reach the king's area: per attacked flank square,
- * with a square attacked twice counted twice; Stockfish 11 FlankAttacks. The fit put its middlegame half at 0.
+ * with a square attacked twice counted twice; Stockfish 11 FlankAttacks.
  */
 export const FLANK_ATTACK_MG = 6;
 export const FLANK_ATTACK_EG = -18;
@@ -635,8 +635,8 @@ export const CHECK_EXT = 1;
 /**
  * late move pruning's move count at depth d, (BASE + PER_DEPTH * d + PER_DEPTH_SQ * d * d) >> 10, one set not improving
  * and one improving; initSearch fills a table from them up to LMP_DEPTH. The form is Ethereal 1eff740 initSearch, a
- * quadratic by depth per row. These values give Ethereal 12.75 LateMovePruningCounts exactly at depths 1 to 8, so the
- * tree is the table's; the improving row needs the linear term for that. Not taken: Stockfish 7cdd5e89 search's
+ * quadratic by depth per row. The seeds are the values that give Ethereal 12.75 LateMovePruningCounts exactly at depths
+ * 1 to 8; the improving row needs the linear term for that. Not taken: Stockfish 7cdd5e89 search's
  * (3 + depth * depth) / (2 - improving), and Ethereal 1eff740's own coefficients, which each play another tree.
  * search.ts counts moves played against it, where Ethereal counts quiets seen.
  */
