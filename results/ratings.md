@@ -29,3 +29,4 @@ engine's player names its version, so each rated version keeps its row.
 | ratchet-0.3.12 | 3452 | 14 | 800 | 51.4% | ethereal-12.75, blackcore-6.0, clockwork-20260705, marvin-6.3.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 4b960f9 | 2026-11-14 |
 | ratchet-0.3.13 | 3466 | 15 | 800 | 51.5% | blackcore-6.0, clockwork-20260705, marvin-6.3.0, midnight-9 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | f1d9776 | 2026-11-15 |
 | ratchet-0.3.15 | 3470 | 14 | 800 | 52.1% | blackcore-6.0, clockwork-20260705, marvin-6.3.0, midnight-9 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | 2522202 | 2026-11-18 |
+| ratchet-hce-0.3.16 | 3495 | 15 | 800 | 49.7% | marvin-6.3.0, midnight-9, carp-3.0.1, willow-4.0 | 53+0.44, Hash 128, 8moves_v3, draw adjudication, no resign | adf0f1f | 2026-11-23 |
