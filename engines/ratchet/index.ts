@@ -32,7 +32,7 @@ import { ttAlloc, ttClear, ttEnable, ttHashfull } from "./tt";
  * the version `id name` reports: major << 16 | minor << 8 | patch; tools/tree.sh reads this line into the tree's
  * PLAYER, which names a rating's row
  */
-const VERSION = (0 << 16) | (3 << 8) | 15;
+const VERSION = (0 << 16) | (3 << 8) | 16;
 
 const HASH_MB = 16;
 

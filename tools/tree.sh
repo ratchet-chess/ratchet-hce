@@ -5,7 +5,7 @@
 #   cd <a ref's files> && WORKTREE=<worktree> sh tools/tree.sh <out-dir> [<map.json>]
 #
 # The tree is the build, the hosts and the bench, with this repo's launcher as bin/engine. PLAYER lists the one
-# player, ratchet, with the version that the files give it. With a map (tools/texel/maps/), the tree is the map's
+# player, ratchet-hce, with the version that the files give it. With a map (tools/texel/maps/), the tree is the map's
 # tuning build's: tools/tuning-build.ts adds build/ratchet-spsa.wasm and tunables.json.
 #
 # WORKTREE is the worktree whose installed compiler the build uses, since a ref's files have no node_modules.
@@ -31,4 +31,4 @@ if [ -n "$map" ]; then
   cp tunables.json "$out/"
   version="$version-tune"
 fi
-echo "ratchet $version" > "$out/PLAYER"
+echo "ratchet-hce $version" > "$out/PLAYER"

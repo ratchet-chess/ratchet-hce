@@ -152,7 +152,7 @@ port.on("message", (c: WorkerCommand) => {
 });
 
 engine.setPosition(START_FEN, []);
-port.postMessage(`name Ratchet${engine.version ? ` ${engine.version}` : ""}`);
+port.postMessage(`name RatchetHCE${engine.version ? ` ${engine.version}` : ""}`);
 if (engine.canChess960) port.postMessage("chess960");
 if (engine.timeTrace() !== undefined) port.postMessage("timerecord");
 port.postMessage("ready");

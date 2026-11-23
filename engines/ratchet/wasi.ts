@@ -15,6 +15,7 @@ import {
 
 init();
 const e = new UciEngine();
+e.name = "RatchetHCE";
 e.version = version();
 e.benchDepth = 12;
 e.chess960 = true;

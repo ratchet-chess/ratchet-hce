@@ -49,7 +49,7 @@ const stop = new Int32Array(new SharedArrayBuffer(4));
 const worker = new Worker(new URL("./worker.ts", import.meta.url), { workerData: { stop, nodesTime, release, level } });
 let markReady: () => void;
 /** the `id name` the worker sends before it is ready: the own engine's carries its version */
-let idName = "Ratchet";
+let idName = "RatchetHCE";
 /** whether the worker's build plays Chess960, which it says before it is ready */
 let chess960 = false;
 /** whether the worker's build keeps a record of its time use, which it says before it is ready */
