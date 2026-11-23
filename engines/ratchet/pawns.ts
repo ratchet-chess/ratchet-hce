@@ -226,6 +226,9 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
  * The pawn shield and storm around a color's king, its own view, on the king's file
  * and its neighbors, Ethereal 12.75 evaluateKingsPawns; records its share of the
  * safety sum in safetyOf. A distance counts ranks from the king, 7 for no pawn.
+ * A file is blocked when an enemy pawn stands directly ahead of an own pawn. Ethereal's
+ * test, ourDist != 7 && ourDist == theirDist - 1, also holds for an own pawn six ranks
+ * ahead on a file with no enemy pawn, the form not taken.
  */
 function shelter(us: i32, ours: u64, theirs: u64, king: i32): i32 {
   const kingFile = king & 7;
@@ -242,7 +245,7 @@ function shelter(us: i32, ours: u64, theirs: u64, king: i32): i32 {
     v += S(unchecked(SHELTER_MG[sh]), unchecked(SHELTER_EG[sh]));
     const sa = (onKing << 3) | ownDist;
     safety += S(unchecked(SAFETY_SHELTER_MG[sa]), unchecked(SAFETY_SHELTER_EG[sa]));
-    const blocked = ownDist != 7 && ownDist == theirDist - 1 ? 1 : 0;
+    const blocked = theirDist != 7 && ownDist == theirDist - 1 ? 1 : 0;
     const st = (blocked << 5) | (min(f, 7 - f) << 3) | theirDist;
     v += S(unchecked(STORM_MG[st]), unchecked(STORM_EG[st]));
     const ss = (blocked << 3) | theirDist;

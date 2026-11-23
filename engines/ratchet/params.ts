@@ -349,26 +349,26 @@ export const SHELTER_EG: StaticArray<i32> = [
   0, -118, -117, -131, -35, 436, -136, 102,
   0, -488, -321, -293, -91, 133, -239, -162,
 ];
-/** the pawn storm by [blocked][file from the edge][enemy pawn's distance, 7 for none], Ethereal 12.75 KingStorm */
+/** the pawn storm by [blocked][file from the edge][enemy pawn's distance, 7 for none], Ethereal 12.75 KingStorm; a blocked file has an enemy pawn, at distance 1 or more, so those rows' first and last cells are never read */
 export const STORM_MG: StaticArray<i32> = [
   26, 646, 132, -152, -112, -90, -124, -181,
   -54, 423, 72, -48, -5, 30, 29, -120,
   219, 208, -27, -38, -19, -16, 12, -69,
   325, 286, -16, -42, 9, 78, -26, -66,
-  0, -88, -25, -79, -42, 3, 75, 624,
-  0, -73, -4, 6, 180, 38, 338, -179,
-  0, -166, -29, -71, -85, -162, 310, 1264,
-  0, -5, -16, -50, 11, 103, 360, 147,
+  0, -88, -25, -79, -42, 3, 75, 0,
+  0, -73, -4, 6, 180, 38, 338, 0,
+  0, -166, -29, -71, -85, -162, 310, 0,
+  0, -5, -16, -50, 11, 103, 360, 0,
 ];
 export const STORM_EG: StaticArray<i32> = [
   85, -64, -46, -6, -52, -97, -27, -95,
   369, 185, 90, 52, 30, -30, -16, 52,
   236, 196, 128, 47, 23, 4, -43, 22,
   -39, 50, -17, -87, -132, -151, -34, -71,
-  0, -78, -163, -141, -129, -130, -192, 917,
-  0, -205, -122, 17, -92, 3, -79, 427,
-  0, -302, -125, -16, 95, 251, -450, -814,
-  0, -127, -286, -167, -109, -129, -59, 122,
+  0, -78, -163, -141, -129, -130, -192, 0,
+  0, -205, -122, 17, -92, 3, -79, 0,
+  0, -302, -125, -16, 95, 251, -450, 0,
+  0, -127, -286, -167, -109, -129, -59, 0,
 ];
 /** shelter's and storm's share of the safety sum, Ethereal 12.75 SafetyShelter and SafetyStorm */
 export const SAFETY_SHELTER_MG: StaticArray<i32> = [
@@ -381,11 +381,11 @@ export const SAFETY_SHELTER_EG: StaticArray<i32> = [
 ];
 export const SAFETY_STORM_MG: StaticArray<i32> = [
   366, 458, 280, 88, 119, 91, 77, 55,
-  0, 5, 255, 32, -50, -44, 496, 1719,
+  0, 5, 255, 32, -50, -44, 496, 0,
 ];
 export const SAFETY_STORM_EG: StaticArray<i32> = [
   970, 958, 1890, 51, -138, -407, -60, -619,
-  0, 0, 658, -843, 654, 156, 3635, 1909,
+  0, 0, 658, -843, 654, 156, 3635, 0,
 ];
 /** per attacker reaching the king's area */
 export const SAFETY_KNIGHT_MG = 194;
