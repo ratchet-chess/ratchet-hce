@@ -124,9 +124,11 @@ Ratchet HCE is built, tested and tuned with these tools:
 * The [Chess Programming Wiki](https://www.chessprogramming.org): the first source read for every feature.
 * [CCRL](https://computerchess.org.uk/ccrl/404/): the published Blitz ratings of the anchor engines, which set
   the rating scale.
-* Texel's tuning method, by Peter Österlund. Its data is the quiet-labeled positions of the
-  [zurichess tuner](https://bitbucket.org/zurichess/tuner), by Alexandru Moșoi (BSD-3-Clause), and positions from
-  the engine's own games.
+* Texel's tuning method, by Peter Österlund. The eval is tuned on the engine's own self-play from Stefan Pohl's
+  `UHO_Lichess` openings, and on Clockwork's `v5_25knpm` self-play positions. Contains information from the
+  [Clockwork dataset](https://data.cwchess.org/), which is made available under the ODbL. Versions up to 0.3.15
+  were tuned on the quiet-labeled positions of the [zurichess tuner](https://bitbucket.org/zurichess/tuner), by
+  Alexandru Moșoi (BSD-3-Clause), and positions from the engine's own games.
 
 ### Engines we learned from
 
