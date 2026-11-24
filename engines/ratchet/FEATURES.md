@@ -398,10 +398,12 @@ Used in: `history.ts` header, bonusAt; `movepick.ts` header, quietScore; `params
 
 ## History_Heuristic#Capture_History
 <!-- used-in -->
-Used in: `history.ts` header; `search.ts` updateHistories.
+Used in: `history.ts` header, captureThreatsAt; `movepick.ts` captureIndex; `params.ts` CAPTURE_THREATS; `search.ts` updateHistories.
 <!-- /used-in -->
 - 2017-11-03, Stockfish 4bc11984 MovePicker::score: a history by moved piece, to-square and captured type, added to the
   victim's value to order captures; a capture that cuts gains, the captures tried before it lose.
+- 2022-05-25, Ethereal b0e3d52 underlying_capture_history: the table is also indexed by whether the opponent attacks
+  the capture's from-square and its to-square.
 - 2025-03-30, Weiss 95b0951 UpdateHistory: each capture tried before the best move takes the malus, whatever the best
   move's kind, and a capture that cuts takes the bonus.
 - 2026-10-25, Clockwork 641d9f5 score_move: a capture's order is the victim's MVV value plus its capture history.
@@ -1124,7 +1126,7 @@ Used in: `eval.ts` header, evalWith; `params.ts` TEMPO_MG.
 
 ## Threat_History
 <!-- used-in -->
-Used in: `history.ts` header, threatsAt; `movepick.ts` quietScore; `params.ts` THREAT_HISTORY; `search.ts` rewardQuiet, search.
+Used in: `history.ts` header, attackedAt, threatsAt; `movepick.ts` quietScore; `params.ts` THREAT_HISTORY, CAPTURE_THREATS; `search.ts` rewardQuiet, search.
 <!-- /used-in -->
 - 2021-11-24, Koivisto 2bce075 SearchData th, mainThreat: a quiet history by side, the square of the opponent's main
   threat, and the move's from- and to-square; the message credits the idea to Connor, Seer's author.

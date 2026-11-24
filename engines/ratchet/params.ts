@@ -805,6 +805,13 @@ export const THREAT_HISTORY = 1;
 export const PAWN_HISTORY = 1;
 export const HIST_PAWN_MAX = 8192;
 export const HIST_DEEP_MARGIN = 233;
+/**
+ * 1: capture history is also indexed by whether the opponent attacks the capture's from square and its to square
+ * (Ethereal b0e3d52 underlying_capture_history). Each node that scores a capture then makes its attacked squares, a
+ * quiescence node too. 0: by piece, square and victim alone, the first quarter of the table.
+ * Features: History_Heuristic#Capture_History, Threat_History.
+ */
+export const CAPTURE_THREATS = 0;
 
 /**
  * 1: the move six plies back orders quiets and takes their bonus, Clockwork 3dd022c History::get_conthist and

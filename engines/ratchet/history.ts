@@ -17,7 +17,7 @@ import { BISHOP, KING, KNIGHT, MAX_PLY, PAWN, QUEEN, ROOK, moveFrom, moveTo } fr
 import { bb, hash, side } from "../../core/position";
 import { KING_ATT, KNIGHT_ATT, bishopAttacks, rookAttacks } from "../../core/tables";
 import {
-  HIST_BONUS_MAX, HIST_BONUS_MUL, HIST_BONUS_SUB, HIST_MALUS_MAX, HIST_MALUS_MUL, HIST_MALUS_SUB, HIST_PAWN_MAX, THREAT_HISTORY,
+  CAPTURE_THREATS, HIST_BONUS_MAX, HIST_BONUS_MUL, HIST_BONUS_SUB, HIST_MALUS_MAX, HIST_MALUS_MUL, HIST_MALUS_SUB, HIST_PAWN_MAX, THREAT_HISTORY,
 } from "./params";
 import { pawnAttacks } from "./geometry";
 import { pawnKey } from "./state";
@@ -35,8 +35,8 @@ const threatSet = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * (MAX_
 const threatKey = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * (MAX_PLY + 2)));
 /** (previous piece << 6 | its square) << 10 | (piece << 6 | square): 16 piece codes, so 2 MiB */
 export const contHist = changetype<StaticArray<i16>>(memory.data(sizeof<i16>() * 1024 * 1024));
-/** (piece << 6 | square) << 3 | victim type */
-export const captureHist = changetype<StaticArray<i16>>(memory.data(sizeof<i16>() * 16 * 64 * 8));
+/** (from attacked << 1 | to attacked) << 13 | (piece << 6 | square) << 3 | victim type; the attacked bits are 0 without CAPTURE_THREATS */
+export const captureHist = changetype<StaticArray<i16>>(memory.data(sizeof<i16>() * 4 * 16 * 64 * 8));
 /** one killer per ply, with room for the child of the deepest ply */
 export const killers = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + 2)));
 
@@ -46,7 +46,7 @@ export function clearHistory(): void {
   // no position hashes to all ones in practice, and a false match would only reuse a stale set for one node
   for (let i = 0; i < MAX_PLY + 2; i++) unchecked((threatKey[i] = ~(<u64>0)));
   for (let i = 0; i < 1024 * 1024; i++) unchecked((contHist[i] = 0));
-  for (let i = 0; i < 16 * 64 * 8; i++) unchecked((captureHist[i] = 0));
+  for (let i = 0; i < 4 * 16 * 64 * 8; i++) unchecked((captureHist[i] = 0));
   for (let i = 0; i < MAX_PLY + 2; i++) unchecked((killers[i] = 0));
 }
 
@@ -73,16 +73,25 @@ export function clearHistory(): void {
 
 /**
  * every square the opponent attacks, x-rays not counted (Ethereal 341c43f allAttackedSquares), for the node at `p`: made on
- * first use and kept while the ply stays at this position, so its singular search and each later move reuse it. 0 when
- * THREAT_HISTORY is off. Feature: Threat_History.
+ * first use and kept while the ply stays at this position, so its singular search and each later move reuse it.
+ * Feature: Threat_History.
  */
-@inline export function threatsAt(p: i32): u64 {
-  if (THREAT_HISTORY == 0) return 0;
+@inline export function attackedAt(p: i32): u64 {
   if (unchecked(threatKey[p]) == hash) return unchecked(threatSet[p]);
   return makeThreats(p);
 }
 
-/** makes and keeps the set threatsAt returns; apart from it so that a kept set costs its callers no call */
+/** the set that keys the butterfly table: attackedAt, or 0 when THREAT_HISTORY is off. Feature: Threat_History. */
+@inline export function threatsAt(p: i32): u64 {
+  return THREAT_HISTORY == 0 ? 0 : attackedAt(p);
+}
+
+/** the set that keys capture history: attackedAt, or 0 when CAPTURE_THREATS is off. Feature: History_Heuristic#Capture_History. */
+@inline export function captureThreatsAt(p: i32): u64 {
+  return CAPTURE_THREATS == 0 ? 0 : attackedAt(p);
+}
+
+/** makes and keeps the set attackedAt returns; apart from it so that a kept set costs its callers no call */
 function makeThreats(p: i32): u64 {
   const c = (side ^ 1) << 3;
   const occ = unchecked(bb[0] | bb[8]);

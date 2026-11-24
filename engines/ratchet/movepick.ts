@@ -14,8 +14,8 @@
 import { FLAG_EP, MAX_MOVES, MAX_PLY, PAWN, QUEEN, moveFrom, movePromo, moveTo } from "../../core/constants";
 import { generateCaptures, generateQuiets, isLegal } from "../../core/movegen";
 import { bb, board, side } from "../../core/position";
-import { butterfly, butterflyIndex, captureHist, contHist, pawnHist, pawnHistIndex, pawnHistRow, threatsAt } from "./history";
-import { GOOD_CAPTURE_DIV, MVV, PAWN_HISTORY, PROMO_NOISY } from "./params";
+import { butterfly, butterflyIndex, captureHist, captureThreatsAt, contHist, pawnHist, pawnHistIndex, pawnHistRow, threatsAt } from "./history";
+import { CAPTURE_THREATS, GOOD_CAPTURE_DIV, MVV, PAWN_HISTORY, PROMO_NOISY } from "./params";
 import { seeGe } from "./see";
 
 export const STAGE_TT = 0;
@@ -59,9 +59,14 @@ export let pickedStage = 0;
   return (m & FLAG_EP) != 0 || board[moveTo(m)] != 0 || movePromo(m) != 0;
 }
 
-/** a capture's index in captureHist */
-@inline export function captureIndex(m: i32): i32 {
-  return ((((<i32>board[moveFrom(m)]) << 6) | moveTo(m)) << 3) | victimOf(m);
+/**
+ * a capture's index in captureHist; `threats` is captureThreatsAt of its node, whose bits for the from and to squares
+ * join the index (Ethereal b0e3d52 underlying_capture_history). Feature: History_Heuristic#Capture_History.
+ */
+@inline export function captureIndex(m: i32, threats: u64): i32 {
+  const i = ((((<i32>board[moveFrom(m)]) << 6) | moveTo(m)) << 3) | victimOf(m);
+  if (CAPTURE_THREATS == 0) return i;
+  return (<i32>((threats >> <u64>moveFrom(m)) & 1) << 14) | (<i32>((threats >> <u64>moveTo(m)) & 1) << 13) | i;
 }
 
 /** a move's piece and square, the low half of a continuation-history index */
@@ -69,9 +74,9 @@ export let pickedStage = 0;
   return ((<i32>board[moveFrom(m)]) << 6) | moveTo(m);
 }
 
-/** a capture's order: the victim's value plus capture history; a queen promotion adds a queen */
-@inline export function captureScore(m: i32): i32 {
-  let s = MVV[victimOf(m)] + <i32>captureHist[captureIndex(m)];
+/** a capture's order: the victim's value plus capture history; a queen promotion adds a queen. `threats` is captureIndex's */
+@inline export function captureScore(m: i32, threats: u64): i32 {
+  let s = MVV[victimOf(m)] + <i32>captureHist[captureIndex(m, threats)];
   const promo = movePromo(m);
   if (promo == QUEEN) s += MVV[QUEEN];
   else if (promo) s -= PROMO_SCORE;
@@ -202,7 +207,8 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
             }
           }
         }
-        for (let i = base; i < e; i++) unchecked((SCORES[i] = captureScore(MOVES[i])));
+        const ct = e > base ? captureThreatsAt(ply) : 0;
+        for (let i = base; i < e; i++) unchecked((SCORES[i] = captureScore(MOVES[i], ct)));
         cur[ply] = base;
         end[ply] = e;
         badEnd[ply] = base;

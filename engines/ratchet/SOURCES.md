@@ -44,6 +44,7 @@ disputed clone's row says so; a citation of it names the program it is assumed t
 | Ethereal | 60f4d5c | https://github.com/AndyGrant/Ethereal | 60f4d5c58672aac237bf65aa6d00363c25f99734 | - |
 | Ethereal | 9050afb | https://github.com/AndyGrant/Ethereal | 9050afbd93c505e367f792dea09090672cf00e5d | - |
 | Ethereal | aa3bc68 | https://github.com/AndyGrant/Ethereal | aa3bc6833530b52b7496203ba0520ee0e8dc05cd | - |
+| Ethereal | b0e3d52 | https://github.com/AndyGrant/Ethereal | b0e3d52bb23b481a998099759a3d16e375e13c60 | - |
 | Ethereal | bd96fb9 | https://github.com/AndyGrant/Ethereal | bd96fb9ea7758629e5abea28ddcad528c7c0d8ac | - |
 | Ethereal | df2d953 | https://github.com/AndyGrant/Ethereal | df2d9537fe381d5bafd2f46492be999685eb0788 | - |
 | Ethereal | f71ac47 | https://github.com/AndyGrant/Ethereal | f71ac4769a4c9850782c02b6987f7e0187c0223f | - |

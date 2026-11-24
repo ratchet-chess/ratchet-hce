@@ -15,7 +15,7 @@ import { bb, halfmove, hash, inCheck, isRepetition, make, ply, side, unmake } fr
 import { contSlot, correction, updateCorrection } from "./correction";
 import { upcomingRepetition } from "./cycle";
 import { UNITS_PER_CP, evalCached } from "./eval";
-import { bonusAt, butterfly, butterflyIndex, captureHist, contHist, gravity, gravityFrom, killers, malusAt, rewardPawn, threatsAt } from "./history";
+import { bonusAt, butterfly, butterflyIndex, captureHist, captureThreatsAt, contHist, gravity, gravityFrom, killers, malusAt, rewardPawn, threatsAt } from "./history";
 import {
   MOVES, SCORES, STAGE_BAD_NOISY, STAGE_GOOD_NOISY, STAGE_QUIET, captureIndex, captureScore, initPicker, isNoisy, nextMove, pickedStage, pieceTo,
   quietScore, resumeAfterTT, selectBest, victimOf,
@@ -248,11 +248,14 @@ function updateHistories(best: i32, depth: i32, bonusDepth: i32, p: i32, quiets:
       }
     }
   } else if (!movePromo(best)) {
-    gravity(captureHist, captureIndex(best), bonus);
+    gravity(captureHist, captureIndex(best, captureThreatsAt(p)), bonus);
   }
-  for (let i = 0; i < captures; i++) {
-    const c = capturesTried[p * CAPTURES_MAX + i];
-    if (c != best) gravity(captureHist, captureIndex(c), malus);
+  if (captures != 0) {
+    const ct = captureThreatsAt(p);
+    for (let i = 0; i < captures; i++) {
+      const c = capturesTried[p * CAPTURES_MAX + i];
+      if (c != best) gravity(captureHist, captureIndex(c, ct), malus);
+    }
   }
 }
 
@@ -412,7 +415,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     const bar = probcutBeta - staticEval;
     const base = p * MAX_MOVES;
     const e = generateCaptures(MOVES, base);
-    for (let i = base; i < e; i++) SCORES[i] = MOVES[i] == tMove ? 1 << 30 : captureScore(MOVES[i]);
+    const ct = e > base ? captureThreatsAt(p) : 0;
+    for (let i = base; i < e; i++) SCORES[i] = MOVES[i] == tMove ? 1 << 30 : captureScore(MOVES[i], ct);
     for (let i = base; i < e; i++) {
       selectBest(i, e);
       const m = MOVES[i];
@@ -464,7 +468,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     let hist = 0;
     // a node's first move is neither pruned nor reduced, so it reads no history; a node that it cuts needs no attacked squares here
     if (played != 0) {
-      if (noisy) hist = <i32>captureHist[captureIndex(m)];
+      if (noisy) hist = <i32>captureHist[captureIndex(m, captureThreatsAt(p))];
       else {
         if (cm >= 0) cmh = <i32>contHist[cm + pt];
         if (fm >= 0) fmh = <i32>contHist[fm + pt];
@@ -758,9 +762,10 @@ function qsearch(alpha: i32, beta: i32): i32 {
   if (check && end == base) return -MATE + p;
   // only a node in check lists quiets, so only it needs the attacked squares
   const threats = check ? threatsAt(p) : 0;
+  const ct = end > base ? captureThreatsAt(p) : 0;
   for (let i = base; i < end; i++) {
     const m = MOVES[i];
-    SCORES[i] = m == tMove ? 1 << 30 : isNoisy(m) ? captureScore(m) + (1 << 18) : quietScore(m, -1, -1, -1, -1, threats);
+    SCORES[i] = m == tMove ? 1 << 30 : isNoisy(m) ? captureScore(m, ct) + (1 << 18) : quietScore(m, -1, -1, -1, -1, threats);
   }
   let bestMove = 0;
   for (let i = base; i < end; i++) {
