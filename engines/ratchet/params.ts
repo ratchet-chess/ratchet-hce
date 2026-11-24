@@ -21,6 +21,11 @@ export const TEMPO_EG = 309;
 /** KXK mop-up, vendor/cpw/pages/Mop-up_Evaluation.wiki: per step of the bare king's center distance, and per step the kings close */
 export const MOPUP_EDGE = 80;
 export const MOPUP_CLOSE = 32;
+/**
+ * KBNK: per step the bare king nears a corner of the bishop's color (eval.ts cornerDistance). Twice MOPUP_EDGE, so a
+ * step along an edge toward that corner gains even where the edge term falls
+ */
+export const MOPUP_CORNER = 160;
 
 // Piece-square tables from White's side, indexed by square: a1 = 0, so rank 1 is the
 // first row. Hand-seeded, then Texel-tuned; results/tuning.md names each fit's dataset.

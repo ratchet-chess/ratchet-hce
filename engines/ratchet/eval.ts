@@ -2,21 +2,22 @@
  * The own engine's eval: material and piece-square tables, the king-pawn terms
  * (pawns.ts), the terms that read attack maps (pieces.ts), complexity, tapered between middlegame and endgame by phase (Fruit 2.1 material_comp_info's form;
  * PeSTO's phase weights) after the endgame half is scaled (Stash 37 eval_scale_endgame), the side
- * to move's tempo, insufficient material, and KXK mop-up. Scores are for the
+ * to move's tempo, insufficient material, the wrong bishop with rook pawns, and KXK mop-up. Scores are for the
  * side to move, in the engine's unit.
  *
  * The search reads the packed (middlegame, endgame) sum that state.ts keeps
  * incrementally (psq.ts). evaluateScratch() recomputes it from params.ts, so a
  * tuning build that sets a table at run time is scored with its new values.
  */
-import { BISHOP, KING, KNIGHT, PAWN, QUEEN, ROOK } from "../../core/constants";
+import { BISHOP, FILE_A, KING, KNIGHT, PAWN, QUEEN, ROOK } from "../../core/constants";
 import { bb, hash, side } from "../../core/position";
 import { KING_ATT } from "../../core/tables";
 import {
-  COMPLEXITY_ENDGAME, COMPLEXITY_FLANKS, COMPLEXITY_OFFSET, COMPLEXITY_PAWNS, MAT_MG, MOPUP_CLOSE, MOPUP_EDGE, SCALE_BASE, SCALE_OCB, SCALE_OCB_PASSED,
+  COMPLEXITY_ENDGAME, COMPLEXITY_FLANKS, COMPLEXITY_OFFSET, COMPLEXITY_PAWNS, MAT_MG, MOPUP_CLOSE, MOPUP_CORNER, MOPUP_EDGE, SCALE_BASE, SCALE_OCB,
+  SCALE_OCB_PASSED,
   SCALE_OCB_PIECES, SCALE_OCB_PIECES_PER, SCALE_PER_PAWN, TEMPO_EG, TEMPO_MG,
 } from "./params";
-import { DARK } from "./geometry";
+import { DARK, FILE_H, distance } from "./geometry";
 import { initPawns, kingPawn, passedOf } from "./pawns";
 import { initPieces, kingSafetyEg, kingSafetyMg, pieceTerms } from "./pieces";
 import { initPsq, scratchPsq } from "./psq";
@@ -42,6 +43,44 @@ export function initEval(): void {
   return max(3 - f, f - 4) + max(3 - r, r - 4);
 }
 
+/**
+ * A square's Manhattan distance to the nearer corner of one color, 0 to 7: the dark corners a1 and h8, or the light
+ * corners h1 and a8 (CPW "KBNK Endgame", Corner-Distance; Stash 37 eval_kbnk has it as file minus rank after a flip)
+ */
+@inline function cornerDistance(s: i32, dark: bool): i32 {
+  const d = (dark ? s & 7 : 7 - (s & 7)) + (s >> 3);
+  return min(d, 14 - d);
+}
+
+/**
+ * Whether `strong` cannot win with bishops and rook pawns: its other men are its king, its pawns are on one rook
+ * file, its bishops miss the queening square, the other side has a king and pawns only, and that king holds the
+ * queening square. The king holds it when it is within one step (Stockfish 11 Endgame<KBPsK>), or when it wins the
+ * race there against the other king and the front pawn, with the tempo (CPW "Wrong Color Bishop and Rook Pawn", Uri's
+ * rule). Stash 37 scale_kbpsk's graded scale beyond one step is not taken: the positions these tests leave are won
+ * more often than drawn. Stockfish 11's second rule, the blocked b- or g-pawn, is not taken. Read against the Syzygy
+ * tables in <artifacts>/runs/hce-reads/wrong-bishop-forms.txt: no won position called a draw against a bare king.
+ */
+function wrongBishop(strong: i32, wKing: i32, bKing: i32): bool {
+  const o = strong << 3;
+  const x = o ^ 8;
+  const pawns = bb[o | PAWN];
+  const bishops = bb[o | BISHOP];
+  if (!pawns || !bishops || bb[o] != (pawns | bishops | bb[o | KING]) || bb[x] != (bb[x | PAWN] | bb[x | KING])) return false;
+  const file = !(pawns & ~FILE_A) ? 0 : !(pawns & ~FILE_H) ? 7 : -1;
+  if (file < 0) return false;
+  const q = strong == 0 ? 56 + file : file;
+  if (bishops & (((DARK >> q) & 1) != 0 ? DARK : ~DARK)) return false;
+  const sKing = strong == 0 ? wKing : bKing;
+  const xKing = strong == 0 ? bKing : wKing;
+  const d = distance(xKing, q);
+  if (d <= 1) return true;
+  const front = strong == 0 ? 63 - <i32>clz(pawns) : <i32>ctz(pawns);
+  const dl = d + (side == strong ? 1 : 0);
+  const dp = min(distance(front, q), 5) + ((xKing & 7) == file ? 1 : 0);
+  return dl < distance(sKing, q) && dl < dp;
+}
+
 const KINGSIDE: u64 = 0xf0f0f0f0f0f0f0f0;
 const QUEENSIDE: u64 = ~KINGSIDE;
 
@@ -60,8 +99,8 @@ const QUEENSIDE: u64 = ~KINGSIDE;
  * The endgame half's scale out of 256, for the side it favors: Stash 37 eval_scale_endgame,
  * one-wing rook scaling (Stockfish 16836f39 and 67818ee9), single-queen scaling (Stockfish
  * c7194bd9 and 69d3be42), one-minor-one-pawn scaling (Lynx 1d3047b5), and general one-wing
- * strong-pawn damping (Weiss b65b91e). Narrow 4-piece endgame-specific tables (Stash 37
- * endgame.c) are not taken.
+ * strong-pawn damping (Weiss b65b91e), and the wrong bishop with rook pawns (`wrongBishop`). The other narrow
+ * endgame-specific functions of Stash 37 endgame.c are not taken.
  */
 function endgameScale(eg: i32, wKing: i32, bKing: i32, phase: i32): i32 {
   const strong = eg > 0 ? 0 : 1;
@@ -77,6 +116,8 @@ function endgameScale(eg: i32, wKing: i32, bKing: i32, phase: i32): i32 {
     const wMat = material(weak);
     if (sMat - wMat <= minor) return sMat <= minor ? 0 : max(((sMat - wMat) * 8) / minor, 0);
   }
+  // its material is at most phase 2, which spares most positions the test
+  if (phase <= 2 && wrongBishop(strong, wKing, bKing)) return 0;
   // opposite bishops
   const wb = bb[BISHOP];
   const bbish = bb[8 | BISHOP];
@@ -126,7 +167,9 @@ function complexity(eg: i32, pawns: u64): i32 {
  * sum. Without pawns, rooks or queens, at most one minor each, or two knights
  * against at most one minor, is a draw (CPW "Draw Evaluation"). Against a bare king, the stronger side is paid for
  * driving it to the edge and bringing its own king close (KXK mop-up, CPW "Mop-up
- * Evaluation"). `cached` lets the king-pawn terms use their table.
+ * Evaluation"). With a bishop and a knight it is also paid for a corner of the bishop's color, where the mate is
+ * (`cornerDistance`); Stockfish 11 Endgame<KBNK>'s 64-entry table is the form not taken. It is paid nothing when its
+ * bishops and rook pawns cannot win (`wrongBishop`). `cached` lets the king-pawn terms use their table.
  */
 export function evalWith(psq: i32, cached: bool): i32 {
   const pawns = bb[PAWN] | bb[8 | PAWN];
@@ -163,10 +206,15 @@ export function evalWith(psq: i32, cached: bool): i32 {
   const bAlone = bb[8] == bb[8 | KING];
   if (wAlone != bAlone) {
     const weak = wAlone ? wKing : bKing;
-    const strongPieces = wAlone ? bb[8] & ~bb[8 | PAWN] & ~bb[8 | KING] : bb[0] & ~bb[PAWN] & ~bb[KING];
-    if (strongPieces) {
+    const o = wAlone ? 8 : 0;
+    const strongPieces = bb[o] & ~bb[o | PAWN] & ~bb[o | KING];
+    if (strongPieces && !wrongBishop(o >> 3, wKing, bKing)) {
       const dist = abs((wKing & 7) - (bKing & 7)) + abs((wKing >> 3) - (bKing >> 3));
-      const mop = MOPUP_EDGE * centerDistance(weak) + MOPUP_CLOSE * (14 - dist);
+      let mop = MOPUP_EDGE * centerDistance(weak) + MOPUP_CLOSE * (14 - dist);
+      const bishops = bb[o | BISHOP];
+      if (!pawns && popcnt(strongPieces) == 2 && popcnt(bishops) == 1 && bb[o | KNIGHT] != 0) {
+        mop += MOPUP_CORNER * (7 - cornerDistance(weak, (bishops & DARK) != 0));
+      }
       v += wAlone ? -mop : mop;
     }
   }
