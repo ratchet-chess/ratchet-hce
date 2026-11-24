@@ -811,7 +811,7 @@ export const HIST_DEEP_MARGIN = 233;
  * quiescence node too. 0: by piece, square and victim alone, the first quarter of the table.
  * Features: History_Heuristic#Capture_History, Threat_History.
  */
-export const CAPTURE_THREATS = 0;
+export const CAPTURE_THREATS = 1;
 
 /**
  * 1: the move six plies back orders quiets and takes their bonus, Clockwork 3dd022c History::get_conthist and
