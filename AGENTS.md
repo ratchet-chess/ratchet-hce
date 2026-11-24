@@ -12,7 +12,7 @@ where, ask the user.
 
 ## Terms
 
-The rows for **release**, **`SPEED`**, **conversion suite**, **player** and **tree** quote the
+The rows for **release**, **feature**, **implementation**, **`SPEED`**, **conversion suite**, **player** and **tree** quote the
 `AGENTS.md` of ratchet-historical and of ratchet-bench, which own those things.
 The rows for **WASI build** and **adapted engine** quote uci-over-wasi's.
 
@@ -24,6 +24,8 @@ The rows for **WASI build** and **adapted engine** quote uci-over-wasi's.
 | **WASI build** | a WASI preview-1 command module that speaks UCI on stdin and stdout, as UCI over WASI states; the spec calls it a module | |
 | **adapted engine** | another engine with the edits that make it a module of UCI over WASI; the how-to is `helper/README.md` | port, WASI port |
 | **release** | one program as it stood at one dated version or event; the unit of the inventory and of `engines/` | exhibit, snapshot, edition, version |
+| **feature** | a technique, named by its Chess Programming Wiki page, or by a page and section as `Page#Section` where one page covers several | mechanism |
+| **implementation** | one engine's version of a feature: what it scores or decides, and under which conditions | shape |
 | **`SPEED`** | a candidate's search speed over a base's, which scales its node budget in a match | speed ratio |
 | **conversion suite** | `tools/mate-suite.sh`: KQK and KRK starts to mate | mate test |
 | **player** | one name that a tree's `PLAYER` lists, as a match plays it: by ref, `[<ref>:][<name>][@<level>]`, or by tree, `tree:<tree>[:<name>][@<level>]` | external player |
