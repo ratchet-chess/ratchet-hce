@@ -75,11 +75,11 @@ bun tools/package.ts          # dist/: the .wasm, the browser Worker, native bui
 
 ## Tuning
 
-- **Size a tune as games per value.** Never quote another engine's game total without its count of values.
+- **Size a tune by its total games.** A value's resolution follows the total, whatever the count of values.
 - **Plan a tune as stages up the clock.** Each stage starts from the last stage's admitted values, and the first stage starts from main's.
 - **A tune's proof is its SPRT against main.** Run no detune, and no run that only shows that the tuner works.
 - **Do not replace a tune by a screen, a jump of several values, or a short SPRT.**
-- **Agree a tune's game count, its ratio and its stages with the user before it starts.**
+- **Agree a tune's map, its game count and its stages with the user before it starts.**
 
 ## Reads before games
 
