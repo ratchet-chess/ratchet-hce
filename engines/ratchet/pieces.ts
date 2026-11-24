@@ -53,9 +53,13 @@ const KING_AREA = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 128))
  */
 const KING_FLANK = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 16));
 
-/** the safety sum's divisors, Ethereal 12.75 evaluateKings's 720 and 20: the square's scales by the seeds' conversion, so its output converts too */
+/**
+ * the safety sum's divisors, Ethereal 12.75 evaluateKings's 720 and 20: the square's scales by the seeds' conversion, so its
+ * output converts too. The endgame half is linear in its sum, so its divisor and every SAFETY_*_EG value are a quarter of
+ * that scale: the penalty is the same, and the packed sum's endgame half stays within i16
+ */
 const KS_DIV_MG = 3512;
-const KS_DIV_EG = 20;
+const KS_DIV_EG = 5;
 
 export function initPieces(): void {
   for (let f = 0; f < 8; f++) {
@@ -305,7 +309,7 @@ export let kingSafetyEg = 0;
   const rookChecks = rookRays & theirR;
   const queenChecks = (bishopRays | rookRays) & theirQ;
 
-  // the endgame half can pass i16 in a large attack and wrap; a known, measured limit (README, Packed eval)
+  // the endgame half is the eval's largest packed half; its values' scale keeps it within i16 (README, Packed eval)
   let sum = unchecked(zoneWeight[us]) + unchecked(safetyOf[us]) + S(SAFETY_OFFSET_MG, SAFETY_OFFSET_EG);
   sum += S(SAFETY_ATTACK_MG, SAFETY_ATTACK_EG) * unchecked(zoneAttacks[us]);
   sum += S(SAFETY_WEAK_MG, SAFETY_WEAK_EG) * <i32>popcnt(weak & unchecked(kingArea[us]));

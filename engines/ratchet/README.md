@@ -13,10 +13,10 @@ invariants that span files.
   of K is followed by a retest of the margins.
 - **Packed eval.** Material and PSQT are one i32 per piece and square, the endgame half in the high
   16 bits (`score.ts` `S`). Each half of any sum must stay within i16. King safety's square can leave i16, so
-  its halves stay unpacked (`pieces.ts`), and `eval.ts` bounds the eval. King safety's packed sum is the known
-  exception: in a large attack its endgame half passes i16 and wraps, about one sum in 1.6M, which drops that
-  penalty to 0. Adding the halves apart cost about 0.8% of speed, so the wrap is kept
-  (`<artifacts>/scripts/ks-probe`).
+  its halves stay unpacked (`pieces.ts`), and `eval.ts` bounds the eval. King safety's packed sum has the
+  largest endgame half. Its `SAFETY_*_EG` values are a quarter of their seeds' scale, with a divisor to match
+  (`pieces.ts` `KS_DIV_EG`), which keeps that half within i16. The bound is measured, not proved:
+  `<artifacts>/scripts/ks-probe` reads the sum's range. A fit that raises those values is followed by that read.
 - **Eval cache.** `evalCached` keys the eval by the position's hash alone, so the eval reads nothing the hash
   does not cover. A build that changes an eval constant at run time clears the cache or scores through
   `evaluateScratch`.

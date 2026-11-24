@@ -312,6 +312,7 @@ export const SPACE_MG = 134;
 export const SPACE_EG = -187;
 
 // King safety, Ethereal 12.75 evaluateKings and evaluateKingsPawns: the safety sum's terms, in the units its square reads (pieces.ts KS_DIV_MG).
+// Every SAFETY_*_EG value is in a quarter of that unit, with a divisor to match (pieces.ts KS_DIV_EG).
 /** the pawn shield by [king's file][file][own pawn's distance, 7 for none], Ethereal 12.75 KingShelter */
 export const SHELTER_MG: StaticArray<i32> = [
   456, 623, 693, 612, 580, 784, 594, 316,
@@ -376,50 +377,50 @@ export const SAFETY_SHELTER_MG: StaticArray<i32> = [
   0, -217, -225, -124, 133, -106, -743, -297,
 ];
 export const SAFETY_SHELTER_EG: StaticArray<i32> = [
-  37, -147, 15, 802, 386, -2951, 2137, -868,
-  0, 386, 1295, 619, -320, -2420, -2309, -893,
+  9, -37, 4, 200, 96, -738, 534, -217,
+  0, 96, 324, 155, -80, -605, -577, -223,
 ];
 export const SAFETY_STORM_MG: StaticArray<i32> = [
   366, 458, 280, 88, 119, 91, 77, 55,
   0, 5, 255, 32, -50, -44, 496, 0,
 ];
 export const SAFETY_STORM_EG: StaticArray<i32> = [
-  970, 958, 1890, 51, -138, -407, -60, -619,
-  0, 0, 658, -843, 654, 156, 3635, 0,
+  242, 240, 472, 13, -34, -102, -15, -155,
+  0, 0, 164, -211, 164, 39, 909, 0,
 ];
 /** per attacker reaching the king's area */
 export const SAFETY_KNIGHT_MG = 194;
-export const SAFETY_KNIGHT_EG = 1567;
+export const SAFETY_KNIGHT_EG = 392;
 export const SAFETY_BISHOP_MG = 271;
-export const SAFETY_BISHOP_EG = 1258;
+export const SAFETY_BISHOP_EG = 314;
 export const SAFETY_ROOK_MG = 311;
-export const SAFETY_ROOK_EG = 875;
+export const SAFETY_ROOK_EG = 219;
 export const SAFETY_QUEEN_MG = 197;
-export const SAFETY_QUEEN_EG = 789;
+export const SAFETY_QUEEN_EG = 197;
 /** per attack on the area; Ethereal 12.75 SafetyAttackValue times 9/12, its rescale of the count to a 9-square area left out */
 export const SAFETY_ATTACK_MG = 85;
-export const SAFETY_ATTACK_EG = 120;
+export const SAFETY_ATTACK_EG = 30;
 /** per weak square of the area */
 export const SAFETY_WEAK_MG = 173;
-export const SAFETY_WEAK_EG = -22;
+export const SAFETY_WEAK_EG = -6;
 /** the attacker has no queen */
 export const SAFETY_NO_QUEEN_MG = -1391;
-export const SAFETY_NO_QUEEN_EG = -1390;
+export const SAFETY_NO_QUEEN_EG = -348;
 /** per safe check */
 export const SAFETY_CHECK_QUEEN_MG = 219;
-export const SAFETY_CHECK_QUEEN_EG = 3362;
+export const SAFETY_CHECK_QUEEN_EG = 840;
 export const SAFETY_CHECK_ROOK_MG = 696;
-export const SAFETY_CHECK_ROOK_EG = 3250;
+export const SAFETY_CHECK_ROOK_EG = 812;
 export const SAFETY_CHECK_BISHOP_MG = 364;
-export const SAFETY_CHECK_BISHOP_EG = 4289;
+export const SAFETY_CHECK_BISHOP_EG = 1072;
 export const SAFETY_CHECK_KNIGHT_MG = 540;
-export const SAFETY_CHECK_KNIGHT_EG = 2829;
+export const SAFETY_CHECK_KNIGHT_EG = 707;
 /** per unsafe check, Stash 37 UnsafeCheck; its S(18, 85) restated for Ethereal 12.75 evaluateKings' divisors, then converted */
 export const SAFETY_UNSAFE_MG = 65;
-export const SAFETY_UNSAFE_EG = 102;
+export const SAFETY_UNSAFE_EG = 26;
 /** the sum's offset */
 export const SAFETY_OFFSET_MG = -112;
-export const SAFETY_OFFSET_EG = -188;
+export const SAFETY_OFFSET_EG = -47;
 
 // The king's flank: its wing, four files wide, on its side's first five ranks (pieces.ts KING_FLANK). 0 turns a value off.
 // The SAFETY_FLANK_ values were fit alone with every other value fixed: results/tuning.md, the local-search row.
@@ -429,14 +430,14 @@ export const SAFETY_OFFSET_EG = -188;
  * this sum is squared whole.
  */
 export const SAFETY_FLANK_ATTACK_MG = 26;
-export const SAFETY_FLANK_ATTACK_EG = -4;
+export const SAFETY_FLANK_ATTACK_EG = -1;
 export const SAFETY_FLANK_ATTACK2_MG = 34;
-export const SAFETY_FLANK_ATTACK2_EG = -8;
+export const SAFETY_FLANK_ATTACK2_EG = -2;
 /** per flank square the king's side defends, and per one it defends twice */
 export const SAFETY_FLANK_DEFENSE_MG = -9;
-export const SAFETY_FLANK_DEFENSE_EG = -4;
+export const SAFETY_FLANK_DEFENSE_EG = -1;
 export const SAFETY_FLANK_DEFENSE2_MG = -25;
-export const SAFETY_FLANK_DEFENSE2_EG = 32;
+export const SAFETY_FLANK_DEFENSE2_EG = 8;
 /**
  * a penalty outside the sum, so it counts before two attackers reach the king's area: per attacked flank square,
  * with a square attacked twice counted twice; Stockfish 11 FlankAttacks.
