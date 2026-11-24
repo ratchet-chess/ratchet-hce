@@ -9,6 +9,7 @@
  * that pieces.ts reads with the span of each color's pawns.
  *
  * Every score is a packed (middlegame, endgame) pair, White's view.
+ * Features: Pawn_Structure, Passed_Pawn, Candidate_Passed_Pawn, King_Pawn_Tropism, Pawn_Hash_Table, King_Safety#Pawn_Shield, King_Safety#Pawn_Storm.
  */
 import { FILE_A, KING, PAWN } from "../../core/constants";
 import { bb } from "../../core/position";
@@ -79,6 +80,7 @@ export function clearPawns(): void {
  */
 export function kingPawn(cached: bool, wk: i32, bk: i32): i32 {
   // the pawn key with both kings, Stash 37 king_pawn_key; never 0 for a real board, so 0 marks an empty slot
+  // Feature: Pawn_Hash_Table.
   const key = pawnKey ^ unchecked(Z_PIECE[(KING << 6) + wk]) ^ unchecked(Z_PIECE[((8 | KING) << 6) + bk]);
   const entry = kpTable + (<usize>(key & <u64>(SIZE - 1)) << 6);
   if (cached && load<u64>(entry) == key) {
@@ -120,7 +122,7 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
   const them = us ^ 1;
   let v = 0;
 
-  // the squares our pawns may one day attack (Stash 37 compute_attack_span)
+  // the squares our pawns may one day attack (Stash 37 compute_attack_span). Feature: Attack_Spans.
   let span: u64 = 0;
   let b = ours;
   while (b) {
@@ -131,6 +133,7 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
   unchecked((spanOf[us] = span));
 
   // isolated, per pawn, split by open vs closed file (Stockfish 8c3d9d99 WeakUnopposed); flat Weiss 2.0 EvalPawns and file-count Stash 37 evaluate_doubled_isolated not taken
+  // Feature: Isolated_Pawn.
   let isolated: u64 = 0;
   for (let f = 0; f < 8; f++) {
     const file = FILE_A << <u64>f;
@@ -139,10 +142,11 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
   }
 
   // doubled, directly stacked (Weiss 2.0 EvalPawns) and spaced by one rank (Weiss 4024a5e PawnDoubled2); Lynx 8940a21e file-indexed table not taken
+  // Feature: Doubled_Pawn.
   v += S(PAWN_DOUBLED_MG, PAWN_DOUBLED_EG) * <i32>popcnt(ours & (ours << 8));
   v += S(PAWN_DOUBLED2_MG, PAWN_DOUBLED2_EG) * <i32>popcnt(ours & (ours << 16));
 
-  // blocked pawns on relative ranks 5 and 6, Stockfish 7225d254 BlockedPawn
+  // blocked pawns on relative ranks 5 and 6, Stockfish 7225d254 BlockedPawn. Feature: Pawn_Rams_(Bitboards).
   const blocked = ours & (us == 0 ? theirs >> 8 : theirs << 8);
   if (blocked) {
     const r5 = us == 0 ? RANK_1 << 32 : RANK_1 << 24;
@@ -152,7 +156,8 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
   }
 
   // backward, Stash 37 evaluate_backward's stop-square test: a stop square attacked by their pawns and out of our span. Not
-  // isolated, and one value each for an open and a closed file (Ethereal 12.75 evaluatePawns PawnBackwards); Stash 37 scores only the open file
+  // isolated, and one value each for an open and a closed file (Ethereal 12.75 evaluatePawns PawnBackwards); Stash 37 scores only the open file.
+  // Features: Backward_Pawn, Isolated_Pawn.
   const stops = us == 0 ? ours << 8 : ours >> 8;
   const stuck = stops & theirAtt & ~span;
   const backward = (us == 0 ? stuck >> 8 : stuck << 8) & ~isolated;
@@ -173,7 +178,7 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
     }
   }
 
-  // phalanx and defenders, Stash 37 evaluate_connected
+  // phalanx and defenders, Stash 37 evaluate_connected. Feature: Connected_Pawns.
   let phalanx = ours & ((ours >> 1) & ~FILE_H);
   while (phalanx) {
     const r = relRank(<i32>ctz(phalanx), us);
@@ -189,6 +194,7 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
 
   // passed pawns: most-advanced pawn on its file only (Stockfish f2430bf0, Fruit 2.1 pawn_comp_info; Weiss 2.0 EvalPawns rear twin not taken).
   // A candidate has its own table (Ethereal 12.75 evaluatePawns PawnCandidatePasser) and is not in the passed set (Stash 37 evaluate_passed, vendor/cpw/pages/Candidate_Passed_Pawn.wiki).
+  // Features: Passed_Pawn, Candidate_Passed_Pawn.
   let passed: u64 = 0;
   b = ours;
   while (b) {
@@ -209,6 +215,7 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
 
   // each passer, by both kings' distance to it, linear per rank, Ethereal 12.75 evaluatePassed; Stash 37
   // evaluate_passed_pos PassedOurKingDistance is a 2-D table, which adds cells that only sparse data fills
+  // Features: Passed_Pawn, King_Pawn_Tropism.
   b = passed;
   while (b) {
     const s = <i32>ctz(b);
@@ -219,6 +226,7 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
   }
 
   // exclude pawns attacked by enemy pawns from shield and storm (Stockfish 7f2c8a2b evaluate_shelter, Lynx 21a3016e)
+  // Features: King_Safety#Pawn_Shield, King_Safety#Pawn_Storm.
   return v + shelter(us, ours & ~theirAtt, theirs & ~ourAtt, ourKing);
 }
 
@@ -229,6 +237,7 @@ function sideValue(us: i32, ours: u64, theirs: u64, ourAtt: u64, theirAtt: u64, 
  * A file is blocked when an enemy pawn stands directly ahead of an own pawn. Ethereal's
  * test, ourDist != 7 && ourDist == theirDist - 1, also holds for an own pawn six ranks
  * ahead on a file with no enemy pawn, the form not taken.
+ * Features: King_Safety#Pawn_Shield, King_Safety#Pawn_Storm.
  */
 function shelter(us: i32, ours: u64, theirs: u64, king: i32): i32 {
   const kingFile = king & 7;

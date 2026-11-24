@@ -12,13 +12,13 @@ import { PSQ, scratchPsq } from "./psq";
 export let psq: i32 = 0;
 const psqStack = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + 1)));
 
-/** the pawns of both colors, hashed with the core's piece keys (Stockfish 15 Position::set_state pawnKey) */
+/** the pawns of both colors, hashed with the core's piece keys (Stockfish 15 Position::set_state pawnKey). Feature: Static_Evaluation_Correction_History. */
 export let pawnKey: u64 = 0;
-/** by color, that color's knights, bishops, rooks and queens (Stash dcc25ed nonpawn_key; Stockfish 7cdd5e89 Position::set_state nonPawnKey also hashes the king) */
+/** by color, that color's knights, bishops, rooks and queens (Stash dcc25ed nonpawn_key; Stockfish 7cdd5e89 Position::set_state nonPawnKey also hashes the king). Feature: Static_Evaluation_Correction_History. */
 export const nonPawnKey = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 2));
-/** both colors' knights and bishops, and both kings (Stash ba73642 minor_key, the kings added where it reads the key) */
+/** both colors' knights and bishops, and both kings (Stash ba73642 minor_key, the kings added where it reads the key). Feature: Static_Evaluation_Correction_History. */
 export let minorKey: u64 = 0;
-/** both colors' rooks and queens, and both kings (Stash ea9fd72 major_key, likewise) */
+/** both colors' rooks and queens, and both kings (Stash ea9fd72 major_key, likewise). Feature: Static_Evaluation_Correction_History. */
 export let majorKey: u64 = 0;
 /** the pawn key, the two non-pawn keys, the minor and the major key, saved per ply */
 const KEYS = 5;

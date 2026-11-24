@@ -32,7 +32,7 @@ The rows for **WASI build** and **adapted engine** quote uci-over-wasi's.
 ## Layout
 
 - `core/`: the board, in AssemblyScript: bitboards, magic sliders, legal move generation, Zobrist hashing and perft. It also holds the WASI build's UCI front end (`uci.ts`, `wasi.ts`) and the calls an engine makes to its host (`host.ts`).
-- `engines/ratchet/`: the own engine. Its `README.md` holds the invariants that span its files.
+- `engines/ratchet/`: the own engine. Its `README.md` holds the invariants that span its files, `SOURCES.md` maps its citations to their public sources, and `FEATURES.md` lists its features' dated implementations.
 - `host/`: the TypeScript host: the wasm wrapper, FEN, and the UCI front end for a tuning build (`host/uci/`). `host/wasi/native.c` is the WASI build's native host.
 - `vendor/uci-over-wasi/`: a copy of uci-over-wasi's host, which runs a WASI build under Bun or Node and in a browser Worker. Its `README.md` names the commit. Fix the host in uci-over-wasi, never in the copy.
 - `bin/`: `ratchet`, the UCI launcher, and `engine`, the tree's launcher.
@@ -57,8 +57,9 @@ bun tools/package.ts          # dist/: the .wasm, the browser Worker, native bui
 
 - **The browser is the target, and the CCRL Blitz rating is the ruler.** The target sets the engine's limits: one thread, a wasm build, the hash a page can hold, and a cold start. A change is judged by matches on the testing platform. Browser measurements check that the limits still hold. Do not tune toward the rating itself.
 - **The own engine is written in Ratchet's own code.** Ideas come from anywhere; code is not ported.
-- **Cite the origin of each function's form** in its comment: the engine, paper or page it follows.
-- **Read a feature's Chess Programming Wiki page and two other engines before choosing its form.** Its comment names the form it rejected.
+- **Cite the implementation each function follows** in its comment: the engine, paper or page.
+- **Name the features a citing comment's code implements,** as `Feature: Delta_Pruning.` `engines/ratchet/FEATURES.md` lists each feature's dated implementations, and `bun tools/citations.ts --write` writes its "Used in" lines.
+- **Read a feature's Chess Programming Wiki page and two other engines before choosing its implementation.** Its comment names the implementation it rejected.
 - **Take ideas only from an engine that has no license.** Take no constant and no table from it. Sirius is such an engine.
 - **Its version is a constant that `id name` reports.** A stage's end bumps the minor version, and that commit is rated. A gain measured by the admission chain bumps the patch version. When to run the chain is a judgment call.
 - **A rated version gets the tag `v<version>`,** at the commit that was rated.

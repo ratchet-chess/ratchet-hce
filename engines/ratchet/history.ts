@@ -10,6 +10,8 @@
  *
  * The tables last between moves of a game (Stockfish 946fa476 id_loop) and are emptied
  * by newGame; a fresh go() empties them too, so a node signature starts clean.
+ *
+ * Features: Killer_Heuristic, History_Heuristic, Threat_History, History_Heuristic#Continuation_History, Pawn_History, History_Heuristic#Capture_History.
  */
 import { BISHOP, KING, KNIGHT, MAX_PLY, PAWN, QUEEN, ROOK, moveFrom, moveTo } from "../../core/constants";
 import { bb, hash, side } from "../../core/position";
@@ -24,7 +26,7 @@ export const HIST_MAX = 16384;
 
 /** (from attacked << 1 | to attacked) * 8192 + side * 4096 + (from | to << 6); butterflyIndex gives it */
 export const butterfly = changetype<StaticArray<i16>>(memory.data(sizeof<i16>() * 4 * 2 * 4096));
-/** pawn structures told apart, Stockfish b0658f09 PAWN_HISTORY_SIZE */
+/** pawn structures told apart, Stockfish b0658f09 PAWN_HISTORY_SIZE. Feature: Pawn_History. */
 const PAWN_STRUCTURES = 512;
 /** (pawn key's low bits) << 10 | (piece << 6 | square); pawnHistIndex gives it. 1 MiB */
 export const pawnHist = changetype<StaticArray<i16>>(memory.data(sizeof<i16>() * PAWN_STRUCTURES * 1024));
@@ -48,7 +50,7 @@ export function clearHistory(): void {
   for (let i = 0; i < MAX_PLY + 2; i++) unchecked((killers[i] = 0));
 }
 
-/** the bonus for the move that cut at `depth`, Weiss c735b8f Bonus */
+/** the bonus for the move that cut at `depth`, Weiss c735b8f Bonus. Feature: History_Heuristic. */
 @inline export function bonusAt(depth: i32): i32 {
   return min(HIST_BONUS_MAX, max(0, HIST_BONUS_MUL * depth - HIST_BONUS_SUB));
 }
@@ -72,7 +74,7 @@ export function clearHistory(): void {
 /**
  * every square the opponent attacks, x-rays not counted (Ethereal 341c43f allAttackedSquares), for the node at `p`: made on
  * first use and kept while the ply stays at this position, so its singular search and each later move reuse it. 0 when
- * THREAT_HISTORY is off
+ * THREAT_HISTORY is off. Feature: Threat_History.
  */
 @inline export function threatsAt(p: i32): u64 {
   if (THREAT_HISTORY == 0) return 0;
@@ -129,7 +131,7 @@ function makeThreats(p: i32): u64 {
   gravityWithin(pawnHist, pawnHistIndex(pt), bonus, HIST_PAWN_MAX);
 }
 
-/** gravity against `base` instead of the entry itself, clamped to +-HIST_MAX (Stash 93a6d5f update_piece_hist_entry) */
+/** gravity against `base` instead of the entry itself, clamped to +-HIST_MAX (Stash 93a6d5f update_piece_hist_entry). Feature: History_Heuristic#Continuation_History. */
 @inline export function gravityFrom(table: StaticArray<i16>, i: i32, base: i32, bonus: i32): void {
   const e = <i32>unchecked(table[i]) + bonus - (base * abs(bonus)) / HIST_MAX;
   unchecked((table[i] = <i16>max(-HIST_MAX, min(HIST_MAX, e))));

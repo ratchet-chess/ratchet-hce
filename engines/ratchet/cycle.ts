@@ -16,6 +16,8 @@
  *   Position::upcoming_repetition and Stash 079fcba game_has_cycle, asking for a second occurrence when the earlier
  *   position is at or before the root.
  * - Weiss 073eda5 AlphaBeta tests only a move that takes the last one back, with no table.
+ *
+ * Feature: Upcoming_Repetition_Detection.
  */
 import { moveFrom, moveTo, BISHOP, KING, KNIGHT, QUEEN, ROOK } from "../../core/constants";
 import { bb, halfmove, hash, hashBack, pliesKept, ply } from "../../core/position";
@@ -121,7 +123,8 @@ export function upcomingRepetition(excluded: i32): bool {
       if (moveFrom(excluded) == from && moveTo(excluded) == a + b - from) continue;
     }
     if (ply <= i) {
-      // the matched position is at or before the root, so a draw needs an earlier occurrence of it (Stockfish 6b782211)
+      // the matched position is at or before the root, so a draw needs an earlier occurrence of it (Stockfish 6b782211).
+      // Feature: Upcoming_Repetition_Detection.
       let repeated = false;
       for (let k = i + 4; k <= end; k += 2) {
         if (hashBack(k) == then) {

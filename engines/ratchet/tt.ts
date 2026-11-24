@@ -8,6 +8,8 @@
  * flags = bound (2 bits) | PV (1 bit) << 2 | generation (5 bits) << 3. Bound 0 is
  * an empty slot. The move keeps the core's low 15 bits and a castle bit above them; the
  * probe restores the other flags from the board. qsearch stores at depth 0.
+ *
+ * Features: Transposition_Table, Transposition_Table#Bucket_Systems, Transposition_Table#Aging.
  */
 import { FLAG_CASTLE, FLAG_DOUBLE, FLAG_EP, PAWN, moveFrom, moveTo } from "../../core/constants";
 import { board, ep } from "../../core/position";
@@ -90,7 +92,8 @@ export function ttNewSearch(): void {
 
 /**
  * the permille of entries in the first 1000 buckets that this search stored, for UCI's hashfull: Weiss c735b8f
- * HashFull counts only the current generation, where Ethereal 0e47e9b tt_hashfull counts every filled entry
+ * HashFull counts only the current generation, where Ethereal 0e47e9b tt_hashfull counts every filled entry.
+ * Feature: Hashfull.
  */
 export function ttHashfull(): i32 {
   const n = <usize>min<u64>(1000, buckets);
@@ -129,6 +132,7 @@ export function ttProbe(key: u64): bool {
  * least depth less 8 per generation of age (Stockfish 9dbb3ae8 TranspositionTable::probe). A result for the
  * same key that is not exact and is more than 2 plies shallower is dropped, and a
  * store without a move keeps the old one (Ethereal 0e47e9b tt_store).
+ * Features: Transposition_Table#Bucket_Systems, Transposition_Table#Aging, Transposition_Table#Depth-Preferred.
  */
 export function ttStore(key: u64, move: i32, score: i32, rawEval: i32, depth: i32, bound: i32, pv: bool): void {
   if (!ttEnabled) return;

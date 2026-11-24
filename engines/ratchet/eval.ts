@@ -8,6 +8,7 @@
  * The search reads the packed (middlegame, endgame) sum that state.ts keeps
  * incrementally (psq.ts). evaluateScratch() recomputes it from params.ts, so a
  * tuning build that sets a table at run time is scored with its new values.
+ * Features: Tapered_Eval, Draw_Evaluation, Initiative, Tempo, Wrong_Color_Bishop_and_Rook_Pawn, Mop-up_Evaluation.
  */
 import { BISHOP, FILE_A, KING, KNIGHT, PAWN, QUEEN, ROOK } from "../../core/constants";
 import { bb, hash, side } from "../../core/position";
@@ -46,6 +47,7 @@ export function initEval(): void {
 /**
  * A square's Manhattan distance to the nearer corner of one color, 0 to 7: the dark corners a1 and h8, or the light
  * corners h1 and a8 (CPW "KBNK Endgame", Corner-Distance; Stash 37 eval_kbnk has it as file minus rank after a flip)
+ * Feature: KBNK_Endgame.
  */
 @inline function cornerDistance(s: i32, dark: bool): i32 {
   const d = (dark ? s & 7 : 7 - (s & 7)) + (s >> 3);
@@ -60,6 +62,7 @@ export function initEval(): void {
  * rule). Stash 37 scale_kbpsk's graded scale beyond one step is not taken: the positions these tests leave are won
  * more often than drawn. Stockfish 11's second rule, the blocked b- or g-pawn, is not taken. Read against the Syzygy
  * tables in <artifacts>/runs/hce-reads/wrong-bishop-forms.txt: no won position called a draw against a bare king.
+ * Feature: Wrong_Color_Bishop_and_Rook_Pawn.
  */
 function wrongBishop(strong: i32, wKing: i32, bKing: i32): bool {
   const o = strong << 3;
@@ -84,7 +87,7 @@ function wrongBishop(strong: i32, wKing: i32, bKing: i32): bool {
 const KINGSIDE: u64 = 0xf0f0f0f0f0f0f0f0;
 const QUEENSIDE: u64 = ~KINGSIDE;
 
-/** a color's non-pawn material at the middlegame values, Stash 37 stack->material */
+/** a color's non-pawn material at the middlegame values, Stash 37 stack->material. Feature: Material. */
 @inline function material(c: i32): i32 {
   const o = c << 3;
   return (
@@ -101,6 +104,7 @@ const QUEENSIDE: u64 = ~KINGSIDE;
  * c7194bd9 and 69d3be42), one-minor-one-pawn scaling (Lynx 1d3047b5), and general one-wing
  * strong-pawn damping (Weiss b65b91e), and the wrong bishop with rook pawns (`wrongBishop`). The other narrow
  * endgame-specific functions of Stash 37 endgame.c are not taken.
+ * Features: Draw_Evaluation, Wrong_Color_Bishop_and_Rook_Pawn, Bishops_of_Opposite_Colors.
  */
 function endgameScale(eg: i32, wKing: i32, bKing: i32, phase: i32): i32 {
   const strong = eg > 0 ? 0 : 1;
@@ -110,6 +114,7 @@ function endgameScale(eg: i32, wKing: i32, bKing: i32, phase: i32): i32 {
   // no pawns, and at most a minor ahead. Stash 37 draws the line at its bishop, which its values make the greater minor;
   // the line here is the greater of the two tuned minors, so a tune that puts the knight above the bishop cannot carry
   // a lone knight past it
+  // Feature: Draw_Evaluation.
   if (!sPawns) {
     const minor = max(MAT_MG[KNIGHT], bishop);
     const sMat = material(strong);
@@ -127,21 +132,22 @@ function endgameScale(eg: i32, wKing: i32, bKing: i32, phase: i32): i32 {
       : SCALE_OCB + SCALE_OCB_PASSED * <i32>popcnt(passedOf[strong]);
   }
   const sPawnCount = <i32>popcnt(sPawns);
-  // one minor vs one minor with a single strong pawn, Lynx 1d3047b5
+  // one minor vs one minor with a single strong pawn, Lynx 1d3047b5. Feature: Draw_Evaluation.
   if (phase == 2 && sPawnCount == 1 && (bb[KNIGHT] | wb) != 0 && (bb[8 | KNIGHT] | bbish) != 0) return 128;
   const oneWing = sPawns != 0 && (!(sPawns & KINGSIDE) || !(sPawns & QUEENSIDE));
   // one-wing rook endgame with small pawn lead and defending king near its pawns, Stockfish 16836f39 and 67818ee9, Stash 37 eval_scale_endgame
+  // Feature: Draw_Evaluation.
   if (phase == 4 && oneWing && popcnt(bb[ROOK]) == 1 && popcnt(bb[8 | ROOK]) == 1) {
     const wPawns = bb[(weak << 3) | PAWN];
     if (sPawnCount <= <i32>popcnt(wPawns) + 1 && (unchecked(KING_ATT[weak == 0 ? wKing : bKing]) & wPawns) != 0) return 130;
   }
   let scale = min(SCALE_BASE + SCALE_PER_PAWN * sPawnCount, 256);
-  // single-queen endgame scaled by enemy minor count, Stockfish c7194bd9 and 69d3be42
+  // single-queen endgame scaled by enemy minor count, Stockfish c7194bd9 and 69d3be42. Feature: Draw_Evaluation.
   if (popcnt(bb[QUEEN] | bb[8 | QUEEN]) == 1) {
     const oppMinors = bb[QUEEN] ? <i32>popcnt(bb[8 | KNIGHT] | bbish) : <i32>popcnt(bb[KNIGHT] | wb);
     return min(scale, 148 + 12 * oppMinors);
   }
-  // strong pawns on one wing only, Weiss b65b91e ScaleFactor
+  // strong pawns on one wing only, Weiss b65b91e ScaleFactor. Feature: Draw_Evaluation.
   if (oneWing) scale = max(scale - 24, 32);
   return scale;
 }
@@ -152,7 +158,7 @@ const EVAL_MAX = 30000;
 /**
  * The endgame half's adjustment by how likely the stronger side is to convert,
  * Xiphos 0.6 eval's initiative and Ethereal 12.75 evaluateComplexity. It never changes
- * which side is ahead.
+ * which side is ahead. Feature: Initiative.
  */
 function complexity(eg: i32, pawns: u64): i32 {
   const flanks = pawns & KINGSIDE && pawns & QUEENSIDE ? COMPLEXITY_FLANKS : 0;
@@ -170,6 +176,7 @@ function complexity(eg: i32, pawns: u64): i32 {
  * Evaluation"). With a bishop and a knight it is also paid for a corner of the bishop's color, where the mate is
  * (`cornerDistance`); Stockfish 11 Endgame<KBNK>'s 64-entry table is the form not taken. It is paid nothing when its
  * bishops and rook pawns cannot win (`wrongBishop`). `cached` lets the king-pawn terms use their table.
+ * Features: Draw_Evaluation, Mop-up_Evaluation, KBNK_Endgame, Wrong_Color_Bishop_and_Rook_Pawn, Tapered_Eval, Tempo.
  */
 export function evalWith(psq: i32, cached: bool): i32 {
   const pawns = bb[PAWN] | bb[8 | PAWN];
@@ -223,7 +230,7 @@ export function evalWith(psq: i32, cached: bool): i32 {
   return side == 0 ? v : -v;
 }
 
-/** by low bits of the position's hash: its high 48 bits and its eval in the low 16, Ethereal 12.75 EvalEntry; 0 when empty */
+/** by low bits of the position's hash: its high 48 bits and its eval in the low 16, Ethereal 12.75 EvalEntry; 0 when empty. Feature: Evaluation_Hash_Table. */
 const EVAL_CACHE_SIZE = 1 << 14;
 const evalCache = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * EVAL_CACHE_SIZE));
 
@@ -231,7 +238,7 @@ export function clearEvalCache(): void {
   for (let i = 0; i < EVAL_CACHE_SIZE; i++) unchecked((evalCache[i] = 0));
 }
 
-/** the eval for the search, from the cache where it can, Ethereal 12.75 getCachedEvaluation and storeCachedEvaluation */
+/** the eval for the search, from the cache where it can, Ethereal 12.75 getCachedEvaluation and storeCachedEvaluation. Feature: Evaluation_Hash_Table. */
 export function evalCached(psq: i32): i32 {
   const i = <i32>(hash & <u64>(EVAL_CACHE_SIZE - 1));
   const entry = unchecked(evalCache[i]);

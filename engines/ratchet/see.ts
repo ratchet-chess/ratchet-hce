@@ -4,6 +4,7 @@
  * attacker first. The form is Stockfish 15 Position::see_ge: a swap list
  * kept as one running balance, with x-rays added as pieces leave the board.
  * Pins are ignored. Castling, en passant and promotions score as an even trade.
+ * Feature: Static_Exchange_Evaluation.
  */
 import { BISHOP, FLAG_CASTLE, FLAG_EP, KING, KNIGHT, PAWN, QUEEN, ROOK, moveFrom, movePromo, moveTo } from "../../core/constants";
 import { bb, board, side } from "../../core/position";

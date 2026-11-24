@@ -13,7 +13,7 @@
  * A null move or the root's edge on either ply leaves it out.
  *
  * The tables last between moves of a game and are emptied by newGame; a fresh
- * go() empties them too, so a node signature starts clean.
+ * go() empties them too, so a node signature starts clean. Feature: Static_Evaluation_Correction_History.
  */
 import { CORR_CONT, CORR_MAX, CORR_WEIGHT_MAX, CORR_W_CONT, CORR_W_MAJOR, CORR_W_MINOR, CORR_W_NONPAWN_THEM, CORR_W_NONPAWN_US, CORR_W_PAWN } from "./params";
 import { majorKey, minorKey, nonPawnKey, pawnKey } from "./state";
@@ -48,7 +48,7 @@ export function clearCorrection(): void {
   return (table * 2 + stm) * SIZE + <i32>(key & <u64>(SIZE - 1));
 }
 
-/** the weighted sum of the six correction tables for the side to move, in the engine's unit (Weiss 2a3f84c GetCorrectionHistory; unweighted Stash dcc25ed sum not taken) */
+/** the weighted sum of the six correction tables for the side to move, in the engine's unit (Weiss 2a3f84c GetCorrectionHistory; unweighted Stash dcc25ed sum not taken). Feature: Static_Evaluation_Correction_History. */
 @inline export function correction(stm: i32, cont: i32): i32 {
   const sum =
     (cont >= 0 ? CORR_W_CONT * unchecked(contCorr[cont]) : 0) +
@@ -60,7 +60,7 @@ export function clearCorrection(): void {
   return sum / (GRAIN * WEIGHT_SCALE);
 }
 
-/** moves one entry toward `diff`, weighted by depth, within CORR_MAX (Stash dcc25ed correction_hist_update) */
+/** moves one entry toward `diff`, weighted by depth, within CORR_MAX (Stash dcc25ed correction_hist_update). Feature: Static_Evaluation_Correction_History. */
 @inline function update(table: StaticArray<i32>, i: i32, w: i32, diff: i32): void {
   const v = (unchecked(table[i]) * (WEIGHT_SCALE - w) + diff * GRAIN * w) / WEIGHT_SCALE;
   unchecked((table[i] = max(-CORR_MAX * GRAIN, min(CORR_MAX * GRAIN, v))));

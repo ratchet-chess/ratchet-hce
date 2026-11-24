@@ -1,7 +1,7 @@
 /**
  * The eval's packed score: a (middlegame, endgame) pair in one i32, the endgame in the
  * high half (Stockfish 11 Score). Sums and differences of packed pairs stay exact while
- * each half stays within i16.
+ * each half stays within i16. Feature: Tapered_Eval.
  */
 
 /** a packed pair */

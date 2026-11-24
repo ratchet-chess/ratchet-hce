@@ -25,6 +25,8 @@
  *
  * Every limit is in the host clock's milliseconds. Under the node clock the host
  * counts nodes as time, so these rules stay deterministic there.
+ *
+ * Features: Time_Management, Time_Management#Soft_Bound, Best_Move_Node_Share, Extra_Time_on_Falling_Score.
  */
 import {
   TM_HARD_CAP, TM_HARD_MUL, TM_INC_MOVES, TM_INC_MOVES_PER_MS, TM_MTG_CAP, TM_MTG_SHARE, TM_NODE_BASE, TM_NODE_MUL, TM_ONE_MOVE, TM_OVERHEAD, TM_SHARE,
@@ -108,6 +110,7 @@ let nodeLimit: f64 = -1;
  * nodes past the limit, once its first iteration is done. This follows Stockfish 19 SearchManager::check_time,
  * which tests `Limits.nodes` at its periodic clock check. Rejected: Ethereal 0e47e9b tm_stop_early and
  * Weiss c735b8f OutOfTime test the limit at every node, exact at the cost of a compare in every node.
+ * Feature: Time_Management.
  */
 export function setNodeLimit(nodes: f64): void {
   nodeLimit = nodes;
