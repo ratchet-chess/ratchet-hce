@@ -10,7 +10,7 @@
  * same list a filter of the whole one would give.
  */
 import { BISHOP, FILE_A, FLAG_CASTLE, FLAG_DOUBLE, FLAG_EP, KING, KNIGHT, NO_SQ, PAWN, QUEEN, ROOK, movePromo } from "./constants";
-import { ROOK_SQ, attackedWith, bb, board, castleIndex, castling, ep, make, side, unmake } from "./position";
+import { attackedWith, bb, board, castling, ep, make, side, unmake } from "./position";
 import { BETWEEN, KING_ATT, KNIGHT_ATT, LINE, PAWN_ATT, bishopAttacks, bit, rookAttacks } from "./tables";
 
 @inline function pushPromos(out: StaticArray<i32>, n: i32, base: i32): i32 {
@@ -178,12 +178,24 @@ export function generateQuiets(out: StaticArray<i32>, start: i32): i32 {
     }
   }
 
-  // Castling: rights imply king and rook are home; not out of, through or into check. The h-side first.
+  // Castling: rights imply king and rook are home; not out of, through or into check.
   if (quiets && !checkers) {
-    const cr = castling >> (us << 1);
-    const base = us == 0 ? 0 : 56;
-    if (cr & 1 && castleOk(us << 1, ksq, base + 6, them, occ)) out[n++] = ksq | ((base + 6) << 6) | FLAG_CASTLE;
-    if (cr & 2 && castleOk((us << 1) | 1, ksq, base + 2, them, occ)) out[n++] = ksq | ((base + 2) << 6) | FLAG_CASTLE;
+    const cr = castling;
+    if (us == 0) {
+      if (cr & 1 && !board[5] && !board[6] && !attackedWith(5, them, occ) && !attackedWith(6, them, occ)) {
+        out[n++] = 4 | (6 << 6) | FLAG_CASTLE;
+      }
+      if (cr & 2 && !board[3] && !board[2] && !board[1] && !attackedWith(3, them, occ) && !attackedWith(2, them, occ)) {
+        out[n++] = 4 | (2 << 6) | FLAG_CASTLE;
+      }
+    } else {
+      if (cr & 4 && !board[61] && !board[62] && !attackedWith(61, them, occ) && !attackedWith(62, them, occ)) {
+        out[n++] = 60 | (62 << 6) | FLAG_CASTLE;
+      }
+      if (cr & 8 && !board[59] && !board[58] && !board[57] && !attackedWith(59, them, occ) && !attackedWith(58, them, occ)) {
+        out[n++] = 60 | (58 << 6) | FLAG_CASTLE;
+      }
+    }
   }
 
   return n;
@@ -204,11 +216,10 @@ export function isLegal(m: i32): bool {
   const p = <i32>board[from];
   if (!p || (p & 8) != us8) return false;
   const type = p & 7;
-  const occ = bb[0] | bb[8];
-  // a castle's king may end on its own rook's square, so it is judged before the capture test
-  if (m & FLAG_CASTLE) return type == KING && castleLegal(m, occ);
   const victim = <i32>board[to];
   if (victim && ((victim & 8) == us8 || (victim & 7) == KING)) return false;
+  const occ = bb[0] | bb[8];
+  if (m & FLAG_CASTLE) return type == KING && castleLegal(m, occ);
   if (type == PAWN) {
     const fwd = us == 0 ? 8 : -8;
     if ((to >= 56 || to < 8) != (promo != 0)) return false;
@@ -254,33 +265,15 @@ export function isLegal(m: i32): bool {
 
 /** whether castling move m is legal: generateMoves()'s castling test */
 function castleLegal(m: i32, occ: u64): bool {
-  if (m & ~(4095 | FLAG_CASTLE)) return false;
-  const from = m & 63;
-  const to = (m >>> 6) & 63;
-  const base = side == 0 ? 0 : 56;
-  if (from != <i32>ctz(bb[(side << 3) | KING]) || (to != base + 6 && to != base + 2)) return false;
-  const i = castleIndex(to);
-  if (!(castling & (1 << i)) || attackedWith(from, side ^ 1, occ)) return false;
-  return castleOk(i, from, to, side ^ 1, occ);
-}
-
-/**
- * Whether the castle of right index i is open, the king not in check: every square the king and rook cross or land
- * on is empty but for the two of them, and no square the king crosses or lands on is attacked. Attacks are read
- * with the rook gone, so a rook that shields the king's destination does not count; in a standard start that
- * changes nothing. Weiss c735b8f CastleLegal, which reads only the destination with the rook gone; on the first rank
- * a square the king crosses can be seen through the rook's square only if its destination can.
- */
-function castleOk(i: i32, ksq: i32, kto: i32, them: i32, occ: u64): bool {
-  const rf = <i32>ROOK_SQ[i];
-  const rto = (kto & 7) == 6 ? kto - 1 : kto + 1;
-  const path = (BETWEEN[(ksq << 6) + kto] | bit(kto) | BETWEEN[(rf << 6) + rto] | bit(rto)) & ~(bit(ksq) | bit(rf));
-  if (occ & path) return false;
-  const o = occ ^ bit(rf);
-  let cross = BETWEEN[(ksq << 6) + kto] | bit(kto);
-  while (cross) {
-    if (attackedWith(<i32>ctz(cross), them, o)) return false;
-    cross &= cross - 1;
+  const them = side ^ 1;
+  const cr = castling;
+  if (attackedWith(<i32>ctz(bb[(side << 3) | KING]), them, occ)) return false;
+  if (side == 0) {
+    if (m == (4 | (6 << 6) | FLAG_CASTLE)) return (cr & 1) != 0 && !board[5] && !board[6] && !attackedWith(5, them, occ) && !attackedWith(6, them, occ);
+    if (m == (4 | (2 << 6) | FLAG_CASTLE)) return (cr & 2) != 0 && !board[3] && !board[2] && !board[1] && !attackedWith(3, them, occ) && !attackedWith(2, them, occ);
+  } else {
+    if (m == (60 | (62 << 6) | FLAG_CASTLE)) return (cr & 4) != 0 && !board[61] && !board[62] && !attackedWith(61, them, occ) && !attackedWith(62, them, occ);
+    if (m == (60 | (58 << 6) | FLAG_CASTLE)) return (cr & 8) != 0 && !board[59] && !board[58] && !board[57] && !attackedWith(59, them, occ) && !attackedWith(58, them, occ);
   }
-  return true;
+  return false;
 }

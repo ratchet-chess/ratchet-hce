@@ -18,7 +18,6 @@
  * which searches bench/positions.txt as bench/search.ts does and prints Stockfish's
  * bench summary.
  */
-import { FLAG_CASTLE } from "./constants";
 import { BENCH_FENS } from "./bench-fens";
 import { IN, arg, argc, cutInput, endLine, exit, fail, inEnd, nowMs, put, putByte, putInt, readArgs, readInput } from "./wasi";
 
@@ -30,8 +29,6 @@ export class UciEngine {
   version: i32 = -1;
   /** the depth of each search in `bench`: bench/search.ts DEPTH */
   benchDepth: i32 = 1;
-  /** whether the build plays Chess960, which needs setCastleRooks */
-  chess960: bool = false;
   /** whether the build reports its table's fill */
   hasHashfull: bool = false;
   /** whether the build keeps a record of its time use */
@@ -41,7 +38,6 @@ export class UciEngine {
   clear!: () => void;
   put!: (s: i32, p: i32) => void;
   setState!: (side: i32, castling: i32, ep: i32, halfmove: i32, fullmove: i32) => void;
-  setCastleRooks!: (whiteKing: i32, blackKing: i32, r1: i32, r2: i32, r4: i32, r8: i32) => void;
   playMove!: (m: i32) => void;
   legalMoves!: () => i32;
   rootMove!: (i: i32) => i32;
@@ -260,11 +256,8 @@ function waitForStop(): void {
 
 // ------------------------------------------------------------------ positions
 
-/** the loaded position's rook square per right (K, Q, k, q), as move text reads them (host/wasm.ts Engine.rooks) */
-const rooks = new StaticArray<i32>(4);
 /** the FEN's fields, as host/fen.ts parseFen reads them */
 const board = new StaticArray<i32>(64);
-const fenRooks = new StaticArray<i32>(4);
 let fenSide = 0;
 let fenRights = 0;
 let fenEp = -1;
@@ -272,26 +265,6 @@ let fenHalfmove = 0;
 let fenFullmove = 1;
 /** the side to move after the position's moves */
 let sideToMove = 0;
-/** whether castles are written as the king taking its own rook (UCI_Chess960) */
-let chess960 = false;
-
-/** right r's rook square in a standard start: K, Q, k, q */
-function standardRook(r: i32): i32 {
-  return r == 0 ? 7 : r == 1 ? 0 : r == 2 ? 63 : 56;
-}
-
-/** the file of `color`'s king on its back rank, the e-file if it is elsewhere (host/fen.ts kingFile) */
-function kingFile(color: i32): i32 {
-  for (let f = 0; f < 8; f++) if (board[color * 56 + f] == ((color << 3) | 6)) return f;
-  return 4;
-}
-
-/** `color`'s outermost back-rank rook beyond the king's file in direction `dir`; the corner if none (host/fen.ts outerRook) */
-function outerRook(color: i32, dir: i32, king: i32): i32 {
-  const rook = (color << 3) | 4;
-  for (let f = dir > 0 ? 7 : 0; f != king; f -= dir) if (board[color * 56 + f] == rook) return color * 56 + f;
-  return color * 56 + (dir > 0 ? 7 : 0);
-}
 
 const FEN_PIECES = "pnbrqk";
 
@@ -321,25 +294,15 @@ function fenField(field: i32, at: usize, len: i32): void {
   } else if (field == 1) {
     fenSide = len == 1 && load<u8>(at) == 98 ? 1 : 0;
   } else if (field == 2) {
+    // KQkq, each right kept only when its king and rook are home (host/fen.ts parseFen)
     for (let i = 0; i < len; i++) {
       const c = <i32>load<u8>(at + <usize>i);
       const lower = c >= 65 && c <= 90 ? c + 32 : c;
+      if (lower != 107 && lower != 113) continue;
       const color = c == lower ? 1 : 0;
-      const k = kingFile(color);
-      let r = -1;
-      let sq = -1;
-      if (lower == 107 || lower == 113) {
-        r = (color << 1) | (lower == 113 ? 1 : 0);
-        sq = outerRook(color, r & 1 ? -1 : 1, k);
-      } else if (lower >= 97 && lower <= 104) {
-        const file = lower - 97;
-        r = (color << 1) | (file < k ? 1 : 0);
-        sq = color * 56 + file;
-      }
-      // a right whose king or rook is not home is dropped (host/fen.ts parseFen)
-      if (r < 0 || board[color * 56 + k] != ((color << 3) | 6) || board[sq] != ((color << 3) | 4)) continue;
-      fenRights |= 1 << r;
-      fenRooks[r] = sq;
+      const r = (color << 1) | (lower == 113 ? 1 : 0);
+      const base = color * 56;
+      if (board[base + 4] == ((color << 3) | 6) && board[base + (r & 1 ? 0 : 7)] == ((color << 3) | 4)) fenRights |= 1 << r;
     }
   } else if (field == 3) {
     if (len >= 2) fenEp = (<i32>load<u8>(at, 1) - 49) * 8 + (<i32>load<u8>(at) - 97);
@@ -359,7 +322,6 @@ function fenField(field: i32, at: usize, len: i32): void {
 /** reads the FEN in the bytes [at, at + len) into the fields above */
 function readFen(at: usize, len: i32): void {
   for (let s = 0; s < 64; s++) board[s] = 0;
-  for (let r = 0; r < 4; r++) fenRooks[r] = -1;
   fenSide = 0;
   fenRights = 0;
   fenEp = -1;
@@ -381,21 +343,6 @@ function loadFen(): void {
   for (let s = 0; s < 64; s++) if (board[s]) engine.put(s, board[s]);
   engine.setState(fenSide, fenRights, fenEp, fenHalfmove, fenFullmove);
   sideToMove = fenSide;
-  if (!engine.chess960) return;
-  let whiteKing = 4;
-  let blackKing = 60;
-  for (let s = 63; s >= 0; s--) {
-    if (board[s] == 6) whiteKing = s;
-    if (board[s] == 14) blackKing = s;
-  }
-  for (let r = 0; r < 4; r++) {
-    const sq = fenRights & (1 << r) ? fenRooks[r] : -1;
-    rooks[r] = sq < 0 ? standardRook(r) : sq;
-  }
-  engine.setCastleRooks(
-    whiteKing, blackKing,
-    fenRights & 1 ? fenRooks[0] : 64, fenRights & 2 ? fenRooks[1] : 64, fenRights & 4 ? fenRooks[2] : 64, fenRights & 8 ? fenRooks[3] : 64,
-  );
 }
 
 const TEXT_CAP = 256;
@@ -455,14 +402,12 @@ const FILES = "abcdefgh";
 const PROMO = " pnbrqk";
 
 /**
- * writes move m's UCI text into MOVE and returns its length: a castle as the
- * king's move to its destination, or under UCI_Chess960 as the king taking its
- * own rook (host/wasm.ts moveToUci and Engine.uci)
+ * writes move m's UCI text into MOVE and returns its length, a castle as the
+ * king's move to its destination (host/wasm.ts moveToUci)
  */
 function moveText(m: i32): i32 {
   const from = m & 63;
-  let to = (m >>> 6) & 63;
-  if (chess960 && m & FLAG_CASTLE) to = rooks[((to >> 4) & 2) | ((to & 7) == 2 ? 1 : 0)];
+  const to = (m >>> 6) & 63;
   const promo = (m >>> 12) & 7;
   store<u8>(MOVE, <u8>FILES.charCodeAt(from & 7));
   store<u8>(MOVE, <u8>((from >> 3) + 49), 1);
@@ -642,7 +587,6 @@ function setOption(): void {
     }
   }
   if (nameIs("hash") && !isNaN(value)) engine.setHash(<i32>value);
-  if (nameIs("uci_chess960") && engine.chess960) chess960 = valueTrue;
   if (nameIs("timerecord") && engine.hasTimeTrace) timeRecord = valueTrue;
 }
 
@@ -672,10 +616,6 @@ function command(from: i32, to: i32): void {
     endLine();
     put("option name Threads type spin default 1 min 1 max 1");
     endLine();
-    if (engine.chess960) {
-      put("option name UCI_Chess960 type check default false");
-      endLine();
-    }
     if (engine.hasTimeTrace) {
       put("option name TimeRecord type check default false");
       endLine();
@@ -776,7 +716,6 @@ function bench(depth: i32): void {
 /** runs the UCI conversation until quit or the end of input; the release has run its init */
 export function uciMain(e: UciEngine): void {
   engine = e;
-  for (let r = 0; r < 4; r++) rooks[r] = standardRook(r);
   readArgs();
   for (let i = 1; i < argc; i++) {
     if (argIs(i, "--nodestime") && i + 1 < argc) {

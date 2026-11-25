@@ -8,7 +8,7 @@
  * - goClock() is one `go` of a game: the TT and the histories last until newGame.
  * - goWindow() is one windowed search from every table empty, for the window gate.
  */
-export { initCore, clear, put, setState, setCastleRooks, playMove, legalMoves, rootMove, perft, checkedWalk } from "../../core/index";
+export { initCore, clear, put, setState, playMove, legalMoves, rootMove, perft, checkedWalk } from "../../core/index";
 export { nodesSearched } from "./search";
 export { setNodeLimit, timeTrace } from "./time";
 import { MAX_MOVES } from "../../core/constants";

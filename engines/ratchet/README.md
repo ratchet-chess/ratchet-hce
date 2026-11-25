@@ -26,7 +26,7 @@ invariants that span files.
 - **TT entry.** Eight bytes, three to a 32-byte bucket, behind one word that holds their three
   21-bit key fragments. An entry holds the move, the score, the raw eval, the depth, and a flags byte
   of bound (2 bits), PV (1) and generation (5). A fragment of 0 marks an empty slot. The move keeps
-  the core's low 15 bits and a castle bit. A probe restores its other flags from the board and checks
-  that it is legal. Mate scores are stored relative to the node.
+  the core's low 15 bits. A probe restores its flags from the board and checks that it is legal.
+  Mate scores are stored relative to the node.
 - **Determinism.** `go(depth)` empties the TT, the histories and the correction history first, so its node signature depends
   only on the build and the position. `goClock` keeps them all between the moves of a game.

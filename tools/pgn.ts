@@ -3,9 +3,6 @@
  * from match records. A game starts from its [FEN] tag or the start position, and
  * each SAN move is matched against the engine's legal moves. The comment after a
  * move ({+0.25/8 0.123s} in fastchess's PGNs) is kept beside it.
- *
- * A game tagged [Variant "Chess960"] or "fischerandom" is replayed with its castles in UCI_Chess960's notation,
- * the king taking its own rook, so its Replayer must offer that notation.
  */
 import { readFileSync } from "node:fs";
 import { parseFen } from "../host/fen.ts";
@@ -24,8 +21,6 @@ export interface Game {
 export interface Replayer {
   setPosition(fen: string, moves: string[]): void;
   legalUci(): string[];
-  /** present on a replayer that can write and read a castle as the king taking its own rook; parseGames sets it */
-  chess960?: boolean;
 }
 
 const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -33,16 +28,8 @@ const PIECES = " PNBRQK";
 const square = (s: string) => s.charCodeAt(0) - 97 + 8 * (s.charCodeAt(1) - 49);
 
 /** the UCI move that `san` names in the position, with `board` the piece code per square */
-function fromSan(san: string, board: Uint8Array, side: number, legal: string[], chess960: boolean): string {
+function fromSan(san: string, board: Uint8Array, side: number, legal: string[]): string {
   const s = san.replace(/[+#!?]/g, "");
-  if ((s === "O-O" || s === "O-O-O") && chess960) {
-    // the king takes its own rook on the castle's side
-    const k = board.indexOf((side << 3) | 6);
-    const found = legal.filter((u) => square(u) === k && board[square(u.slice(2))] === ((side << 3) | 4)
-      && (square(u.slice(2)) > k) === (s === "O-O"));
-    if (found.length !== 1) throw new Error(`SAN ${san} matches ${found.length} legal moves`);
-    return found[0];
-  }
   if (s === "O-O" || s === "O-O-O") {
     const r = side ? "8" : "1";
     return `e${r}${s === "O-O" ? "g" : "c"}${r}`;
@@ -62,7 +49,7 @@ export function toSan(uci: string, board: Uint8Array, legal: string[]): string {
   const f = square(uci);
   const t = square(uci.slice(2));
   const type = board[f] & 7;
-  if (type === 6 && (Math.abs(t - f) === 2 || board[t] === (board[f] & 8 | 4))) return t > f ? "O-O" : "O-O-O";
+  if (type === 6 && Math.abs(t - f) === 2) return t > f ? "O-O" : "O-O-O";
   const capture = board[t] !== 0 || (type === 1 && f % 8 !== t % 8);
   const promotion = uci[4] ? `=${uci[4].toUpperCase()}` : "";
   if (type === 1) return `${capture ? `${uci[0]}x` : ""}${uci.slice(2, 4)}${promotion}`;
@@ -81,16 +68,6 @@ export function applyUci(board: Uint8Array, uci: string, side: number): void {
   const f = square(uci);
   const t = square(uci.slice(2));
   const p = board[f];
-  if ((p & 7) === 6 && board[t] === ((p & 8) | 4)) {
-    // a Chess960 castle, the king taking its own rook: both end on the standard castling squares
-    const base = f & 56;
-    const rook = board[t];
-    board[f] = 0;
-    board[t] = 0;
-    board[base + (t > f ? 6 : 2)] = p;
-    board[base + (t > f ? 5 : 3)] = rook;
-    return;
-  }
   if ((p & 7) === 1 && f % 8 !== t % 8 && !board[t]) board[t + (side ? 8 : -8)] = 0;
   if ((p & 7) === 6 && Math.abs(t - f) === 2) {
     const rf = t > f ? f + 3 : f - 4;
@@ -122,9 +99,6 @@ export function parseGames(texts: string[], engine: Replayer): Game[] {
     const f = parseFen(fen);
     const board = f.board;
     let side = f.side;
-    const chess960 = /^(chess960|fischerandom)$/i.test(tag("Variant") ?? "");
-    if (chess960 && engine.chess960 === undefined) throw new Error("a Chess960 game needs a replayer that writes castles as the king taking its rook");
-    if (engine.chess960 !== undefined) engine.chess960 = chess960;
     const game: Game = { white: tag("White") ?? "", black: tag("Black") ?? "", fen, moves: [], comments: [] };
     for (const [, comment, word] of tokens) {
       if (comment !== undefined) {
@@ -134,7 +108,7 @@ export function parseGames(texts: string[], engine: Replayer): Game[] {
       if (/^\d+\.+$/.test(word) || /^(1-0|0-1|1\/2-1\/2|\*)$/.test(word)) continue;
       const san = word.replace(/^\d+\.+/, "");
       engine.setPosition(fen, game.moves);
-      const uci = fromSan(san, board, side, engine.legalUci(), chess960);
+      const uci = fromSan(san, board, side, engine.legalUci());
       applyUci(board, uci, side);
       game.moves.push(uci);
       game.comments.push("");

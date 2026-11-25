@@ -5,7 +5,7 @@
  */
 import { parentPort, workerData } from "node:worker_threads";
 import { parseFen } from "../fen.ts";
-import { Engine, MATE, START_FEN } from "../wasm.ts";
+import { Engine, MATE, START_FEN, moveToUci } from "../wasm.ts";
 import type { GoLimits } from "./limits.ts";
 
 export type WorkerCommand =
@@ -15,8 +15,7 @@ export type WorkerCommand =
   | { cmd: "hash"; mb: number }
   | { cmd: "tune"; id: number; value: number }
   | { cmd: "eval" }
-  | { cmd: "timerecord"; on: boolean }
-  | { cmd: "chess960"; on: boolean };
+  | { cmd: "timerecord"; on: boolean };
 
 const port = parentPort!;
 const stop: Int32Array = workerData.stop;
@@ -89,7 +88,7 @@ function go(limits: GoLimits): void {
   engine.onIteration = (depth, score, nodes) => {
     const ms = performance.now() - t0;
     const nps = Math.round((nodes * 1000) / Math.max(ms, 1));
-    const pv = engine.pv().map((m) => engine.uci(m)).join(" ");
+    const pv = engine.pv().map(moveToUci).join(" ");
     const full = engine.hashfull();
     const hashfull = full === undefined ? "" : ` hashfull ${full}`;
     port.postMessage(`info depth ${depth} score ${scoreText(score)} nodes ${nodes} nps ${nps}${hashfull} time ${Math.round(ms)} pv ${pv}`);
@@ -117,7 +116,7 @@ function go(limits: GoLimits): void {
     const f = (x: number, places: number) => (x > 1e15 ? "none" : String(Math.round(x * 10 ** places) / 10 ** places));
     port.postMessage(`info string pgncomment tm rule=${t.rule} el=${f(t.elapsed, 1)} soft=${f(t.soft, 1)} hard=${f(t.hard, 1)} score=${f(t.score, 3)} node=${f(t.node, 3)} veto=${t.veto}`);
   }
-  port.postMessage(`bestmove ${best ? engine.uci(best) : "0000"}`);
+  port.postMessage(`bestmove ${best ? moveToUci(best) : "0000"}`);
 }
 
 port.on("message", (c: WorkerCommand) => {
@@ -145,14 +144,10 @@ port.on("message", (c: WorkerCommand) => {
     case "timerecord":
       timeRecord = c.on;
       break;
-    case "chess960":
-      engine.chess960 = c.on && engine.canChess960;
-      break;
   }
 });
 
 engine.setPosition(START_FEN, []);
 port.postMessage(`name RatchetHCE${engine.version ? ` ${engine.version}` : ""}`);
-if (engine.canChess960) port.postMessage("chess960");
 if (engine.timeTrace() !== undefined) port.postMessage("timerecord");
 port.postMessage("ready");

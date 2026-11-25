@@ -9,7 +9,7 @@
  */
 import { UciEngine, uciMain } from "../../core/uci";
 import {
-  clear, evaluate, go, goClock, hashfull, init, legalMoves, newGame, nodesSearched, playMove, put, pvLength, pvMove, rootMove, setCastleRooks, setHash, setNodeLimit, setState,
+  clear, evaluate, go, goClock, hashfull, init, legalMoves, newGame, nodesSearched, playMove, put, pvLength, pvMove, rootMove, setHash, setNodeLimit, setState,
   timeTrace, version,
 } from "./index";
 
@@ -18,14 +18,12 @@ const e = new UciEngine();
 e.name = "RatchetHCE";
 e.version = version();
 e.benchDepth = 12;
-e.chess960 = true;
 e.hasHashfull = true;
 e.hasTimeTrace = true;
 e.hasNodeLimit = true;
 e.clear = clear;
 e.put = put;
 e.setState = setState;
-e.setCastleRooks = setCastleRooks;
 e.playMove = playMove;
 e.legalMoves = legalMoves;
 e.rootMove = rootMove;

@@ -4,7 +4,7 @@
  * the board before the core makes it; unmake restores what was saved at the ply.
  */
 import { BISHOP, FLAG_CASTLE, FLAG_EP, KING, KNIGHT, MAX_PLY, PAWN, QUEEN, ROOK, moveFrom, movePromo, moveTo } from "../../core/constants";
-import { ROOK_SQ, board, castleIndex, make, makeNull, ply, unmake, unmakeNull } from "../../core/position";
+import { board, make, makeNull, ply, unmake, unmakeNull } from "../../core/position";
 import { Z_PIECE } from "../../core/zobrist";
 import { PSQ, scratchPsq } from "./psq";
 
@@ -127,10 +127,9 @@ export function doMove(m: i32): void {
   const to = moveTo(m);
   const piece = <i32>board[from];
   if (m & FLAG_CASTLE) {
-    // the core's castling (core/position.ts make): the rook from its square to the one beside the king's
-    // destination; in Chess960 the king's destination may hold that rook, so nothing is captured
-    const rf = <i32>ROOK_SQ[castleIndex(to)];
-    const rt = (to & 7) == 6 ? to - 1 : to + 1;
+    // the core's castling (core/position.ts make): the rook from the corner to the square the king crossed
+    const rf = to > from ? from + 3 : from - 4;
+    const rt = to > from ? from + 1 : from - 1;
     const rook = <i32>board[rf];
     const pBase = piece << 6;
     const rBase = rook << 6;

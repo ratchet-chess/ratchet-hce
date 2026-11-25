@@ -72,7 +72,6 @@ The spec, in the `uci-over-wasi` repo, states what a WASI host must give the mod
 * **Draws:** repetition is seen one move before it happens, by van Kervinck's cuckoo method.
 * **Time use:** a soft and a hard limit. The soft limit moves with the best move's share of the nodes and with
   a falling score.
-* **Chess960.**
 * **Not included:** more than one thread, endgame tablebases and pondering.
 
 ## UCI options
@@ -81,7 +80,6 @@ The spec, in the `uci-over-wasi` repo, states what a WASI host must give the mod
 |---|---|---|
 | `Hash` | 16 | Transposition table size in MB (1-1024). |
 | `Threads` | 1 | Search threads. Only 1 is accepted. |
-| `UCI_Chess960` | false | Play Chess960 positions. |
 | `TimeRecord` | false | Developer option: print the engine's record of its time use after each search. |
 
 A tuning build also takes its tuned values as options. No packaged file is a tuning build.

@@ -6,18 +6,15 @@
  *
  * Entry (8 bytes): move u16 | score i16 | raw eval i16 | depth u8 | flags u8,
  * flags = bound (2 bits) | PV (1 bit) << 2 | generation (5 bits) << 3. Bound 0 is
- * an empty slot. The move keeps the core's low 15 bits and a castle bit above them; the
- * probe restores the other flags from the board. qsearch stores at depth 0.
+ * an empty slot. The move keeps the core's low 15 bits, and the probe restores its
+ * flags from the board. qsearch stores at depth 0.
  *
  * Features: Transposition_Table, Transposition_Table#Bucket_Systems, Transposition_Table#Aging.
  */
-import { FLAG_CASTLE, FLAG_DOUBLE, FLAG_EP, PAWN, moveFrom, moveTo } from "../../core/constants";
+import { FLAG_CASTLE, FLAG_DOUBLE, FLAG_EP, KING, PAWN, moveFrom, moveTo } from "../../core/constants";
 import { board, ep } from "../../core/position";
 import { isLegal } from "../../core/movegen";
 import { TT_AGE_STORE } from "./params";
-
-/** the stored move's castle bit: a Chess960 castle's king can move one square or none, so its step cannot tell */
-const TT_CASTLE = 0x8000;
 
 export const BOUND_UPPER = 1;
 export const BOUND_LOWER = 2;
@@ -136,7 +133,7 @@ export function ttProbe(key: u64): bool {
  */
 export function ttStore(key: u64, move: i32, score: i32, rawEval: i32, depth: i32, bound: i32, pv: bool): void {
   if (!ttEnabled) return;
-  let stored = (move & 0x7fff) | (move & FLAG_CASTLE ? TT_CASTLE : 0);
+  let stored = move & 0x7fff;
   const b = bucketOf(key);
   const frag = fragmentOf(key);
   const frags = load<u64>(b);
@@ -176,14 +173,14 @@ export function ttStore(key: u64, move: i32, score: i32, rawEval: i32, depth: i3
   store<u8>(slot, <u8>(bound | (pv ? 4 : 0) | (generation << 3)), 7);
 }
 
-/** the table's stored move as a legal move of this position with its flags, or 0 */
+/** the table's 15-bit move as a legal move of this position with its flags, or 0 */
 export function ttMoveOf(m: i32): i32 {
   if (!m) return 0;
-  if (m & TT_CASTLE) return isLegal((m & 0x7fff) | FLAG_CASTLE) ? (m & 0x7fff) | FLAG_CASTLE : 0;
   const from = moveFrom(m);
   const to = moveTo(m);
   const type = <i32>board[from] & 7;
-  if (type == PAWN) {
+  if (type == KING && abs(to - from) == 2) m |= FLAG_CASTLE;
+  else if (type == PAWN) {
     if (abs(to - from) == 16) m |= FLAG_DOUBLE;
     else if (to == ep && (to & 7) != (from & 7) && !board[to]) m |= FLAG_EP;
   }
