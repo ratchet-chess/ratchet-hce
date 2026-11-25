@@ -65,7 +65,8 @@ bun tools/package.ts          # dist/: the .wasm, the browser Worker, native bui
 - **Take ideas only from an engine that has no license.** Take no constant and no table from it.
 - **Its version is a constant that `id name` reports.** Bumping the minor or patch version is the developer's call. A rated version gets the tag `v<version>`, at the commit that was rated.
 - **Pass this repo's gates (`bun run test`) and the conversion suite.** A search change passes the window gate (`test/window.ts`).
-- **A change that keeps the node signature is a speed change.** Read it on Bun and Node on one quiet host, with the testing platform's speed read. Read a match's `SPEED` the same way.
+- **A change that keeps the node signature is a speed change.** Read it on Bun and Node on one quiet host, with the testing platform's speed read.
+- **A change that alters the node signature has no one `SPEED`.** Its ratio depends on the tables' state and on the positions. The admission chain reads it through the launcher at `SPEED_DEPTH`, and the match reports its own `SPEED` from its games as the check.
 - **Any other change is admitted by SPRT against its parent.** Start with cheap tests, and go longer or deeper only when a result needs it.
 - **A read without games gives a search form's size and cost, not its sign.** Do not predict a gain from error counts, fixed-depth nodes, or depth at equal nodes.
 - **Before proposing an admission chain, check how many events the form touches.** If the count is too small for a chain to resolve, say so before any games.
@@ -82,7 +83,8 @@ bun tools/package.ts          # dist/: the .wasm, the browser Worker, native bui
 - **The testing platform is ratchet-bench.** Its queue plays the matches, the conversion suite and the rating runs.
 - **This repo builds its own tree.** `tools/tree.sh` builds a ref's files, and `bin/engine` is the tree's launcher. Change how the engine is built or started in those two files, not in ratchet-bench.
 - **Start a match tool from this repo's worktree.** The platform then builds a player by ref, such as `HEAD:ratchet-hce` or `worktree:ratchet-hce`.
-- **`BENCH` in the gitignored `tools/local.env` names the testing platform's checkout.** The admission chain is `bun <BENCH>/tools/admit.ts <parent-ref> [candidate-ref]`.
+- **`BENCH` in the gitignored `tools/local.env` names the testing platform's checkout.** The admission chain is `SPEED_DEPTH=16 bun <BENCH>/tools/admit.ts <parent-ref> [candidate-ref]`.
+- **`SPEED_DEPTH` is the depth at which a search has about the nodes of a game's move.** 16 is the long rung's, 24+0.24. Read it again when the rung or the search's depth changes.
 - **A match tool writes its rows to this worktree's `results/`,** and keeps its run state in `tmp/`. Each row names its protocol, so a protocol change shows which rows are old. Docs hold decisions and invariants.
 - **Research notes and scripts are off-tree,** in the store that `ARTIFACTS` in `tools/local.env` names. Records cite it as `<artifacts>`.
 
