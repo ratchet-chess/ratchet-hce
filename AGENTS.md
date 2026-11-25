@@ -73,10 +73,9 @@ bun tools/package.ts          # dist/: the .wasm, the browser Worker, native bui
 ## Tuning
 
 - **Size a tune by its total games.** A value's resolution follows the total, whatever the count of values.
-- **Plan a tune as stages up the clock.** Each stage starts from the last stage's admitted values, and the first stage starts from main's.
 - **A tune's proof is its SPRT against main.**
 - **Write tuned values into the engine itself,** as a commit.
-- **Agree a tune's map, its game count and its stages with the user before it starts.**
+- **Agree a tune's map, its game count and its clock with the user before it starts.**
 
 ## Testing a change
 
