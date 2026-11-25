@@ -73,8 +73,14 @@ bun tools/package.ts          # dist/: the .wasm, the browser Worker, native bui
 
 ## Tuning
 
+- **A game tune plays a real clock scaled per host,** `MODE=scaled` of the testing platform's `tools/spsa.ts`. A node clock hides a value that makes a node slower.
+- **A tune's proof is its SPRT against main,** on the node clock.
+- **A tune and its proof play one clock,** the long rung's nodes a game.
+- **A tune keeps one set of values and grows it.** A value leaves the set when a test of that value fails.
+- **Test a new form alone against main first.** Once it is admitted, its values join the next tune's set.
+- **A form that failed alone may go inside a tune of the whole set,** one form per tune. The tune's proof judges it.
+- **Remove a form's avoidable code cost before its test.**
 - **Size a tune by its total games.** A value's resolution follows the total, whatever the count of values.
-- **A tune's proof is its SPRT against main.**
 - **Write tuned values into the engine itself,** as a commit.
 - **Agree a tune's map, its game count and its clock with the user before it starts.**
 
