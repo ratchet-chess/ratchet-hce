@@ -336,7 +336,8 @@ function fenField(field: i32, at: usize, len: i32): void {
         r = (color << 1) | (file < k ? 1 : 0);
         sq = color * 56 + file;
       }
-      if (r < 0) continue;
+      // a right whose king or rook is not home is dropped (host/fen.ts parseFen)
+      if (r < 0 || board[color * 56 + k] != ((color << 3) | 6) || board[sq] != ((color << 3) | 4)) continue;
       fenRights |= 1 << r;
       fenRooks[r] = sq;
     }

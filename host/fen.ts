@@ -60,7 +60,9 @@ export function parseFen(fen: string): ParsedFen {
     }
   }
   // KQkq as X-FEN reads it, the outermost rook on that side of the king, which is the corner's in a standard start;
-  // a file letter as Shredder-FEN reads it, the rook on that file, its side by the king's file
+  // a file letter as Shredder-FEN reads it, the rook on that file, its side by the king's file. A right is kept only
+  // when its king is on the back rank and its square holds its rook: the core castles whatever piece stands there,
+  // so a right the board cannot hold would corrupt the position.
   let rights = 0;
   const rooks = [-1, -1, -1, -1];
   for (const ch of castling ?? "-") {
@@ -77,7 +79,7 @@ export function parseFen(fen: string): ParsedFen {
       i = (color << 1) | (file < k ? 1 : 0);
       sq = color * 56 + file;
     }
-    if (i < 0) continue;
+    if (i < 0 || board[color * 56 + k] !== ((color << 3) | KING) || board[sq] !== ((color << 3) | ROOK)) continue;
     rights |= 1 << i;
     rooks[i] = sq;
   }
