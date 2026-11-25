@@ -28,5 +28,12 @@ invariants that span files.
   of bound (2 bits), PV (1) and generation (5). A fragment of 0 marks an empty slot. The move keeps
   the core's low 15 bits. A probe restores its flags from the board and checks that it is legal.
   Mate scores are stored relative to the node.
+- **TT cutoffs.** The table lookup cuts only. A stored bound that does not cut is left alone, and
+  the window is never tightened from it. `boundCuts` in `search.ts` names the verified form and the
+  rejected one. The table score may replace the static eval that pruning reads, and the stand pat in
+  the quiescence search. Both uses are heuristics outside this rule.
+- **Window gate.** On the plain configuration with the table off, every windowed search is in
+  Fishburn's relation to the full-window value (`test/window.ts`). The plain configuration is every
+  `off` value of the flag map (`tools/texel/maps/ratchet-flags.json`).
 - **Determinism.** `go(depth)` empties the TT, the histories and the correction history first, so its node signature depends
   only on the build and the position. `goClock` keeps them all between the moves of a game.
