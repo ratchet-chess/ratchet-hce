@@ -17,8 +17,8 @@ searches.
 
 | browser | isolated | SIMD | relaxed SIMD | threads | tail calls | memory64 | largest memory, MB | clock step, us | commit | date |
 |---|---|---|---|---|---|---|---|---|---|---|
-| chrome 156.0.0.0 | yes | yes | yes | yes | yes | yes | 3840 | 5 | e1beea5 | 2026-11-05 |
-| firefox 159.0 | yes | yes | yes | yes | yes | yes | 3840 | 20 | e1beea5 | 2026-11-05 |
+| chrome 156.0.0.0 | yes | yes | yes | yes | yes | yes | 3840 | 5 | fc42091 | 2026-11-26 |
+| firefox 159.0 | yes | yes | yes | yes | yes | yes | 3840 | 20 | fc42091 | 2026-11-26 |
 
 | engine | runtime | passes | hash, MB | depth | node signature | knodes/s | range | cold knodes/s | first searches, cold over warm | protocol | commit | date |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -38,3 +38,11 @@ searches.
 | ratchet | node 24.21.0 | kept | 4 | 11 | 5804094 | 1402 | 1394 to 1409 |  |  | worker1, depth 11, 96 positions, repeat 2, rounds 2 | e1beea5 | 2026-11-05 |
 | ratchet | node 24.21.0 | kept | 16 | 11 | 6108946 | 1338 | 1334 to 1342 |  |  | worker1, depth 11, 96 positions, repeat 2, rounds 2 | e1beea5 | 2026-11-05 |
 | ratchet | node 24.21.0 | kept | 128 | 11 | 6048239 | 1299 | 1285 to 1313 |  |  | worker1, depth 11, 96 positions, repeat 2, rounds 2 | e1beea5 | 2026-11-05 |
+| RatchetHCE 0.3.16 | bun 1.4.2 | kept | 16 | 18 | 40647367 | 1437 | 1432 to 1441 | 1431 | 1.01 | worker3, job 1262, one game's positions for White, <artifacts>/scripts/hash-read/positions-game20.txt, UCI over WASI, kept over 60 positions of positions.txt, go depth 18, repeat 2, rounds 2 | fc42091 | 2026-11-26 |
+| RatchetHCE 0.3.16 | bun 1.4.2 | kept | 128 | 18 | 36168297 | 1440 | 1435 to 1445 | 1438 | 1 | worker3, job 1262, one game's positions for White, <artifacts>/scripts/hash-read/positions-game20.txt, UCI over WASI, kept over 60 positions of positions.txt, go depth 18, repeat 2, rounds 2 | fc42091 | 2026-11-26 |
+| RatchetHCE 0.3.16 | chrome 156.0.0.0 | kept | 16 | 18 | 40647367 | 1444 | 1440 to 1449 | 1436 | 1.01 | worker3, job 1262, one game's positions for White, <artifacts>/scripts/hash-read/positions-game20.txt, UCI over WASI, kept over 60 positions of positions.txt, go depth 18, repeat 2, rounds 2 | fc42091 | 2026-11-26 |
+| RatchetHCE 0.3.16 | chrome 156.0.0.0 | kept | 128 | 18 | 36168297 | 1441 | 1441 to 1441 | 1439 | 1 | worker3, job 1262, one game's positions for White, <artifacts>/scripts/hash-read/positions-game20.txt, UCI over WASI, kept over 60 positions of positions.txt, go depth 18, repeat 2, rounds 2 | fc42091 | 2026-11-26 |
+| RatchetHCE 0.3.16 | firefox 159.0 | kept | 16 | 18 | 40647367 | 1417 | 1415 to 1419 | 1405 | 1.02 | worker3, job 1262, one game's positions for White, <artifacts>/scripts/hash-read/positions-game20.txt, UCI over WASI, kept over 60 positions of positions.txt, go depth 18, repeat 2, rounds 2 | fc42091 | 2026-11-26 |
+| RatchetHCE 0.3.16 | firefox 159.0 | kept | 128 | 18 | 36168297 | 1422 | 1420 to 1425 | 1421 | 1.01 | worker3, job 1262, one game's positions for White, <artifacts>/scripts/hash-read/positions-game20.txt, UCI over WASI, kept over 60 positions of positions.txt, go depth 18, repeat 2, rounds 2 | fc42091 | 2026-11-26 |
+| RatchetHCE 0.3.16 | node 24.21.0 | kept | 16 | 18 | 40647367 | 1458 | 1452 to 1465 | 1454 | 1.01 | worker3, job 1262, one game's positions for White, <artifacts>/scripts/hash-read/positions-game20.txt, UCI over WASI, kept over 60 positions of positions.txt, go depth 18, repeat 2, rounds 2 | fc42091 | 2026-11-26 |
+| RatchetHCE 0.3.16 | node 24.21.0 | kept | 128 | 18 | 36168297 | 1444 | 1439 to 1449 | 1444 | 1 | worker3, job 1262, one game's positions for White, <artifacts>/scripts/hash-read/positions-game20.txt, UCI over WASI, kept over 60 positions of positions.txt, go depth 18, repeat 2, rounds 2 | fc42091 | 2026-11-26 |
