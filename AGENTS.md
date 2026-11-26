@@ -66,7 +66,7 @@ bun tools/package.ts          # dist/: the .wasm, the browser Worker, native bui
 - **Its version is a constant that `id name` reports.** Bumping the minor or patch version is the developer's call. A rated version gets the tag `v<version>`, at the commit that was rated.
 - **Pass this repo's gates (`bun run test`) and the conversion suite.** A search change passes the window gate (`test/window.ts`).
 - **A change that keeps the node signature is a speed change.** Read it on Bun and Node on one quiet host, with the testing platform's speed read.
-- **A change that alters the node signature has no one `SPEED`.** Its ratio depends on the tables' state and on the positions. The admission chain reads it through the launcher at `SPEED_DEPTH`, and the match reports its own `SPEED` from its games as the check.
+- **A change that alters the node signature has no one `SPEED`.** Its ratio depends on the tables' state and on the positions. The admission chain reads a start value through the launcher at `SPEED_DEPTH`. The match then sets each host's `SPEED` from its games' own, in steps.
 - **Any other change is admitted by SPRT against its parent.** Start with cheap tests, and go longer or deeper only when a result needs it.
 - **A read without games gives a search form's size and cost, not its sign.** Do not predict a gain from error counts, fixed-depth nodes, or depth at equal nodes.
 - **Before proposing an admission chain, check how many events the form touches.** If the count is too small for a chain to resolve, say so before any games.
