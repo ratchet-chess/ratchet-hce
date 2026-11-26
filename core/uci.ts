@@ -29,6 +29,8 @@ export class UciEngine {
   version: i32 = -1;
   /** the depth of each search in `bench`: bench/search.ts DEPTH */
   benchDepth: i32 = 1;
+  /** the table's MB in play until a setoption sets it; `bench` keeps the size the release's init gave */
+  hashMb: i32 = 16;
   /** whether the build reports its table's fill */
   hasHashfull: bool = false;
   /** whether the build keeps a record of its time use */
@@ -612,7 +614,9 @@ function command(from: i32, to: i32): void {
     endLine();
     put("id author the Ratchet contributors");
     endLine();
-    put("option name Hash type spin default 16 min 1 max 1024");
+    put("option name Hash type spin default ");
+    putInt(engine.hashMb);
+    put(" min 1 max 1024");
     endLine();
     put("option name Threads type spin default 1 min 1 max 1");
     endLine();
@@ -727,6 +731,7 @@ export function uciMain(e: UciEngine): void {
       exit(0);
     }
   }
+  e.setHash(e.hashMb);
   loadFenText(START_FEN);
   for (;;) {
     const nl = newlineFrom(0);

@@ -50,6 +50,8 @@ let idName = "RatchetHCE";
 /** whether the worker's build keeps a record of its time use, which it says before it is ready */
 let timeRecord = false;
 const ready = new Promise<void>((r) => (markReady = r));
+/** the table's MB until a setoption sets it, as the WASI build's (engines/ratchet/wasi.ts hashMb) */
+const HASH_MB = 128;
 
 worker.on("message", (line: string) => {
   if (line === "ready") markReady();
@@ -63,6 +65,7 @@ worker.on("error", (e: Error) => {
 });
 
 const send = (c: WorkerCommand) => worker.postMessage(c);
+send({ cmd: "hash", mb: HASH_MB });
 
 /** the elements a tuning build exposes as UCI options, from --tunables; a release build offers none */
 interface Tunable { name: string; id: number; value: number; min: number; max: number }
@@ -114,7 +117,7 @@ for await (const raw of rl) {
       await ready;
       out(`id name ${idName}`);
       out("id author the Ratchet contributors");
-      out("option name Hash type spin default 16 min 1 max 1024");
+      out(`option name Hash type spin default ${HASH_MB} min 1 max 1024`);
       out("option name Threads type spin default 1 min 1 max 1");
       if (timeRecord) out("option name TimeRecord type check default false");
       for (const t of tunables) out(`option name ${t.name} type spin default ${t.value} min ${t.min} max ${t.max}`);

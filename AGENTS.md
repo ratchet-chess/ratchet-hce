@@ -91,6 +91,8 @@ bun tools/package.ts          # dist/: the .wasm, the browser Worker, native bui
 - **Start a match tool from this repo's worktree.** The platform then builds a player by ref, such as `HEAD:ratchet-hce` or `worktree:ratchet-hce`.
 - **`BENCH` in the gitignored `tools/local.env` names the testing platform's checkout.** The admission chain is `SPEED_DEPTH=16 bun <BENCH>/tools/admit.ts <parent-ref> [candidate-ref]`.
 - **`SPEED_DEPTH` is the depth at which a search has about the nodes of a game's move.** 16 is the long rung's, 24+0.24. Read it again when the rung or the search's depth changes.
+- **A rung's hash keeps the table pressure of the UCI default at the browser target,** 128 MB at the target's nodes a move. So 6+0.06 plays HASH 16, 24+0.24 HASH 32, and 60+0.6 and the rating runs HASH 128. A new rung scales by its nodes a move.
+- **`bench` and a fresh `go(depth)` keep a 16 MB table,** so the node signature and the speed reads stay comparable.
 - **A match tool writes its rows to this worktree's `results/`,** and keeps its run state in `tmp/`. Each row names its protocol, so a protocol change shows which rows are old. Docs hold decisions and invariants.
 - **Research notes and scripts are off-tree,** in the store that `ARTIFACTS` in `tools/local.env` names. Records cite it as `<artifacts>`.
 

@@ -18,6 +18,8 @@ const e = new UciEngine();
 e.name = "RatchetHCE";
 e.version = version();
 e.benchDepth = 12;
+/** the browser target's table: no knodes/s cost against 16 MB, and fewer nodes to a depth (results/browser.md) */
+e.hashMb = 128;
 e.hasHashfull = true;
 e.hasTimeTrace = true;
 e.hasNodeLimit = true;

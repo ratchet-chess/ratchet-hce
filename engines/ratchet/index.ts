@@ -34,6 +34,7 @@ import { ttAlloc, ttClear, ttEnable, ttHashfull } from "./tt";
  */
 const VERSION = (0 << 16) | (3 << 8) | 16;
 
+/** the table init allocates: a fresh search's, so bench and the node signature run at it; play's default is wasi.ts's */
 const HASH_MB = 16;
 
 export function init(): void {

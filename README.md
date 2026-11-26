@@ -78,7 +78,7 @@ The spec, in the `uci-over-wasi` repo, states what a WASI host must give the mod
 
 | Option | Default | |
 |---|---|---|
-| `Hash` | 16 | Transposition table size in MB (1-1024). |
+| `Hash` | 128 | Transposition table size in MB (1-1024). `bench` runs at 16. |
 | `Threads` | 1 | Search threads. Only 1 is accepted. |
 | `TimeRecord` | false | Developer option: print the engine's record of its time use after each search. |
 
