@@ -937,6 +937,9 @@ Used in: `params.ts` RFP_DEPTH; `search.ts` search.
   grows with the log of depth, at or above beta, is returned; the message calls it post futility pruning.
 - 2010-02-02, Stockfish b5a4edd8 search: its stand-pat return is renamed static null move pruning, with a description
   its message credits to Tord Romstad.
+- 2025-12-07, Lynx f87f5d5f NegaMax: the margin gets a term quadratic in depth, and its linear terms are lowered, so
+  the margin is smaller at low depth and larger at high depth.
+- 2026-07-06, Stockfish 7da31a1f search: the margin per ply is 40 plus 4 per ply of depth, to a cap of 80.
 - 2026-08-13, Weiss c735b8f AlphaBeta: no reverse futility, nor other pruning before the move loop, inside a singular
   search.
 - 2026-10-26, Stash f91e750 search: at a non-PV node of depth 7 or less, eval − 86 per ply, plus 79 when improving, at

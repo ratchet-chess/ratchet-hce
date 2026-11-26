@@ -27,7 +27,7 @@ import {
   LMR_HISTORY_STEP, LMR_MIN_DEPTH, LMR_NOISY_BASE, LMR_NOISY_DIV, LMR_NOISY_HISTORY_DIV, LMR_NOISY_MIN_DEPTH, LMR_NON_PV, LMR_NOT_IMPROVING,
   LMR_SHALLOWER, LMR_TT_NOISY, LMR_TT_PV, MAT_EG, BAD_NOISY_FUT_DEPTH, BAD_NOISY_FUT_MARGIN, NMP_BASE, NMP_CUT_NODE, NMP_EVAL_MARGIN, NMP_STATIC, NMP_STATIC_BASE, NMP_STATIC_PER, PAWN_HISTORY, PROBCUT_DEPTH, PROBCUT_MARGIN, PROBCUT_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN,
   SE_DOUBLE_MAX, SE_MARGIN, SE_MARGIN_DIV, SE_NEG_ALPHA, SE_NEG_CUT, SE_SEARCH_ADD, SE_TRIPLE_MARGIN, SE_TT_DEPTH, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA,
-  QS_EVASIONS, QS_SEE, RAZOR_DEPTH, RAZOR_DROP, RAZOR_MARGIN, RAZOR_QS_DEPTH, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, SEE_DEPTH, SEE_HISTORY, SEE_NOISY, SEE_QUIET, TT_CUT_NODE, UPCOMING_REP,
+  QS_EVASIONS, QS_SEE, RAZOR_DEPTH, RAZOR_DROP, RAZOR_MARGIN, RAZOR_QS_DEPTH, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, RFP_QUAD, SEE_DEPTH, SEE_HISTORY, SEE_NOISY, SEE_QUIET, TT_CUT_NODE, UPCOMING_REP,
 } from "./params";
 import { seeGe } from "./see";
 import { doMove, doNull, psq, undoMove, undoNull } from "./state";
@@ -367,8 +367,9 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
 
   if (!pvNode && !check) {
     // reverse futility, Stash f91e750 search, skipped inside a singular search as Weiss c735b8f AlphaBeta skips its
-    // pruning there; Stash f91e750 runs it there too. Feature: Reverse_Futility_Pruning.
-    if (excl == 0 && depth <= RFP_DEPTH && pruneEval < MATE_IN_MAX && pruneEval - (RFP_MARGIN * depth - (improving ? RFP_IMPROVING : 0)) >= beta) return pruneEval;
+    // pruning there; Stash f91e750 runs it there too. The margin per ply grows with depth, Lynx f87f5d5f NegaMax; not
+    // taken: Stockfish 7da31a1f search, whose margin per ply stops growing at a cap. Feature: Reverse_Futility_Pruning.
+    if (excl == 0 && depth <= RFP_DEPTH && pruneEval < MATE_IN_MAX && pruneEval - ((RFP_MARGIN + RFP_QUAD * depth) * depth - (improving ? RFP_IMPROVING : 0)) >= beta) return pruneEval;
 
     // razoring, Stash 13ac9e7 search: to qsearch at depth 2 or less, a null-window qsearch below alpha at depth 3,
     // and a ply less for the node when that qsearch beats beta by a ply's margin. Feature: Razoring.

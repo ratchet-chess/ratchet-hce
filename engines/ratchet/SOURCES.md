@@ -65,6 +65,7 @@ disputed clone's row says so; a citation of it names the program it is assumed t
 | Lynx | 1d3047b5 | https://github.com/lynx-chess/Lynx | 1d3047b533e66196d9ee1e620eec52994b77e591 | - |
 | Lynx | 21a3016e | https://github.com/lynx-chess/Lynx | 21a3016e8fce819385c1f3b733bae40f742af53e | - |
 | Lynx | 8940a21e | https://github.com/lynx-chess/Lynx | 8940a21eb4cb11c2c97da09853477bc47316fcb9 | - |
+| Lynx | f87f5d5f | https://github.com/lynx-chess/Lynx | f87f5d5f68797b6d682f6bd78e30c9e7845259a2 | - |
 | Phalanx | XII | phalanx_12.orig.tar.gz, Debian snapshot: https://snapshot.debian.org/file/476fdfcdb5a1b45c3f1ba1509541c23088cccfa2 | sha256:16c1727e00265fccdf219afabd34be47425836333d1179e5a478ec686a56ff37 | - |
 | Sargon | 1978 | retro-sargon, Bill Forster's transcription of the 1978 listing: https://github.com/billforsternz/retro-sargon | a0be0d2936a7459970215bc43fbdc59f9682bd66 | - |
 | Stash | 007850d | https://github.com/mhouppin/stash-bot | 007850df35d51bdad46a011fcd08f0d1c8687f6f | - |
@@ -112,6 +113,7 @@ disputed clone's row says so; a citation of it names the program it is assumed t
 | Stockfish | 7225d254 | https://github.com/official-stockfish/Stockfish | 7225d254f90c7b9d64d4adf85ec2d319c6cf75a0 | - |
 | Stockfish | 77b4f4c2 | https://github.com/official-stockfish/Stockfish | 77b4f4c2e735a3f1173d74ce904db9dae262a682 | - |
 | Stockfish | 7cdd5e89 | https://github.com/official-stockfish/Stockfish | 7cdd5e89a39fe3071b67d91c7bb07d712044bf76 | - |
+| Stockfish | 7da31a1f | https://github.com/official-stockfish/Stockfish | 7da31a1f1d8e16721ca2fd430c44fcb4b99b0bec | - |
 | Stockfish | 7f2c8a2b | https://github.com/official-stockfish/Stockfish | 7f2c8a2b81af19033a62845408b7ae19ed513053 | - |
 | Stockfish | 7f300a76 | https://github.com/official-stockfish/Stockfish | 7f300a769848c695fb28da444b0c3f4c1d919945 | - |
 | Stockfish | 8c3d9d99 | https://github.com/official-stockfish/Stockfish | 8c3d9d996af7aa34f019785818eecbeb9338b95f | - |

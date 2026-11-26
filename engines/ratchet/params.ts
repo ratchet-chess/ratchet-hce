@@ -558,9 +558,14 @@ export const UPCOMING_REP = 2;
 
 // ------------------------ search: pruning before the move loop
 
-/** reverse futility, Stash f91e750 search: depth <= 7, 86 per ply less 79 when improving, at its PAWN_MG_SCORE 103. Features: Reverse_Futility_Pruning, Improving. */
+/**
+ * reverse futility, Stash f91e750 search: depth <= 7, 86 per ply less 79 when improving, at its PAWN_MG_SCORE 103.
+ * The margin per ply grows by RFP_QUAD for each ply of depth, as Lynx f87f5d5f NegaMax adds a term quadratic in depth
+ * and lowers its linear term. Features: Reverse_Futility_Pruning, Improving.
+ */
 export const RFP_DEPTH = 7;
-export const RFP_MARGIN = 339;
+export const RFP_MARGIN = 291;
+export const RFP_QUAD = 24;
 export const RFP_IMPROVING = 281;
 
 /** razoring, Stash f91e750 search: depth <= 3, static eval + 120 per ply <= alpha, at its PAWN_MG_SCORE 103. Feature: Razoring. */
