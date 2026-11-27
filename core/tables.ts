@@ -16,8 +16,12 @@ export const LINE = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 409
 
 /** per-record magic data, 32 bytes each (mask, mul, shift, offset): rooks 0..63, bishops 64..127 */
 const MAGIC = memory.data(32 * 128, 64);
+const MAGIC_MASK: usize = 0;
+const MAGIC_MUL: usize = 8;
+const MAGIC_SHIFT: usize = 16;
+const MAGIC_OFFSET: usize = 24;
 /** sum of 2^(mask bits) over all rook and bishop squares */
-export const SLIDER_ATT = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 107648));
+const SLIDER_ATT = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 107648));
 
 const DF: StaticArray<i32> = [1, -1, 0, 0, 1, 1, -1, -1];
 const DR: StaticArray<i32> = [0, 0, 1, -1, 1, -1, 1, -1];
@@ -147,10 +151,10 @@ export function initTables(): void {
       }
       if (!ok) continue;
       const e = MAGIC + (<usize>k << 5);
-      store<u64>(e, mask);
-      store<u64>(e, magic, 8);
-      store<u64>(e, shift, 16);
-      store<i32>(e, offset, 24);
+      store<u64>(e, mask, MAGIC_MASK);
+      store<u64>(e, magic, MAGIC_MUL);
+      store<u64>(e, shift, MAGIC_SHIFT);
+      store<i32>(e, offset, MAGIC_OFFSET);
       for (let j = 0; j < n; j++) {
         if (used[j] == epoch) SLIDER_ATT[offset + j] = stored[j];
       }
@@ -162,15 +166,17 @@ export function initTables(): void {
 
 /** a record's magic number */
 export function magicAt(k: i32): u64 {
-  return load<u64>(MAGIC + (<usize>k << 5), 8);
+  return load<u64>(MAGIC + (<usize>k << 5), MAGIC_MUL);
 }
 
 @inline export function rookAttacks(s: i32, occ: u64): u64 {
   const e = MAGIC + (<usize>s << 5);
-  return SLIDER_ATT[load<i32>(e, 24) + <i32>(((occ & load<u64>(e)) * load<u64>(e, 8)) >> load<u64>(e, 16))];
+  const idx = ((occ & load<u64>(e, MAGIC_MASK)) * load<u64>(e, MAGIC_MUL)) >> load<u64>(e, MAGIC_SHIFT);
+  return SLIDER_ATT[load<i32>(e, MAGIC_OFFSET) + <i32>idx];
 }
 
 @inline export function bishopAttacks(s: i32, occ: u64): u64 {
   const e = MAGIC + 2048 + (<usize>s << 5);
-  return SLIDER_ATT[load<i32>(e, 24) + <i32>(((occ & load<u64>(e)) * load<u64>(e, 8)) >> load<u64>(e, 16))];
+  const idx = ((occ & load<u64>(e, MAGIC_MASK)) * load<u64>(e, MAGIC_MUL)) >> load<u64>(e, MAGIC_SHIFT);
+  return SLIDER_ATT[load<i32>(e, MAGIC_OFFSET) + <i32>idx];
 }

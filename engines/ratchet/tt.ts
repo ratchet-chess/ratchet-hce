@@ -21,7 +21,13 @@ export const BOUND_LOWER = 2;
 export const BOUND_EXACT = 3;
 
 const BUCKET_BYTES = 32;
+const BUCKET_ENTRIES: usize = 8;
 const ENTRY_BYTES = 8;
+const ENTRY_MOVE: usize = 0;
+const ENTRY_SCORE: usize = 2;
+const ENTRY_EVAL: usize = 4;
+const ENTRY_DEPTH: usize = 6;
+const ENTRY_FLAGS: usize = 7;
 const ENTRIES = 3;
 const FRAG_WIDTH = 21;
 const FRAG_MASK: u64 = 0x1fffff;
@@ -97,7 +103,7 @@ export function ttHashfull(): i32 {
   let used = 0;
   for (let i: usize = 0; i < n; i++) {
     for (let j = 0; j < ENTRIES; j++) {
-      const flags = <i32>load<u8>(table + i * BUCKET_BYTES + 8 + <usize>j * ENTRY_BYTES, 7);
+      const flags = <i32>load<u8>(table + i * BUCKET_BYTES + BUCKET_ENTRIES + <usize>j * ENTRY_BYTES, ENTRY_FLAGS);
       if (flags & 3 && flags >> 3 == generation) used++;
     }
   }
@@ -113,12 +119,12 @@ export function ttProbe(key: u64): bool {
   if (!matches) return false;
   // ctz(matches) is 20, 41 or 62 -> slot 0, 1 or 2 without division
   const idx = (<i32>ctz(matches) * 3) >> 6;
-  const e = b + 8 + (<usize>idx << 3);
-  const flags = <i32>load<u8>(e, 7);
-  ttMove = <i32>load<u16>(e);
-  ttScore = <i32>load<i16>(e, 2);
-  ttEval = <i32>load<i16>(e, 4);
-  ttDepth = <i32>load<u8>(e, 6);
+  const e = b + BUCKET_ENTRIES + (<usize>idx << 3);
+  const flags = <i32>load<u8>(e, ENTRY_FLAGS);
+  ttMove = <i32>load<u16>(e, ENTRY_MOVE);
+  ttScore = <i32>load<i16>(e, ENTRY_SCORE);
+  ttEval = <i32>load<i16>(e, ENTRY_EVAL);
+  ttDepth = <i32>load<u8>(e, ENTRY_DEPTH);
   ttBound = flags & 3;
   ttPv = (flags & 4) != 0;
   return true;
@@ -142,12 +148,16 @@ export function ttStore(key: u64, move: i32, score: i32, rawEval: i32, depth: i3
   let idx = 0;
   if (matches) {
     idx = (<i32>ctz(matches) * 3) >> 6;
-    const e = b + 8 + (<usize>idx << 3);
-    const flags = <i32>load<u8>(e, 7);
-    if (bound != BOUND_EXACT && depth < <i32>load<u8>(e, 6) - 2 && (TT_AGE_STORE == 0 || flags >> 3 == generation)) {
+    const e = b + BUCKET_ENTRIES + (<usize>idx << 3);
+    const flags = <i32>load<u8>(e, ENTRY_FLAGS);
+    if (
+      bound != BOUND_EXACT &&
+      depth < <i32>load<u8>(e, ENTRY_DEPTH) - 2 &&
+      (TT_AGE_STORE == 0 || flags >> 3 == generation)
+    ) {
       return;
     }
-    if (!stored) stored = <i32>load<u16>(e);
+    if (!stored) stored = <i32>load<u16>(e, ENTRY_MOVE);
   } else {
     const empty = (frags - FRAG_LSB) & ~frags & FRAG_MSB;
     if (empty) {
@@ -155,9 +165,9 @@ export function ttStore(key: u64, move: i32, score: i32, rawEval: i32, depth: i3
     } else {
       let worst = i32.MAX_VALUE;
       for (let i = 0; i < ENTRIES; i++) {
-        const e = b + 8 + (<usize>i << 3);
-        const flags = <i32>load<u8>(e, 7);
-        const value = <i32>load<u8>(e, 6) - 8 * ((32 + generation - (flags >> 3)) & 31);
+        const e = b + BUCKET_ENTRIES + (<usize>i << 3);
+        const flags = <i32>load<u8>(e, ENTRY_FLAGS);
+        const value = <i32>load<u8>(e, ENTRY_DEPTH) - 8 * ((32 + generation - (flags >> 3)) & 31);
         if (value < worst) {
           worst = value;
           idx = i;
@@ -167,12 +177,12 @@ export function ttStore(key: u64, move: i32, score: i32, rawEval: i32, depth: i3
     const shift = <u64>(idx * FRAG_WIDTH);
     store<u64>(b, (frags & ~(FRAG_MASK << shift)) | (frag << shift));
   }
-  const slot = b + 8 + (<usize>idx << 3);
-  store<u16>(slot, <u16>stored);
-  store<i16>(slot, <i16>score, 2);
-  store<i16>(slot, <i16>rawEval, 4);
-  store<u8>(slot, <u8>depth, 6);
-  store<u8>(slot, <u8>(bound | (pv ? 4 : 0) | (generation << 3)), 7);
+  const slot = b + BUCKET_ENTRIES + (<usize>idx << 3);
+  store<u16>(slot, <u16>stored, ENTRY_MOVE);
+  store<i16>(slot, <i16>score, ENTRY_SCORE);
+  store<i16>(slot, <i16>rawEval, ENTRY_EVAL);
+  store<u8>(slot, <u8>depth, ENTRY_DEPTH);
+  store<u8>(slot, <u8>(bound | (pv ? 4 : 0) | (generation << 3)), ENTRY_FLAGS);
 }
 
 /** the table's 15-bit move as a legal move of this position with its flags, or 0 */

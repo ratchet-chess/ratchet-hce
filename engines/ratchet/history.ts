@@ -31,7 +31,7 @@ import {
 import { pawnAttacks } from "./geometry";
 import { pawnKey } from "./state";
 
-export const HIST_MAX = 16384;
+const HIST_MAX = 16384;
 
 /** (from attacked << 1 | to attacked) * 8192 + side * 4096 + (from | to << 6); butterflyIndex gives it */
 export const butterfly = changetype<StaticArray<i16>>(memory.data(sizeof<i16>() * 4 * 2 * 4096));

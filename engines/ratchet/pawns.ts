@@ -92,6 +92,14 @@ const SIZE = 8192;
 /** words in an entry, one cache line: the key; the value and both safety shares; the passed sets; the spans */
 const WORDS = 8;
 const kpTable = memory.data(sizeof<u64>() * WORDS * SIZE, 64);
+const KP_KEY: usize = 0;
+const KP_VALUE: usize = 8;
+const KP_SAFETY_W: usize = 12;
+const KP_SAFETY_B: usize = 16;
+const KP_PASSED_W: usize = 24;
+const KP_PASSED_B: usize = 32;
+const KP_SPAN_W: usize = 40;
+const KP_SPAN_B: usize = 48;
 
 /** the passed pawns of each color, from the last kingPawn() */
 export const passedOf = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 2));
@@ -114,14 +122,14 @@ export function kingPawn(cached: bool, wk: i32, bk: i32): i32 {
   // Feature: Pawn_Hash_Table.
   const key = pawnKey ^ unchecked(Z_PIECE[(KING << 6) + wk]) ^ unchecked(Z_PIECE[((8 | KING) << 6) + bk]);
   const entry = kpTable + (<usize>(key & <u64>(SIZE - 1)) << 6);
-  if (cached && load<u64>(entry) == key) {
-    unchecked((safetyOf[0] = load<i32>(entry, 12)));
-    unchecked((safetyOf[1] = load<i32>(entry, 16)));
-    unchecked((passedOf[0] = load<u64>(entry, 24)));
-    unchecked((passedOf[1] = load<u64>(entry, 32)));
-    unchecked((spanOf[0] = load<u64>(entry, 40)));
-    unchecked((spanOf[1] = load<u64>(entry, 48)));
-    return load<i32>(entry, 8);
+  if (cached && load<u64>(entry, KP_KEY) == key) {
+    unchecked((safetyOf[0] = load<i32>(entry, KP_SAFETY_W)));
+    unchecked((safetyOf[1] = load<i32>(entry, KP_SAFETY_B)));
+    unchecked((passedOf[0] = load<u64>(entry, KP_PASSED_W)));
+    unchecked((passedOf[1] = load<u64>(entry, KP_PASSED_B)));
+    unchecked((spanOf[0] = load<u64>(entry, KP_SPAN_W)));
+    unchecked((spanOf[1] = load<u64>(entry, KP_SPAN_B)));
+    return load<i32>(entry, KP_VALUE);
   }
   const wp = bb[PAWN];
   const bp = bb[8 | PAWN];
@@ -134,14 +142,14 @@ export function kingPawn(cached: bool, wk: i32, bk: i32): i32 {
   const v =
     sideValue(0, wp, bp, att0, att1, att20, att21, wk, bk) - sideValue(1, bp, wp, att1, att0, att21, att20, bk, wk);
   if (cached) {
-    store<u64>(entry, key);
-    store<i32>(entry, v, 8);
-    store<i32>(entry, unchecked(safetyOf[0]), 12);
-    store<i32>(entry, unchecked(safetyOf[1]), 16);
-    store<u64>(entry, unchecked(passedOf[0]), 24);
-    store<u64>(entry, unchecked(passedOf[1]), 32);
-    store<u64>(entry, unchecked(spanOf[0]), 40);
-    store<u64>(entry, unchecked(spanOf[1]), 48);
+    store<u64>(entry, key, KP_KEY);
+    store<i32>(entry, v, KP_VALUE);
+    store<i32>(entry, unchecked(safetyOf[0]), KP_SAFETY_W);
+    store<i32>(entry, unchecked(safetyOf[1]), KP_SAFETY_B);
+    store<u64>(entry, unchecked(passedOf[0]), KP_PASSED_W);
+    store<u64>(entry, unchecked(passedOf[1]), KP_PASSED_B);
+    store<u64>(entry, unchecked(spanOf[0]), KP_SPAN_W);
+    store<u64>(entry, unchecked(spanOf[1]), KP_SPAN_B);
   }
   return v;
 }

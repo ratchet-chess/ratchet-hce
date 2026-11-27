@@ -29,14 +29,14 @@ import {
 import { CAPTURE_THREATS, GOOD_CAPTURE_DIV, MVV, PAWN_HISTORY, PROMO_NOISY } from "./params";
 import { seeGe } from "./see";
 
-export const STAGE_TT = 0;
-export const STAGE_GEN_NOISY = 1;
+const STAGE_TT = 0;
+const STAGE_GEN_NOISY = 1;
 export const STAGE_GOOD_NOISY = 2;
-export const STAGE_KILLER = 3;
-export const STAGE_GEN_QUIET = 4;
+const STAGE_KILLER = 3;
+const STAGE_GEN_QUIET = 4;
 export const STAGE_QUIET = 5;
 export const STAGE_BAD_NOISY = 6;
-export const STAGE_DONE = 7;
+const STAGE_DONE = 7;
 
 /** a quiet promotion sorts first among quiets, an underpromotion last */
 const PROMO_SCORE = 1 << 20;
@@ -277,6 +277,7 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
           const f4 = f4Of[ply];
           const f6 = f6Of[ply];
           const threats = threatsAt(ply);
+          // inlined quietScore with pawnHistRow() and side offset hoisted out of the loop
           const ph = pawnHistRow();
           const sb = side << 12;
           for (let i = from; i < e; i++) {
@@ -322,6 +323,7 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
                 }
               }
             }
+            // one-sided swap instead of selectBest: c advances next, so MOVES[c] and SCORES[c] need no write
             const m = unchecked(MOVES[best]);
             if (best != c) {
               unchecked((MOVES[best] = MOVES[c]));

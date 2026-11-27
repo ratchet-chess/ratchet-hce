@@ -26,8 +26,6 @@ import { Z_PIECE, Z_SIDE } from "../../core/zobrist";
 
 const SLOTS = 8192;
 const SLOT_MASK: u64 = SLOTS - 1;
-/** the reversible moves of both colors, each pair of squares once */
-export const CYCLE_MOVES = 3668;
 /** an insert that displaces this many entries has met a loop, and its last entry is dropped: Ratchet's guard */
 const KICKS_MAX = 512;
 
@@ -46,7 +44,7 @@ const cycleSquares = changetype<StaticArray<u16>>(memory.data(sizeof<u16>() * SL
   return <i32>((key >> 16) & SLOT_MASK);
 }
 
-/** fills the table from the core's keys and returns how many moves it holds, CYCLE_MOVES unless an insert looped */
+/** fills the table from the core's keys and returns how many moves it holds (3668 unless an insert looped) */
 export function initCycle(): i32 {
   for (let i = 0; i < SLOTS; i++) cycleKey[i] = 0;
   let placed = 0;
