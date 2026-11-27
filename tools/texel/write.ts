@@ -1,18 +1,17 @@
 /**
- * The writer: from a map, a copy of the subject's release with its mapped constants
- * changed. Two outputs share the mapping:
+ * The writer: from a map, the subject's engine with its mapped constants changed.
+ * Two outputs share the mapping:
  *
  * - a tuning build: each mapped scalar becomes a `let`, and each source file that
  *   holds a slot gets a generated setter, so the build exports
  *   tuneSet(element id, value) and the tuner sets any element at run time. Built
  *   under tmp/texel/builds/, never committed, with tunables.json beside it: the
  *   free elements as UCI spin options (host/uci/main.ts --tunables).
- * - a tuned variant: each slot's literal takes its element's value, rounded to the
- *   storage type and clamped to its bounds, in engines/<release>-<name>/; or, for
- *   the own engine, the same literals in its own files (writeInPlace).
+ * - tuned values: each slot's literal in the engine's own files takes its element's
+ *   value, rounded to the storage type and clamped to its bounds (writeInPlace).
  *
- * A copy's relative imports that leave the release's directory are recomputed for
- * the copy's place, so it compiles anywhere.
+ * The tuning build's relative imports that leave the engine's directory are
+ * recomputed for the copy's place, so it compiles anywhere.
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -22,9 +21,9 @@ import { applyEdits, type Edit, mutableEdits, valueEdit } from "./source.ts";
 
 const REPO = new URL("../../", import.meta.url).pathname;
 
-/** the release's sources, by file name */
+/** the engine's sources, by file name */
 function releaseFiles(m: LoadedMap): Map<string, string> {
-  if (!m.releaseDir) throw new Error(`${m.path}: the writer needs a release`);
+  if (!m.releaseDir) throw new Error(`${m.path}: the writer needs the map's "release", the engine's directory`);
   const files = new Map<string, string>();
   for (const f of readdirSync(m.releaseDir)
     .filter((f) => f.endsWith(".ts"))
@@ -53,54 +52,18 @@ export function storable(e: Element, v: number): number {
   return Math.min(e.max, Math.max(e.min, r));
 }
 
-/** writes `files` into `dir`, rehomed from the release's directory */
+/** writes `files` into `dir`, rehomed from the engine's directory */
 function emit(m: LoadedMap, files: Map<string, string>, dir: string): void {
   mkdirSync(dir, { recursive: true });
   for (const [f, text] of files) writeFileSync(join(dir, f), rehome(text, m.releaseDir!, resolve(dir)));
 }
 
 /**
- * The tuned variant engines/<release>-<name>/ with `values` (element name to
- * value; an element not named keeps its default). Refuses to overwrite.
- */
-export function writeVariant(m: LoadedMap, name: string, values: Record<string, number>): string {
-  const dir = join(REPO, "engines", `${m.map.release}-${name}`);
-  if (existsSync(dir)) throw new Error(`${dir} exists`);
-  const byName = new Map(m.elements.map((e) => [e.name, e]));
-  for (const n of Object.keys(values)) if (!byName.has(n)) throw new Error(`${m.path}: no element ${n}`);
-  const files = releaseFiles(m);
-  const edits = new Map<string, Edit[]>();
-  const changed: Record<string, number> = {};
-  for (const e of m.elements) {
-    if (!(e.name in values)) continue;
-    if (e.fixed) throw new Error(`${e.name} is fixed in ${m.path}`);
-    const v = storable(e, values[e.name]);
-    if (v !== e.default) changed[e.name] = v;
-    for (const s of e.slots) {
-      const decl = m.declarations.get(s.file)!.get(s.symbol)!;
-      const list = edits.get(s.file) ?? [];
-      list.push(valueEdit(files.get(s.file)!, decl, s.index < 0 ? 0 : s.index, stored(v, s.transform)));
-      edits.set(s.file, list);
-    }
-  }
-  for (const [f, list] of edits) files.set(f, applyEdits(files.get(f)!, list));
-  emit(m, files, dir);
-  writeFileSync(
-    join(dir, "variant.json"),
-    `${JSON.stringify({ release: m.map.release, map: relative(REPO, m.path), values: changed }, null, 2)}\n`,
-  );
-  return dir;
-}
-
-/**
- * Writes `values` into the subject's own files, for the own engine, whose tuned
- * values are committed in place (AGENTS.md § Tuning). Refuses a release: one
- * with a fidelity reference stays untouched. Returns the files changed.
+ * Writes `values` into the engine's own files, where tuned values are committed
+ * (AGENTS.md § Tuning). Returns the files changed.
  */
 export function writeInPlace(m: LoadedMap, values: Record<string, number>): string[] {
-  if (!m.releaseDir) throw new Error(`${m.path}: the writer needs a release`);
-  if (existsSync(join(m.releaseDir, "fidelity")))
-    throw new Error(`${m.releaseDir} is a release: write a variant instead`);
+  if (!m.releaseDir) throw new Error(`${m.path}: the writer needs the map's "release", the engine's directory`);
   const byName = new Map(m.elements.map((e) => [e.name, e]));
   for (const n of Object.keys(values)) if (!byName.has(n)) throw new Error(`${m.path}: no element ${n}`);
   const files = releaseFiles(m);
@@ -134,7 +97,7 @@ function store(e: Element, s: { symbol: string; index: number; transform: string
 }
 
 /**
- * The tuning build: the release with every slot settable through tuneSet, written
+ * The tuning build: the engine with every slot settable through tuneSet, written
  * and compiled under tmp/texel/builds/<subject>-<hash>/. Returns the wasm's path;
  * an existing build of the same map and sources is reused.
  */
@@ -190,7 +153,7 @@ export function buildTuning(m: LoadedMap): string {
   }
   const index = files.get("index.ts");
   if (!index) throw new Error(`${m.releaseDir}: no index.ts`);
-  // a table the release fills once from a tuned constant is filled again after each set
+  // a table the engine fills once from a tuned constant is filled again after each set
   const refresh = m.map.refresh ? `  ${m.map.refresh}();\n` : "";
   files.set(
     "index.ts",

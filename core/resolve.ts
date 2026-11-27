@@ -2,7 +2,7 @@
  * The Texel tuner's neutral resolver: a material-only capture search that takes a
  * position to a quiet one, the same for every subject tuned. Its material values
  * (1, 3, 3, 5, 9 pawns) and its move order (most valuable victim, then least
- * valuable attacker) are Ratchet's own, not any release's. It searches the core's
+ * valuable attacker) are the core's own, not any engine's. It searches the core's
  * noisy moves: captures, en passant and queen promotions. A side may stand pat;
  * the search does not test for check.
  */

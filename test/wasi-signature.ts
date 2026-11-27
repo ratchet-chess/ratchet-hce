@@ -1,8 +1,8 @@
 /**
- * The WASI build's gate: a release's WASI build has the node signature of the wasm the gates load.
+ * The WASI build's gate: an engine's WASI build has the node signature of the wasm the gates load.
  *
- * The gates and bench/search.ts call build/<release>.wasm through its exports. bin/ratchet and the match tools
- * play build/wasi/<release>.wasm, the file that ships. Both are compiled from one engine, and this gate is the
+ * The gates and bench/search.ts call build/<engine>.wasm through its exports. bin/ratchet and the match tools
+ * play build/wasi/<engine>.wasm, the file that ships. Both are compiled from one engine, and this gate is the
  * check that they search alike: the WASI build's `bench` must count the nodes bench/search.ts counts, at its depth.
  *
  *   bun test/wasi-signature.ts
@@ -22,11 +22,11 @@ let failed = false;
 for (const file of readdirSync(join(root, "build/wasi"))
   .filter((f) => f.endsWith(".wasm"))
   .sort()) {
-  const release = file.replace(/\.wasm$/, "");
+  const engine = file.replace(/\.wasm$/, "");
   const found = /d(\d+)\s+signature (\d+)/.exec(
-    run(["bench/search.ts", "--engine", release, "--repeat", "1", "--warmup", "1"]),
+    run(["bench/search.ts", "--engine", engine, "--repeat", "1", "--warmup", "1"]),
   );
-  if (!found) throw new Error(`no signature for ${release} from bench/search.ts`);
+  if (!found) throw new Error(`no signature for ${engine} from bench/search.ts`);
   const [depth, signature] = [found[1], Number(found[2])];
   const nodes = Number(
     /Nodes searched\s*:\s*(\d+)/.exec(
@@ -36,7 +36,7 @@ for (const file of readdirSync(join(root, "build/wasi"))
   const equal = nodes === signature;
   failed ||= !equal;
   console.log(
-    `${equal ? "ok  " : "FAIL"} ${release}: WASI build ${nodes} nodes at depth ${depth}, bench/search.ts ${signature}`,
+    `${equal ? "ok  " : "FAIL"} ${engine}: WASI build ${nodes} nodes at depth ${depth}, bench/search.ts ${signature}`,
   );
 }
 process.exit(failed ? 1 : 0);

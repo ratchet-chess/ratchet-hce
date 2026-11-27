@@ -5,8 +5,6 @@
  *
  *   bun tools/texel/main.ts map <map.json>                  the map's elements, checked
  *   bun tools/texel/main.ts build <map.json>                the tuning build; prints its wasm
- *   bun tools/texel/main.ts write <map.json> --name <name> [--values <values.json>]
- *                                                           the tuned variant engines/<release>-<name>/
  *   bun tools/texel/main.ts write <map.json> --in-place --values <values.json>
  *                                                           the own engine's values, written into its own files
  *   bun tools/texel/main.ts dataset --set <name> [--valid <permille>] [--limit <n>]
@@ -89,7 +87,7 @@ import { type Labels, adam, adapterTarget, fitK, localSearch, loss, traceTarget,
 import { type Trace, linearEval, probe, readTrace, writeTrace } from "./trace.ts";
 import { UciAdapter } from "./uci.ts";
 import { WasmAdapter } from "./wasm.ts";
-import { buildTuning, storable, writeInPlace, writeVariant } from "./write.ts";
+import { buildTuning, storable, writeInPlace } from "./write.ts";
 
 const REPO = new URL("../../", import.meta.url).pathname;
 const DATASETS = join(REPO, "tmp", "texel", "datasets");
@@ -126,7 +124,7 @@ if (["eval", "trace", "tune"].includes(step) && !process.env.QUEUE_ALLOC) {
 const opt = (name: string) => (rest.includes(name) ? rest[rest.indexOf(name) + 1] : undefined);
 const positional = rest[0] && !rest[0].startsWith("--") ? rest[0] : undefined;
 const usage =
-  "usage: bun tools/texel/main.ts map|build <map.json> | write <map.json> --name <name> | --in-place" +
+  "usage: bun tools/texel/main.ts map|build <map.json> | write <map.json> --in-place" +
   " [--values <values.json>] | dataset --set <name> | --pgn <file> --name <name> [--opt <key>=<value> ...]" +
   " [--valid <permille>] [--limit <n>] | resolve <dataset.bin> | join <a.bin> <b.bin>... --name <name>" +
   " | info <dataset.bin> | eval|trace <map.json> <dataset.bin> [--workers <n>] [--limit <n>]" +
@@ -140,7 +138,7 @@ const die = (msg: string): never => {
 /**
  * The adapter --adapter names (wasm, the default, or uci), with the first `count`
  * records loaded. A uci adapter starts --processes engines from the map's uci
- * section; for a Ratchet release, {build} and {tunables} are its tuning build.
+ * section; for a map with a "release", {build} and {tunables} are its tuning build.
  */
 async function openAdapter(m: LoadedMap, records: Uint8Array, count: number): Promise<Adapter> {
   const kind = opt("--adapter") ?? "wasm";
@@ -219,8 +217,8 @@ if (step === "map" || step === "build" || step === "write") {
   } else {
     const valuesPath = opt("--values");
     const values = valuesPath ? (JSON.parse(readFileSync(valuesPath, "utf8")) as Record<string, number>) : {};
-    if (rest.includes("--in-place")) console.log(writeInPlace(m, values).join("\n"));
-    else console.log(writeVariant(m, opt("--name") ?? die(usage), values));
+    if (!rest.includes("--in-place")) die(usage);
+    console.log(writeInPlace(m, values).join("\n"));
   }
 } else if (step === "dataset") {
   let set: SetEntry;

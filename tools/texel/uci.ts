@@ -10,7 +10,7 @@
  *   }
  *
  * - command: the argv, run from the repo; {build} and {tunables} are a tuning
- *   build's wasm and options file, for a subject that is a Ratchet release.
+ *   build's wasm and options file, for a map with a "release".
  * - options: set once at start, before any element.
  * - eval: `{ "form": "search", "depth": d }` scores a position by `go depth d`,
  *   reading the last `info ... score cp` (a mate score is NaN), from a fresh

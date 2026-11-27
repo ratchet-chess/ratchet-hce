@@ -5,16 +5,16 @@
  * block expands to elements, and a tuned element is one free value after ties.
  *
  *   {
- *     "subject": "chess-4.6",
- *     "release": "chess-4.6",            // engines/<release>/, for a source subject
- *     "eval": { "form": "search", "depth": 2 },   // or { "form": "static" }
- *     "quirks": ["reads-search-state"],
+ *     "subject": "ratchet",
+ *     "release": "ratchet",              // engines/<release>/, for a source subject
+ *     "k": 1.022,                        // optional: the K every tune holds
+ *     "eval": { "form": "static" },      // or { "form": "search", "depth": 2 }
  *     "refresh": "initSearch",           // optional, below
- *     "defaults": { "type": "i32", "step": 8 },
+ *     "defaults": { "type": "i32", "step": 4 },
  *     "blocks": [
- *       { "name": "FPNISO", "sources": [{ "file": "eval.ts", "symbol": "FPNISO" }] },
- *       { "name": "VALUE", "size": 7, "layout": "count", "fixed": [0, 6],
- *         "sources": [{ "file": "eval.ts", "symbol": "VALUE" }] }
+ *       { "name": "TEMPO_MG", "sources": [{ "file": "params.ts", "symbol": "TEMPO_MG" }] },
+ *       { "name": "MAT_MG", "size": 7, "layout": "count", "fixed": [0, 6],
+ *         "sources": [{ "file": "params.ts", "symbol": "MAT_MG" }] }
  *     ]
  *   }
  *
@@ -25,9 +25,9 @@
  * squares); `ties` may instead list index groups. A middlegame and endgame pair is
  * two blocks. `type` is the storage type (i32, i16, i8, u16, u8, f64), whose range
  * bounds the element unless `min` and `max` narrow it. `step` is the local search's
- * step and the probe's unit. `refresh` names a function in scope in the release's
+ * step and the probe's unit. `refresh` names a function in scope in the engine's
  * index.ts that the tuning build calls after each set: it refills a table the
- * release fills once from the map's constants.
+ * engine fills once from the map's constants.
  */
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
@@ -74,8 +74,7 @@ export interface ParameterMap {
   k?: number;
   release?: string;
   eval: EvalForm;
-  quirks?: string[];
-  /** a function in the release's index.ts scope that the tuning build calls after each set */
+  /** a function in the engine's index.ts scope that the tuning build calls after each set */
   refresh?: string;
   defaults?: { type?: string; step?: number };
   blocks: Block[];
@@ -120,7 +119,7 @@ export interface LoadedMap {
   elements: Element[];
   /** each source file's declarations that the map reads, by file */
   declarations: Map<string, Map<string, Declaration>>;
-  /** sha256 of the map, the release's and the core's sources and the writer, which names its builds */
+  /** sha256 of the map, the engine's and the core's sources and the writer, which names its builds */
   hash: string;
 }
 
@@ -232,7 +231,7 @@ export function loadMap(path: string): LoadedMap {
     }
   }
 
-  // A build depends on the map, the release, the core it imports and the writer that made it.
+  // A build depends on the map, the engine, the core it imports and the writer that made it.
   const hash = createHash("sha256").update(text);
   const files = [
     ...(releaseDir

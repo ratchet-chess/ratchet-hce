@@ -1,6 +1,6 @@
 /**
  * The limits of a UCI `go`, as the front end parses them. The host passes them
- * to the release, which times itself as its original did.
+ * to the engine, which times itself.
  */
 export interface GoLimits {
   wtime?: number;

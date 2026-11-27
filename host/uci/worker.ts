@@ -20,7 +20,6 @@ export type WorkerCommand =
 interface WorkerInit {
   stop: Int32Array;
   release: string;
-  level?: number;
   nodesTime: number;
 }
 
@@ -29,7 +28,6 @@ const port = parentPort!;
 const stop = data.stop;
 const engine = await Engine.load(data.release);
 if (!engine.clocked) throw new Error(`${data.release} does not time itself, so it cannot play`);
-if (data.level) engine.setGameLevel(data.level);
 let sideToMove = 0;
 /**
  * The TimeRecord option: each search then prints the engine's record of its time use as one
@@ -49,15 +47,6 @@ let timeRecord = false;
  */
 const nodesTime = data.nodesTime;
 
-/**
- * Ratchet's guard, for a release with levels in place of a clock: its move waits
- * until this long after the go. Such a release can reply within a millisecond,
- * and an anchor that hands each go to a search thread can miss a go that comes
- * before the thread waits again (Stash 9, MissingPawn), and lose on time. The
- * wait costs the release nothing, since it ignores its clock.
- */
-const MIN_REPLY_MS = 100;
-const pause = new Int32Array(new SharedArrayBuffer(4));
 /** the engine's own remaining time under --nodestime, from the game's first go */
 let ownMs: number | undefined;
 
@@ -76,17 +65,16 @@ function ownClock(limits: GoLimits): GoLimits {
 }
 
 /**
- * A search: the host passes the side to move's limits to the release, which
+ * A search: the host passes the side to move's limits to the engine, which
  * times itself, and supplies its clock: wall time or, under --nodestime, nodes.
- * The host's stop reaches the release as waiting input. A clock already run
- * out passes as 0. A node limit goes to a release that takes one, the own engine; any
- * other ignores it and says so, since no original takes one. In an infinite search,
- * the move waits for the GUI's stop, as UCI requires.
+ * The host's stop reaches the engine as waiting input. A clock already run
+ * out passes as 0. A build that takes no node limit ignores one and says so.
+ * In an infinite search, the move waits for the GUI's stop, as UCI requires.
  */
 function go(limits: GoLimits): void {
   if (limits.nodes !== undefined) {
     if (engine.nodeLimited) engine.setNodeLimit(Math.max(0, limits.nodes));
-    else port.postMessage("info string a release takes no node limit; this one is ignored");
+    else port.postMessage("info string this build takes no node limit; this one is ignored");
   }
   if (nodesTime) limits = ownClock(limits);
   const given = (ms: number | undefined) => (ms === undefined ? undefined : Math.max(0, ms));
@@ -117,10 +105,6 @@ function go(limits: GoLimits): void {
   if (nodesTime && ownMs !== undefined) {
     const inc = (sideToMove === 0 ? limits.winc : limits.binc) ?? 0;
     ownMs = Math.max(1, ownMs - engine.nodes() / nodesTime + inc);
-  }
-  if (engine.leveled) {
-    const wait = MIN_REPLY_MS - (performance.now() - t0);
-    if (wait > 0) Atomics.wait(pause, 0, 0, wait);
   }
   const t = timeRecord ? engine.timeTrace() : undefined;
   if (t) {

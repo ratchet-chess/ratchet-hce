@@ -2,16 +2,16 @@
  * UCI front end. Reads commands from stdin and forwards engine work to the search
  * worker, so isready and stop are answered while a search runs.
  *
- *   bun host/uci/main.ts --release <name> [--nodestime N] [--level N] [--tunables <path>]   (or node, deno run -A)
+ *   bun host/uci/main.ts --release <name> [--nodestime N] [--tunables <path>]   (or node, deno run -A)
  *
- * --release names the release to play: build/<name>.wasm, from engines/<name>/,
+ * --release names the build to play: build/<name>.wasm, from engines/<name>/,
  * or a path to a .wasm file, such as a Texel tuning build.
  *
  * --tunables <path> names a tuning build's options file, tunables.json beside its
  * wasm (tools/texel/write.ts): each element becomes a spin option, which sets it
  * through the build's tuneSet.
  *
- * `eval` (not UCI; Stockfish has one) prints `eval cp <n>`: the release's static
+ * `eval` (not UCI; Stockfish has one) prints `eval cp <n>`: the engine's static
  * eval of the current position for the side to move, as the host reports it.
  *
  * TimeRecord is offered only by a build that keeps a record of its time use, the own engine. When it is on, each
@@ -19,10 +19,6 @@
  * the clock's milliseconds it took, the two limits, the soft limit's score and node factors, and the iterations the
  * veto carried past the soft limit (engines/ratchet/time.ts timeTrace). fastchess's `-pgnout match_line=` copies the
  * line into the move's comment.
- *
- * --level N sets the level of every game, for a release whose original has
- * levels and no clock, such as Sargon (1978): one level per match, as its
- * operator chose one, so its time controls are ignored.
  *
  * --nodestime N times the engine in nodes, N per millisecond of its own clock
  * (worker.ts). It is for test matches, so it is a launcher argument, not a UCI
@@ -37,13 +33,11 @@ import type { WorkerCommand } from "./worker.ts";
 
 const args = process.argv.slice(2);
 const release = args.includes("--release") ? args[args.indexOf("--release") + 1] : "";
-if (!release) throw new Error("--release needs a release name");
+if (!release) throw new Error("--release needs a build name");
 const nodesTime = args.includes("--nodestime") ? Number(args[args.indexOf("--nodestime") + 1]) : 0;
 if (!(nodesTime >= 0)) throw new Error("--nodestime needs nodes per millisecond");
-const level = args.includes("--level") ? Number(args[args.indexOf("--level") + 1]) : 0;
-if (!Number.isInteger(level)) throw new Error("--level needs a whole number");
 const stop = new Int32Array(new SharedArrayBuffer(4));
-const worker = new Worker(new URL("./worker.ts", import.meta.url), { workerData: { stop, nodesTime, release, level } });
+const worker = new Worker(new URL("./worker.ts", import.meta.url), { workerData: { stop, nodesTime, release } });
 let markReady: () => void;
 /** the `id name` the worker sends before it is ready: the own engine's carries its version */
 let idName = "RatchetHCE";
@@ -67,7 +61,7 @@ worker.on("error", (e: Error) => {
 const send = (c: WorkerCommand) => worker.postMessage(c);
 send({ cmd: "hash", mb: HASH_MB });
 
-/** the elements a tuning build exposes as UCI options, from --tunables; a release build offers none */
+/** the elements a tuning build exposes as UCI options, from --tunables; any other build offers none */
 interface Tunable {
   name: string;
   id: number;

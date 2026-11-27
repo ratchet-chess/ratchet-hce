@@ -1,12 +1,12 @@
 /**
  * Host wrapper around a WASM build: build/core.wasm (core/, `bun run
- * build:wasm`) or a release's build/<release>.wasm, which re-exports the core
+ * build:wasm`) or the own engine's build/ratchet.wasm, which re-exports the core
  * beside its search. Loading, position setup and UCI move strings.
  */
 import { parseFen } from "./fen.ts";
 
 interface Exports {
-  /** a release's init, which also sets up the core */
+  /** the engine's init, which also sets up the core */
   init?(): void;
   initCore(): void;
   clear(): void;
@@ -41,7 +41,7 @@ export interface CorePosition {
   halfmove: number;
 }
 
-/** The exports a release adds to the core's; build/core.wasm has none of them. */
+/** The exports the own engine adds to the core's; build/core.wasm has none of them. */
 interface Search {
   go(depth: number): number;
   setHash(mb: number): void;
@@ -54,7 +54,7 @@ interface Search {
   evaluate(): number;
   /** present only in a tuning build */
   tuneSet?(id: number, value: number): void;
-  /** the own engine's version, major << 16 | minor << 8 | patch; a release has none */
+  /** the own engine's version, major << 16 | minor << 8 | patch */
   version?(): number;
   /** the own engine's static eval in its own unit, finer than the centipawn */
   evaluateUnits?(): number;
@@ -77,33 +77,17 @@ interface Search {
   evalBenchRun?(reps: number, withEval: number): number;
 }
 
-/** A game played inside a release that keeps its own game state, as its original did; optional. */
-interface Game {
-  gameStart(level: number, black: number): void;
-  gamePlayer(from: number, to: number): number;
-  /** from | to << 6, or -1 for no move */
-  gameMove(): number;
-  gameNextMove(): void;
-}
-
 /**
- * A release that times itself, as its original did, from the host's limits and
- * clock; optional. A limit not given is -1.
+ * A game's search, timed by the engine from the host's limits and clock; build/core.wasm
+ * has none. A limit not given is -1.
  */
 interface Clocked {
   goClock(timeMs: number, incMs: number, movesToGo: number, moveTimeMs: number, depth: number): number;
-  /** the level of every later game, for a release whose original has levels and no clock */
-  setGameLevel?(level: number): void;
-  /** the node limit of the next goClock, which clears it; the own engine only, since no original takes one */
+  /** the node limit of the next goClock, which clears it */
   setNodeLimit?(nodes: number): void;
 }
 
-/** a release's leaf count of its own move generator, when its board is not the core's; optional */
-interface ReleasePerft {
-  perftRelease(depth: number): number;
-}
-
-/** Called by a release where its original read its input; non-zero means input is waiting, so the search stops. */
+/** Called by the search to check for input; non-zero means input is waiting, so the search stops. */
 export type Poll = () => number;
 
 /**
@@ -123,7 +107,7 @@ export interface TimeTrace {
 /** Called after each iteration whose line is kept, finished or cut, with its score and nodes so far; a report only. */
 export type OnIteration = (depth: number, score: number, nodes: number) => number;
 
-/** The clock a clocked release reads, in milliseconds; `nodes` is its count in this search. */
+/** The clock a timed search reads, in milliseconds; `nodes` is its count in this search. */
 export type Clock = (nodes: number) => number;
 
 export const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -144,20 +128,20 @@ export class Engine {
   poll: Poll = () => 0;
   onIteration: OnIteration = () => 0;
   clock: Clock = () => performance.now();
-  private wasm: Exports & Partial<Search> & Partial<Game> & Partial<ReleasePerft> & Partial<Clocked>;
+  private wasm: Exports & Partial<Search> & Partial<Clocked>;
 
-  private constructor(wasm: Exports & Partial<Search> & Partial<Game> & Partial<ReleasePerft> & Partial<Clocked>) {
+  private constructor(wasm: Exports & Partial<Search> & Partial<Clocked>) {
     this.wasm = wasm;
   }
 
-  /** the search exports, which only a release has */
+  /** the search exports, which build/core.wasm lacks */
   private get search(): Search {
-    if (!this.wasm.go) throw new Error("this build has no search: load a release, not the core");
+    if (!this.wasm.go) throw new Error("this build has no search: load the engine, not the core");
     return this.wasm as Search;
   }
 
   /**
-   * Loads build/<name>.wasm: "core", or a release's directory name under
+   * Loads build/<name>.wasm: "core", or an engine's directory name under
    * engines/; or a path ending in .wasm, such as a tuning build.
    */
   static async load(name: string): Promise<Engine> {
@@ -190,13 +174,7 @@ export class Engine {
       },
     });
     state.memory = instance.exports.memory as WebAssembly.Memory | undefined;
-    state.engine = new Engine(
-      instance.exports as unknown as Exports &
-        Partial<Search> &
-        Partial<Game> &
-        Partial<ReleasePerft> &
-        Partial<Clocked>,
-    );
+    state.engine = new Engine(instance.exports as unknown as Exports & Partial<Search> & Partial<Clocked>);
     if (state.engine.wasm.init) state.engine.wasm.init();
     else state.engine.wasm.initCore();
     state.engine.setPosition(START_FEN, []);
@@ -240,18 +218,13 @@ export class Engine {
     return this.search.go(maxDepth);
   }
 
-  /** whether the release times itself: goClock, not go */
+  /** whether the build times itself: goClock, not go */
   get clocked(): boolean {
     return this.wasm.goClock !== undefined;
   }
 
-  /** whether the release keeps a game of its own, played through gameStart, gamePlayer and gameMove */
-  get ownsGame(): boolean {
-    return this.wasm.gameStart !== undefined;
-  }
-
   /**
-   * One move of a game, timed by the release from `limits` and `clock`: the side
+   * One move of a game, timed by the engine from `limits` and `clock`: the side
    * to move's time and increment, moves to go, a fixed time, or a depth.
    */
   goClock(limits: {
@@ -261,7 +234,7 @@ export class Engine {
     moveTimeMs?: number;
     depth?: number;
   }): number {
-    if (!this.wasm.goClock) throw new Error("this release does not time itself");
+    if (!this.wasm.goClock) throw new Error("this build does not time itself");
     return this.wasm.goClock(
       limits.timeMs ?? -1,
       limits.incMs ?? -1,
@@ -271,26 +244,15 @@ export class Engine {
     );
   }
 
-  /** whether the release takes a node limit: the own engine does, and no original did */
+  /** whether the build takes a node limit */
   get nodeLimited(): boolean {
     return this.wasm.setNodeLimit !== undefined;
   }
 
   /** the node limit of the next goClock search, from a `go nodes` */
   setNodeLimit(nodes: number): void {
-    if (!this.wasm.setNodeLimit) throw new Error("this release takes no node limit");
+    if (!this.wasm.setNodeLimit) throw new Error("this build takes no node limit");
     this.wasm.setNodeLimit(nodes);
-  }
-
-  /** whether the release has game levels in place of a clock */
-  get leveled(): boolean {
-    return this.wasm.setGameLevel !== undefined;
-  }
-
-  /** sets the level of every later game; throws if the release has no levels */
-  setGameLevel(level: number): void {
-    if (!this.wasm.setGameLevel) throw new Error("this release has no game level");
-    this.wasm.setGameLevel(level);
   }
 
   /** sizes the transposition table in megabytes */
@@ -391,13 +353,13 @@ export class Engine {
     return this.search.evalBenchRun(reps, withEval ? 1 : 0);
   }
 
-  /** the own engine's version as "major.minor.patch"; undefined for a release */
+  /** the own engine's version as "major.minor.patch"; undefined for a build without one */
   get version(): string | undefined {
     const v = this.wasm.version?.();
     return v === undefined ? undefined : `${v >> 16}.${(v >> 8) & 255}.${v & 255}`;
   }
 
-  /** sets tuning-build constant `id` to `value`; a release build has none */
+  /** sets tuning-build constant `id` to `value`; a build that is not a tuning build has none */
   tune(id: number, value: number): void {
     this.search.tuneSet?.(id, value);
   }
@@ -446,40 +408,5 @@ export class Engine {
   perft(fen: string, depth: number, bulk: boolean): number {
     this.setPosition(fen, []);
     return this.wasm.perft(depth, bulk ? 1 : 0);
-  }
-
-  /** the leaf count of the release's own move generator from `fen`; throws if the release uses the core's */
-  perftRelease(fen: string, depth: number): number {
-    if (!this.wasm.perftRelease) throw new Error("this build has no generator of its own");
-    this.setPosition(fen, []);
-    return this.wasm.perftRelease(depth);
-  }
-
-  /** the game exports, which only a release that keeps its own game state has */
-  private get game(): Game {
-    if (!this.wasm.gameStart) throw new Error("this build plays no game of its own");
-    return this.wasm as Game;
-  }
-
-  /** a new game inside the release from the start position, the release playing black or white at `level` */
-  gameStart(level: number, black: boolean): void {
-    this.game.gameStart(level, black ? 1 : 0);
-  }
-
-  /** the opponent's move in UCI notation; false if the release finds it illegal */
-  gamePlayer(uci: string): boolean {
-    const sq = (s: string) => s.charCodeAt(0) - 97 + 8 * (s.charCodeAt(1) - 49);
-    return this.game.gamePlayer(sq(uci), sq(uci.slice(2, 4))) !== 0;
-  }
-
-  /** the release's move, made on its own board, in UCI notation without a promotion letter; "" for none */
-  gameMove(): string {
-    const m = this.game.gameMove();
-    return m < 0 ? "" : moveToUci(m & 4095);
-  }
-
-  /** the release's step after both sides have moved */
-  gameNextMove(): void {
-    this.game.gameNextMove();
   }
 }

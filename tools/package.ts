@@ -1,8 +1,8 @@
 /**
- * Builds a release's distribution files from its WASI build (build/wasi/<release>.wasm), so it plays as a UCI
+ * Builds the own engine's distribution files from its WASI build (build/wasi/ratchet.wasm), so it plays as a UCI
  * engine everywhere engines run: GUIs, match runners, and pages.
  *
- *   bun tools/package.ts [--release ratchet] [--out dist] [--native linux-x86-64,...] [--bun ...]
+ *   bun tools/package.ts [--out dist] [--native linux-x86-64,...] [--bun ...]
  *                        [--wabt <dir>] [--simde <dir>]
  *
  * Into <out>/<name>/ it writes:
@@ -12,8 +12,7 @@
  *                                 host/wasi/native.c, and no runtime
  *   THIRD-PARTY-NOTICES.txt       the Clockwork dataset's ODbL notice, and WABT's and SIMDe's in native builds
  *   SHA256SUMS
- * where <name> is <release>-<version>, and the own engine's is ratchetHCE-<version>, so its files differ from
- * ratchet's. Run `bun run build:wasm` first.
+ * where <name> is ratchetHCE-<version>, so its files differ from ratchet's. Run `bun run build:wasm` first.
  *
  * --native lists the native targets (default Linux and Windows x86-64/x86-64-v3; pass `macos-arm64` on macOS, or
  * empty string to skip native builds). --wabt and --simde override nixpkgs lookups when Nix is not installed.
@@ -22,7 +21,7 @@
  *
  * Every runnable file prints its node signature with `bench`. Before it writes SHA256SUMS, the tool runs `bench`
  * on each file this host can execute (Windows builds under Wine when wine64 is installed on non-Windows), at
- * bench/search.ts's depth for the release, and fails if any count differs from the release's node signature.
+ * bench/search.ts's depth for the engine, and fails if any count differs from the engine's node signature.
  */
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -34,9 +33,10 @@ import { Engine } from "../host/wasm.ts";
 const root = fileURLToPath(new URL("..", import.meta.url));
 const args = process.argv.slice(2);
 const opt = (n: string) => (args.includes(n) ? args[args.indexOf(n) + 1] : undefined);
-const release = opt("--release") ?? "ratchet";
+/** the engine under engines/ that this repo packages */
+const ENGINE = "ratchet";
 const out = opt("--out") ?? join(root, "dist");
-const wasi = join(root, "build/wasi", `${release}.wasm`);
+const wasi = join(root, "build/wasi", `${ENGINE}.wasm`);
 
 /**
  * Native targets: the C compiler and its flags. Each target's file is named for its OS and for the oldest CPU
@@ -116,10 +116,9 @@ wasm2c and compiling it with the following third-party components:
 const run = (cmd: string, argv: string[], cwd = root) =>
   execFileSync(cmd, argv, { cwd, stdio: ["ignore", "pipe", "inherit"], encoding: "utf8" });
 
-const version = (await Engine.load(release)).version;
-/** the name in the files: this repo packages the own engine, engines/ratchet/, as ratchetHCE */
-const product = release === "ratchet" ? "ratchetHCE" : release;
-const name = version ? `${product}-${version}` : product;
+const version = (await Engine.load(ENGINE)).version;
+if (!version) throw new Error(`build/${ENGINE}.wasm reports no version`);
+const name = `ratchetHCE-${version}`;
 const dir = join(out, name);
 rmSync(dir, { recursive: true, force: true });
 mkdirSync(dir, { recursive: true });
@@ -218,8 +217,8 @@ if (bunTargets.length) {
   }
 }
 
-// every runnable file on this host must print the release's node signature
-const tool = run("bun", ["bench/search.ts", "--engine", release, "--repeat", "1", "--warmup", "1"]);
+// every runnable file on this host must print the engine's node signature
+const tool = run("bun", ["bench/search.ts", "--engine", ENGINE, "--repeat", "1", "--warmup", "1"]);
 const found = /d(\d+)\s+signature (\d+)/.exec(tool);
 if (!found) throw new Error(`no signature from bench/search.ts:\n${tool}`);
 const [depth, signature] = [found[1], Number(found[2])];
@@ -254,7 +253,7 @@ for (const f of files) {
   const nodes = Number(/Nodes searched\s*:\s*(\d+)/.exec(r.stdout)?.[1]);
   if (nodes !== signature)
     throw new Error(`${f}: bench ${depth} gave ${nodes} nodes, bench/search.ts ${signature}\n${r.stderr}`);
-  console.error(`${f}: ${nodes} nodes at depth ${depth}, the release's node signature`);
+  console.error(`${f}: ${nodes} nodes at depth ${depth}, the engine's node signature`);
 }
 
 const sums =

@@ -1,8 +1,8 @@
 /**
  * Search benchmark: an engine's node signature and search speed over a fixed
  * position set, on whichever runtime executes this file. Each search is a fresh
- * go(depth) from the position, as a fidelity reference runs one, so the node
- * signature is the build's own and must be equal on every runtime.
+ * go(depth) from the position, so the node signature is the build's own and must
+ * be equal on every runtime.
  *
  *   bun bench/search.ts | node bench/search.ts | deno run --allow-read bench/search.ts
  *   --engine <name>        one engine under engines/ (default: every engine built in build/)
@@ -11,7 +11,7 @@
  *   --hash <mb>            size the transposition table first (default: the engine's own)
  *   --keep                 play the set as one game: newGame once per pass, then goClock to the depth,
  *                          so the tables fill as they do in play, and its signature is the kept pass's
- *   --positions <file>     `name|fen` lines (default bench/positions.txt, the set of the releases' references)
+ *   --positions <file>     `name|fen` lines (default bench/positions.txt)
  *   --warmup <n>           positions in the warm-up pass (default: the whole set). A slice warms the runtime's
  *                          compiler in a fraction of the time, for a quiet host; the whole set also rides out a
  *                          load that comes and goes on this host
@@ -41,11 +41,6 @@ import { baseBuild, median, root, runtime } from "./common.ts";
 
 /** depth per engine, chosen by hand so one pass takes seconds, not minutes, under Bun on `local` */
 const DEPTH: Record<string, number> = {
-  "sargon-1978": 3,
-  "chess-4.6": 5,
-  "gnuchess-1987": 5,
-  "phalanx-xii": 6,
-  "fruit-2.1": 7,
   ratchet: 12,
 };
 
@@ -72,7 +67,7 @@ const engines = opt("--engine")
       .filter((d) => existsSync(new URL(`../build/${d}.wasm`, import.meta.url)))
       .sort();
 
-/** a variant's depth is its release's: the longest DEPTH key that prefixes its name */
+/** a build named <engine>-<suffix> takes its engine's depth: the longest DEPTH key that prefixes its name */
 function depthOf(name: string): number {
   const given = opt("--depth");
   if (given) return Number(given);

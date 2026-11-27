@@ -1,6 +1,6 @@
 /**
- * The three calls a release makes to whatever runs it: its clock, a check for
- * waiting input, and a report after each iteration whose line is kept, finished or cut. A release calls
+ * The three calls an engine makes to whatever runs it: its clock, a check for
+ * waiting input, and a report after each iteration whose line is kept, finished or cut. An engine calls
  * these, never an import of its own.
  *
  * The wasm the host and the tools load (`index.ts`) imports them from the JavaScript host (host/wasm.ts).

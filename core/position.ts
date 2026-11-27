@@ -4,8 +4,8 @@
  * type-0 codes 0 and 8 holding color occupancy, plus a mailbox.
  *
  * make() updates the Zobrist hash incrementally; unmake() restores it from the
- * hash history instead of recomputing it. The core keeps no eval state: a
- * release that keeps terms incrementally updates them beside make() and unmake().
+ * hash history instead of recomputing it. The core keeps no eval state: an
+ * engine that keeps terms incrementally updates them beside make() and unmake().
  *
  * `ply` counts from the search root. Game moves are applied with playMove(), which
  * folds them into the repetition history and resets ply to 0, so the undo stack

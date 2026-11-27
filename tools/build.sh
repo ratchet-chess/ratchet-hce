@@ -1,6 +1,6 @@
 #!/bin/sh
-# Builds the core and every release under engines/ into build/<name>.wasm, the wasm the host and the tools load. A release with a
-# wasi.ts also gets build/wasi/<name>.wasm, its WASI build: a WASI preview-1 command module that speaks UCI
+# Builds the core and every engine under engines/ into build/<name>.wasm, the wasm the host and the tools load. An
+# engine with a wasi.ts also gets build/wasi/<name>.wasm, its WASI build: a WASI preview-1 command module that speaks UCI
 # (core/uci.ts). WASI=1 switches core/host.ts to the module's own answers, and abortWasi replaces env.abort.
 set -eu
 cd "$(dirname "$(readlink -f "$0")")/.."
