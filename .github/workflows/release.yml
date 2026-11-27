@@ -53,13 +53,15 @@ jobs:
             -o "$RUNNER_TEMP/wabt.tar.gz"
           printf '%s  %s\n' "$WABT_SHA" "$RUNNER_TEMP/wabt.tar.gz" | sha256sum -c -
           tar -xzf "$RUNNER_TEMP/wabt.tar.gz" -C "$RUNNER_TEMP"
+          mkdir -p "$RUNNER_TEMP/simde"
+          cp -r /usr/include/simde "$RUNNER_TEMP/simde/"
 
       - name: Package WASI, Worker, Linux and Windows native builds
         id: info
         run: |
           WABT="$RUNNER_TEMP/wabt-1.0.42"
           # Build WASI, JS Worker, Linux x86-64/v3, Windows x86-64/v3, and THIRD-PARTY-NOTICES.txt
-          out=$(bun tools/package.ts --wabt "$WABT" --simde /usr/include)
+          out=$(bun tools/package.ts --wabt "$WABT" --simde "$RUNNER_TEMP/simde")
           dir=$(printf '%s\n' "$out" | head -n1)
           name=$(basename "$dir")
           sig_line=$(bun bench/search.ts --engine ratchet --repeat 1 --warmup 1 | grep -oE 'd[0-9]+[[:space:]]+signature [0-9]+' | head -n1)
