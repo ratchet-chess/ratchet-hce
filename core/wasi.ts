@@ -79,20 +79,6 @@ function inputWaiting(): bool {
   return false;
 }
 
-/** waits `ms` milliseconds, or until input arrives */
-export function sleepMs(ms: f64): void {
-  if (ms <= 0) return;
-  memory.fill(subs, 0, 2 * 48);
-  store<u64>(subs, 1);
-  store<u8>(subs, EVENT_FD_READ, 8);
-  store<u32>(subs, 0, 16);
-  store<u64>(subs + 48, 2);
-  store<u8>(subs + 48, EVENT_CLOCK, 8);
-  store<u32>(subs + 48, CLOCK_MONOTONIC, 16);
-  store<u64>(subs + 48, <u64>(ms * 1e6), 24);
-  poll_oneoff(subs, events, 2, io);
-}
-
 // ------------------------------------------------------------------ output
 
 const OUT_CAP: i32 = 1 << 16;
@@ -107,11 +93,6 @@ export function putByte(b: i32): void {
 /** appends an ASCII string */
 export function put(s: string): void {
   for (let i = 0, n = s.length; i < n; i++) putByte(s.charCodeAt(i));
-}
-
-/** appends `len` bytes from `ptr` */
-export function putBytes(ptr: usize, len: i32): void {
-  for (let i = 0; i < len; i++) putByte(load<u8>(ptr + <usize>i));
 }
 
 /** appends a whole number */
@@ -132,7 +113,9 @@ export function endLine(fd: u32 = 1): void {
     store<u32>(io, <u32>(OUT + <usize>at));
     store<u32>(io, <u32>(outLen - at), 4);
     if (fd_write(fd, io, 1, io + 8) != 0) break;
-    at += <i32>load<u32>(io, 8);
+    const n = <i32>load<u32>(io, 8);
+    if (n == 0) break;
+    at += n;
   }
   outLen = 0;
 }

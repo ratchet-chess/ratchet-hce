@@ -198,7 +198,10 @@ function tokenIs(s: string): bool {
   return true;
 }
 
-/** the current token as a number, as JavaScript's Number reads a whole or decimal one; NaN if it is not one */
+/**
+ * The current token as a number, as JavaScript's Number reads a whole or decimal one; NaN if it is not one.
+ * Accumulates all digits and divides once by the fraction's power of ten to match argNumber.
+ */
 function tokenNumber(): f64 {
   let i = 0;
   let sign: f64 = 1;
@@ -207,21 +210,23 @@ function tokenNumber(): f64 {
     i++;
   }
   let v: f64 = 0;
+  let scale: f64 = 0;
   let digits = 0;
-  while (i < tokLen && byteAt(tokStart + i) >= 48 && byteAt(tokStart + i) <= 57) {
-    v = v * 10 + <f64>(byteAt(tokStart + i++) - 48);
-    digits++;
-  }
-  if (i < tokLen && byteAt(tokStart + i) == 46) {
-    i++;
-    let scale: f64 = 0.1;
-    while (i < tokLen && byteAt(tokStart + i) >= 48 && byteAt(tokStart + i) <= 57) {
-      v += <f64>(byteAt(tokStart + i++) - 48) * scale;
-      scale /= 10;
-      digits++;
+  while (i < tokLen) {
+    const c = byteAt(tokStart + i);
+    if (c == 46 && scale == 0) {
+      scale = 1;
+      i++;
+      continue;
     }
+    if (c < 48 || c > 57) return NaN;
+    v = v * 10 + <f64>(c - 48);
+    scale *= 10;
+    digits++;
+    i++;
   }
-  return digits > 0 && i == tokLen ? sign * v : NaN;
+  if (digits == 0) return NaN;
+  return sign * (scale > 1 ? v / scale : v);
 }
 
 /** the next token as a number; NaN if there is none */
@@ -317,7 +322,11 @@ function fenField(field: i32, at: usize, len: i32): void {
       }
     }
   } else if (field == 3) {
-    if (len >= 2) fenEp = (<i32>load<u8>(at, 1) - 49) * 8 + (<i32>load<u8>(at) - 97);
+    if (len == 2) {
+      const file = <i32>load<u8>(at) - 97;
+      const rank = <i32>load<u8>(at, 1) - 49;
+      if (file >= 0 && file < 8 && rank >= 0 && rank < 8) fenEp = rank * 8 + file;
+    }
   } else if (field == 4 || field == 5) {
     let v = 0;
     let ok = len > 0;
