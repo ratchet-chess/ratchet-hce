@@ -43,16 +43,23 @@ jobs:
           bun run test
           bun tools/citations.ts
 
-      - name: Install wasm2c and SIMDe
+      - name: Install wasm2c (upstream WABT) and SIMDe
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq wabt libsimde-dev gcc-mingw-w64-x86-64
+          sudo apt-get install -y -qq libsimde-dev gcc-mingw-w64-x86-64
+          WABT_VER=1.0.42
+          WABT_SHA=84895407a6bbb80e918f33b16b2fb2206021c150b6bc9ff6f761263a745ab131
+          curl -fsSL "https://github.com/WebAssembly/wabt/releases/download/${WABT_VER}/wabt-${WABT_VER}-linux-x64.tar.gz" \
+            -o "$RUNNER_TEMP/wabt.tar.gz"
+          printf '%s  %s\n' "$WABT_SHA" "$RUNNER_TEMP/wabt.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/wabt.tar.gz" -C "$RUNNER_TEMP"
 
       - name: Package WASI, Worker, Linux and Windows native builds
         id: info
         run: |
+          WABT="$RUNNER_TEMP/wabt-1.0.42"
           # Build WASI, JS Worker, Linux x86-64/v3, Windows x86-64/v3, and THIRD-PARTY-NOTICES.txt
-          out=$(bun tools/package.ts --wabt /usr --simde /usr/include)
+          out=$(bun tools/package.ts --wabt "$WABT" --simde /usr/include)
           dir=$(printf '%s\n' "$out" | head -n1)
           name=$(basename "$dir")
           sig_line=$(bun bench/search.ts --engine ratchet --repeat 1 --warmup 1 | grep -oE 'd[0-9]+[[:space:]]+signature [0-9]+' | head -n1)
@@ -62,10 +69,10 @@ jobs:
           echo "depth=$depth" >> "$GITHUB_OUTPUT"
           echo "signature=$sig" >> "$GITHUB_OUTPUT"
           echo "packaged $name (d$depth signature $sig)"
-          # Keep wasm2c C output for macOS native compilation
+          # Keep wasm2c C output and runtime sources (.c/.h/.inc) for macOS native compilation
           mkdir -p dist/wasm2c-src
           cp "tmp/package/$name/engine.c" "tmp/package/$name/engine.h" dist/wasm2c-src/
-          cp /usr/share/wabt/wasm2c/wasm-rt*.c /usr/share/wabt/wasm2c/wasm-rt*.h dist/wasm2c-src/
+          cp "$WABT/include/wasm-rt"*.h "$WABT/share/wabt/wasm2c/wasm-rt"* dist/wasm2c-src/
 
       - name: Upload WASI, Linux, Windows and C translation artifacts
         uses: actions/upload-artifact@v4
