@@ -883,6 +883,11 @@ export const CORR_W_NONPAWN_THEM = 263;
 export const CORR_W_MINOR = 318;
 export const CORR_W_MAJOR = 318;
 export const CORR_W_CONT = 296;
+/**
+ * the update's weight in sixteenths of Stash 302136d add_correction_history's 1 + depth: 16 is Stash's weight, and 32
+ * is Lynx ae1c2768 UpdateCorrectionHistory's, twice 1 + depth. Feature: Static_Evaluation_Correction_History.
+ */
+export const CORR_RATE = 48;
 
 // ---------------------------------------------------------------- time
 

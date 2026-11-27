@@ -65,6 +65,7 @@ disputed clone's row says so; a citation of it names the program it is assumed t
 | Lynx | 1d3047b5 | https://github.com/lynx-chess/Lynx | 1d3047b533e66196d9ee1e620eec52994b77e591 | - |
 | Lynx | 21a3016e | https://github.com/lynx-chess/Lynx | 21a3016e8fce819385c1f3b733bae40f742af53e | - |
 | Lynx | 8940a21e | https://github.com/lynx-chess/Lynx | 8940a21eb4cb11c2c97da09853477bc47316fcb9 | - |
+| Lynx | ae1c2768 | https://github.com/lynx-chess/Lynx | ae1c2768e098c2d73fa7cf7a640edd500b6c9605 | - |
 | Lynx | f87f5d5f | https://github.com/lynx-chess/Lynx | f87f5d5f68797b6d682f6bd78e30c9e7845259a2 | - |
 | Phalanx | XII | phalanx_12.orig.tar.gz, Debian snapshot: https://snapshot.debian.org/file/476fdfcdb5a1b45c3f1ba1509541c23088cccfa2 | sha256:16c1727e00265fccdf219afabd34be47425836333d1179e5a478ec686a56ff37 | - |
 | Sargon | 1978 | retro-sargon, Bill Forster's transcription of the 1978 listing: https://github.com/billforsternz/retro-sargon | a0be0d2936a7459970215bc43fbdc59f9682bd66 | - |

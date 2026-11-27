@@ -1023,13 +1023,14 @@ Used in: `params.ts` SPACE_MG; `pieces.ts` space.
 
 ## Static_Evaluation_Correction_History
 <!-- used-in -->
-Used in: `correction.ts` header, correction, update; `params.ts` CORR_MAX, CORR_CONT; `search.ts` search; `state.ts` pawnKey, nonPawnKey, minorKey, majorKey.
+Used in: `correction.ts` header, correction, update, updateCorrection; `params.ts` CORR_MAX, CORR_CONT, CORR_RATE; `search.ts` search; `state.ts` pawnKey, nonPawnKey, minorKey, majorKey.
 <!-- /used-in -->
 - 2023-10, Caissa, as the *Chess Programming Wiki*'s Static_Evaluation_Correction_History page dates it (secondary):
   the difference between search score and static eval, kept per pawn structure, corrects later static evals.
 - 2024-06-28, Stash 302136d add_correction_history: a table by the pawn key; an update moves the entry toward the
   search's error by a weight of 1 + depth, at most 16, of 256, within 32 units.
 - 2024-12-29, Weiss 2a3f84c GetCorrectionHistory: each table weighted in the sum.
+- 2025-04-16, Lynx ae1c2768 UpdateCorrectionHistory: an update's weight is twice 1 + depth, at most 32, of 256.
 - 2025-04-23, Stash dcc25ed correction_hist_update: tables by each color's non-pawn key.
 - 2025-07-09, Stash ba73642 board_minor_key: a table by the key of both colors' knights and bishops and both kings.
 - 2025-07-27, Stash ea9fd72 board_major_key: a table by the key of both colors' rooks and queens and both kings.

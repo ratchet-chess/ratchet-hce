@@ -15,7 +15,7 @@
  * The tables last between moves of a game and are emptied by newGame; a fresh
  * go() empties them too, so a node signature starts clean. Feature: Static_Evaluation_Correction_History.
  */
-import { CORR_CONT, CORR_MAX, CORR_WEIGHT_MAX, CORR_W_CONT, CORR_W_MAJOR, CORR_W_MINOR, CORR_W_NONPAWN_THEM, CORR_W_NONPAWN_US, CORR_W_PAWN } from "./params";
+import { CORR_CONT, CORR_MAX, CORR_RATE, CORR_WEIGHT_MAX, CORR_W_CONT, CORR_W_MAJOR, CORR_W_MINOR, CORR_W_NONPAWN_THEM, CORR_W_NONPAWN_US, CORR_W_PAWN } from "./params";
 import { majorKey, minorKey, nonPawnKey, pawnKey } from "./state";
 
 const SIZE = 16384;
@@ -66,9 +66,15 @@ export function clearCorrection(): void {
   unchecked((table[i] = max(-CORR_MAX * GRAIN, min(CORR_MAX * GRAIN, v))));
 }
 
-/** moves the side to move's entry in every table toward `diff`, the score less the static eval; `cont` is contSlot's */
+/**
+ * moves the side to move's entry in every table toward `diff`, the score less the static eval; `cont` is contSlot's.
+ * The weight is CORR_RATE sixteenths of Stash 302136d add_correction_history's 1 + depth, as Lynx ae1c2768
+ * UpdateCorrectionHistory doubles it. Not taken: the square of 1 + depth (CPW Static_Evaluation_Correction_History),
+ * which changes the weight's shape by depth.
+ * Feature: Static_Evaluation_Correction_History.
+ */
 export function updateCorrection(stm: i32, depth: i32, diff: i32, cont: i32): void {
-  const w = min(CORR_WEIGHT_MAX, 1 + depth);
+  const w = (min(CORR_WEIGHT_MAX, 1 + depth) * CORR_RATE) >> 4;
   update(corr, slot(0, stm, pawnKey), w, diff);
   update(corr, slot(1, stm, unchecked(nonPawnKey[0])), w, diff);
   update(corr, slot(2, stm, unchecked(nonPawnKey[1])), w, diff);
