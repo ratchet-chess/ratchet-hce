@@ -3,7 +3,20 @@
  * and the correction keys kept beside them. A move's change to each is read from
  * the board before the core makes it; unmake restores what was saved at the ply.
  */
-import { BISHOP, FLAG_CASTLE, FLAG_EP, KING, KNIGHT, MAX_PLY, PAWN, QUEEN, ROOK, moveFrom, movePromo, moveTo } from "../../core/constants";
+import {
+  BISHOP,
+  FLAG_CASTLE,
+  FLAG_EP,
+  KING,
+  KNIGHT,
+  MAX_PLY,
+  PAWN,
+  QUEEN,
+  ROOK,
+  moveFrom,
+  movePromo,
+  moveTo,
+} from "../../core/constants";
 import { board, make, makeNull, ply, unmake, unmakeNull } from "../../core/position";
 import { Z_PIECE } from "../../core/zobrist";
 import { PSQ, scratchPsq } from "./psq";
@@ -12,13 +25,27 @@ import { PSQ, scratchPsq } from "./psq";
 export let psq: i32 = 0;
 const psqStack = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + 1)));
 
-/** the pawns of both colors, hashed with the core's piece keys (Stockfish 15 Position::set_state pawnKey). Feature: Static_Evaluation_Correction_History. */
+/**
+ * The pawns of both colors, hashed with the core's piece keys (Stockfish 15
+ * Position::set_state pawnKey). Feature: Static_Evaluation_Correction_History.
+ */
 export let pawnKey: u64 = 0;
-/** by color, that color's knights, bishops, rooks and queens (Stash dcc25ed nonpawn_key; Stockfish 7cdd5e89 Position::set_state nonPawnKey also hashes the king). Feature: Static_Evaluation_Correction_History. */
+/**
+ * By color, that color's knights, bishops, rooks and queens (Stash dcc25ed
+ * nonpawn_key; Stockfish 7cdd5e89 Position::set_state nonPawnKey also hashes
+ * the king). Feature: Static_Evaluation_Correction_History.
+ */
 export const nonPawnKey = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 2));
-/** both colors' knights and bishops, and both kings (Stash ba73642 minor_key, the kings added where it reads the key). Feature: Static_Evaluation_Correction_History. */
+/**
+ * Both colors' knights and bishops, and both kings (Stash ba73642 minor_key,
+ * the kings added where it reads the key).
+ * Feature: Static_Evaluation_Correction_History.
+ */
 export let minorKey: u64 = 0;
-/** both colors' rooks and queens, and both kings (Stash ea9fd72 major_key, likewise). Feature: Static_Evaluation_Correction_History. */
+/**
+ * Both colors' rooks and queens, and both kings (Stash ea9fd72 major_key,
+ * likewise). Feature: Static_Evaluation_Correction_History.
+ */
 export let majorKey: u64 = 0;
 /** the pawn key, the two non-pawn keys, the minor and the major key, saved per ply */
 const KEYS = 5;
@@ -133,7 +160,11 @@ export function doMove(m: i32): void {
     const rook = <i32>board[rf];
     const pBase = piece << 6;
     const rBase = rook << 6;
-    psq += unchecked(PSQ[pBase + to]) - unchecked(PSQ[pBase + from]) + unchecked(PSQ[rBase + rt]) - unchecked(PSQ[rBase + rf]);
+    psq +=
+      unchecked(PSQ[pBase + to]) -
+      unchecked(PSQ[pBase + from]) +
+      unchecked(PSQ[rBase + rt]) -
+      unchecked(PSQ[rBase + rf]);
     xorKey(piece, unchecked(Z_PIECE[pBase + from]) ^ unchecked(Z_PIECE[pBase + to]));
     xorKey(rook, unchecked(Z_PIECE[rBase + rf]) ^ unchecked(Z_PIECE[rBase + rt]));
     make(m);

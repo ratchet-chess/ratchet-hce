@@ -6,7 +6,20 @@
  * produce near rank 1, so no bounds check precedes the 0x88 test.
  */
 
-import { BISHOP, CASTLE_BK, CASTLE_BQ, CASTLE_WK, CASTLE_WQ, KING, KNIGHT, PAWN, QUEEN, ROOK, WHITE, parseFen } from "../../../host/fen.ts";
+import {
+  BISHOP,
+  CASTLE_BK,
+  CASTLE_BQ,
+  CASTLE_WK,
+  CASTLE_WQ,
+  KING,
+  KNIGHT,
+  PAWN,
+  QUEEN,
+  ROOK,
+  WHITE,
+  parseFen,
+} from "../../../host/fen.ts";
 
 /** off-board (127 & 0x88 !== 0) and fits the Uint8Array undo stack */
 export const NO_SQ = 127;

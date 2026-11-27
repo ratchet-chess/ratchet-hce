@@ -29,7 +29,10 @@
   return envPoll();
 }
 
-/** the report of an iteration's line, finished or cut and kept: its depth, its score for the side to move, the nodes so far */
+/**
+ * The report of an iteration's line, finished or cut and kept: its depth, its
+ * score for the side to move, and the nodes so far.
+ */
 @inline export function hostIteration(depth: i32, score: i32, nodes: f64): i32 {
   if (isDefined(WASI)) return uciIteration(depth, score, nodes);
   return envIteration(depth, score, nodes);

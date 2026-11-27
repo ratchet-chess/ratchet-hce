@@ -29,7 +29,10 @@ interface Exports {
   inCheckNow?(): number;
 }
 
-/** a position as the core holds it: a piece code per square, the side to move, castling rights, en passant square (64 for none), halfmove clock */
+/**
+ * A position as the core holds it: a piece code per square, the side to move,
+ * castling rights, en passant square (64 for none), and halfmove clock.
+ */
 export interface CorePosition {
   board: Uint8Array;
   side: number;
@@ -63,7 +66,10 @@ interface Search {
   hashfull?(): number;
   /** the own engine's incremental-eval mismatches, walking the tree to a depth */
   evalWalk?(depth: number): number;
-  /** the own engine's windowed search for the window gate: one search to a depth with (alpha, beta), fresh, with or without its table */
+  /**
+   * The own engine's windowed search for the window gate: one search to a depth
+   * with (alpha, beta), fresh, with or without its table.
+   */
   goWindow?(alpha: number, beta: number, depth: number, table: number): number;
   /** the own engine's eval bench: a set of positions, and passes of its eval over them in wasm */
   evalBenchInit?(n: number): void;
@@ -100,11 +106,18 @@ interface ReleasePerft {
 /** Called by a release where its original read its input; non-zero means input is waiting, so the search stops. */
 export type Poll = () => number;
 
-/** The own engine's record of one timed search. `veto` counts iterations that ran on past the soft limit because the best move had just changed. */
+/**
+ * The own engine's record of one timed search. `veto` counts iterations that ran
+ * on past the soft limit because the best move had just changed.
+ */
 export interface TimeTrace {
   rule: "none" | "soft" | "hard-between" | "hard-inside" | "host" | "nodes";
-  elapsed: number; soft: number; hard: number;
-  score: number; node: number; veto: number;
+  elapsed: number;
+  soft: number;
+  hard: number;
+  score: number;
+  node: number;
+  veto: number;
 }
 
 /** Called after each finished iteration with its score and the nodes so far; a report only. */
@@ -143,22 +156,27 @@ export class Engine {
     return this.wasm as Search;
   }
 
-  /** loads build/<name>.wasm: "core", or a release's directory name under engines/; or a path ending in .wasm, such as a tuning build */
+  /**
+   * Loads build/<name>.wasm: "core", or a release's directory name under
+   * engines/; or a path ending in .wasm, such as a tuning build.
+   */
   static async load(name: string): Promise<Engine> {
     // imported here, so that a browser bundle, which loads through fromBytes, needs no node:fs
     const { readFileSync } = await import("node:fs");
-    return Engine.fromBytes(readFileSync(name.endsWith(".wasm") ? name : new URL(`../build/${name}.wasm`, import.meta.url)), name);
+    return Engine.fromBytes(
+      readFileSync(name.endsWith(".wasm") ? name : new URL(`../build/${name}.wasm`, import.meta.url)),
+      name,
+    );
   }
 
   /** instantiates a WASM build from its bytes; `name` labels its aborts */
   static async fromBytes(bytes: BufferSource, name: string): Promise<Engine> {
-    let engine: Engine | undefined;
-    let memory: WebAssembly.Memory | undefined;
+    const state: { engine?: Engine; memory?: WebAssembly.Memory } = {};
     // an AssemblyScript string: UTF-16 at `ptr`, its byte length in the word before it
     const text = (ptr: number) => {
-      if (!ptr || !memory) return "";
-      const bytes = new DataView(memory.buffer).getUint32(ptr - 4, true);
-      return String.fromCharCode(...new Uint16Array(memory.buffer, ptr, bytes >>> 1));
+      if (!ptr || !state.memory) return "";
+      const bytes = new DataView(state.memory.buffer).getUint32(ptr - 4, true);
+      return String.fromCharCode(...new Uint16Array(state.memory.buffer, ptr, bytes >>> 1));
     };
     const { instance } = await WebAssembly.instantiate(bytes, {
       env: {
@@ -166,17 +184,23 @@ export class Engine {
           const why = text(msg);
           throw new Error(`${name}.wasm abort${why ? `: ${why}` : ""} at ${line}:${col}`);
         },
-        poll: () => engine!.poll(),
-        onIteration: (depth: number, score: number, nodes: number) => engine!.onIteration(depth, score, nodes),
-        clock: (nodes: number) => engine!.clock(nodes),
+        poll: () => state.engine!.poll(),
+        onIteration: (depth: number, score: number, nodes: number) => state.engine!.onIteration(depth, score, nodes),
+        clock: (nodes: number) => state.engine!.clock(nodes),
       },
     });
-    memory = instance.exports.memory as WebAssembly.Memory | undefined;
-    engine = new Engine(instance.exports as unknown as Exports & Partial<Search> & Partial<Game> & Partial<ReleasePerft> & Partial<Clocked>);
-    if (engine.wasm.init) engine.wasm.init();
-    else engine.wasm.initCore();
-    engine.setPosition(START_FEN, []);
-    return engine;
+    state.memory = instance.exports.memory as WebAssembly.Memory | undefined;
+    state.engine = new Engine(
+      instance.exports as unknown as Exports &
+        Partial<Search> &
+        Partial<Game> &
+        Partial<ReleasePerft> &
+        Partial<Clocked>,
+    );
+    if (state.engine.wasm.init) state.engine.wasm.init();
+    else state.engine.wasm.initCore();
+    state.engine.setPosition(START_FEN, []);
+    return state.engine;
   }
 
   /** loads `fen` and plays the UCI `moves`; throws on an illegal move */
@@ -193,7 +217,10 @@ export class Engine {
     }
   }
 
-  /** loads a position from its fields, as setPosition does from a FEN: a piece code per square, en passant -1 for none */
+  /**
+   * Loads a position from its fields, as setPosition does from a FEN: a piece
+   * code per square, en passant -1 for none.
+   */
   setBoard(board: Uint8Array, side: number, castling: number, ep: number, halfmove: number, fullmove: number): void {
     const w = this.wasm;
     w.clear();
@@ -227,9 +254,21 @@ export class Engine {
    * One move of a game, timed by the release from `limits` and `clock`: the side
    * to move's time and increment, moves to go, a fixed time, or a depth.
    */
-  goClock(limits: { timeMs?: number; incMs?: number; movesToGo?: number; moveTimeMs?: number; depth?: number }): number {
+  goClock(limits: {
+    timeMs?: number;
+    incMs?: number;
+    movesToGo?: number;
+    moveTimeMs?: number;
+    depth?: number;
+  }): number {
     if (!this.wasm.goClock) throw new Error("this release does not time itself");
-    return this.wasm.goClock(limits.timeMs ?? -1, limits.incMs ?? -1, limits.movesToGo ?? -1, limits.moveTimeMs ?? -1, limits.depth ?? -1);
+    return this.wasm.goClock(
+      limits.timeMs ?? -1,
+      limits.incMs ?? -1,
+      limits.movesToGo ?? -1,
+      limits.moveTimeMs ?? -1,
+      limits.depth ?? -1,
+    );
   }
 
   /** whether the release takes a node limit: the own engine does, and no original did */
@@ -282,11 +321,12 @@ export class Engine {
 
   /**
    * The own engine's record of its last timed search, or undefined for a build without one: which rule ended it, the
-   * time it took against its two limits, and the soft limit's factors. engines/ratchet/time.ts timeTrace names the fields.
+   * time it took against its two limits, and the soft limit's factors. engines/ratchet/time.ts timeTrace names them.
    */
   timeTrace(): TimeTrace | undefined {
-    const t = this.search.timeTrace;
-    if (!t) return undefined;
+    const s = this.search;
+    if (!s.timeTrace) return undefined;
+    const t = (f: number) => s.timeTrace!(f);
     const rule = (["none", "soft", "hard-between", "hard-inside", "host", "nodes"] as const)[t(0)] ?? "none";
     return { rule, elapsed: t(1), soft: t(2), hard: t(3), score: t(4), node: t(5), veto: t(6) };
   }
@@ -323,7 +363,10 @@ export class Engine {
     return this.search.evalWalk(depth);
   }
 
-  /** one fresh search of the own engine to `depth` with the window (alpha, beta), with or without its table; the fail-soft score in its own unit */
+  /**
+   * One fresh search of the own engine to `depth` with the window (alpha, beta),
+   * with or without its table; returns the fail-soft score in its own unit.
+   */
   goWindow(alpha: number, beta: number, depth: number, table: boolean): number {
     if (!this.search.goWindow) throw new Error("this build has no windowed search");
     return this.search.goWindow(alpha, beta, depth, table ? 1 : 0);
@@ -339,7 +382,10 @@ export class Engine {
     }
   }
 
-  /** `reps` passes over the eval bench's set, with the eval or only restoring each position; returns their checksum. Set a position before searching again. */
+  /**
+   * `reps` passes over the eval bench's set, with the eval or only restoring each
+   * position; returns their checksum. Set a position before searching again.
+   */
   evalBenchRun(reps: number, withEval: boolean): number {
     if (!this.search.evalBenchRun) throw new Error("this build has no eval bench");
     return this.search.evalBenchRun(reps, withEval ? 1 : 0);
@@ -362,7 +408,13 @@ export class Engine {
     if (!w.pieceAt) throw new Error("this build cannot read its position back: load the core");
     const board = new Uint8Array(64);
     for (let s = 0; s < 64; s++) board[s] = w.pieceAt(s);
-    return { board, side: w.sideToMove!(), castling: w.castlingRights!(), ep: w.epSquare!(), halfmove: w.halfmoveClock!() };
+    return {
+      board,
+      side: w.sideToMove!(),
+      castling: w.castlingRights!(),
+      ep: w.epSquare!(),
+      halfmove: w.halfmoveClock!(),
+    };
   }
 
   /** whether the side to move is in check; build/core.wasm only */
@@ -371,7 +423,10 @@ export class Engine {
     return this.wasm.inCheckNow() !== 0;
   }
 
-  /** plays the neutral resolver's capture line (core/resolve.ts) on the position; returns its length; build/core.wasm only */
+  /**
+   * Plays the neutral resolver's capture line (core/resolve.ts) on the position;
+   * returns its length; build/core.wasm only.
+   */
   resolveQuiet(): number {
     if (!this.wasm.resolveQuiet) throw new Error("this build has no resolver: load the core");
     return this.wasm.resolveQuiet();

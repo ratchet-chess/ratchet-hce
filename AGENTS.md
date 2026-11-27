@@ -47,6 +47,9 @@ The row for **WASI build** quotes uci-over-wasi's.
 bun install
 bun run build:wasm            # the core and the own engine into build/, and the WASI build into build/wasi/
 bun run typecheck
+bun run lint                  # oxlint on host/, tools/, test/, bench/ (not engines/ or core/)
+bun run format:check          # oxfmt on host/, tools/, test/, bench/
+bun run check:lines           # 120-column check on all tracked .ts files (excluding vendor/ and core/bench-fens.ts)
 bun run test                  # the gates (`bun test` is Bun's own test runner)
 bun test/perft.ts --full      # every perft depth in the suite
 bun test/window.ts --depth 6  # the window gate deeper than `bun run test` runs it

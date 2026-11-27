@@ -29,7 +29,11 @@ export function baseBuild(name: string, ref: string): { sha: string; wasm: strin
   const sha = rev.stdout.trim();
   const bench = /^BENCH=(.+)$/m.exec(readFileSync(join(root, "tools/local.env"), "utf8"))?.[1];
   if (!bench) throw new Error("tools/local.env has no BENCH, the testing platform's checkout");
-  const built = spawnSync("bun", [join(bench, "tools/engine.ts"), "build", join(root, "tmp/bench"), sha], { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "inherit"] });
+  const built = spawnSync("bun", [join(bench, "tools/engine.ts"), "build", join(root, "tmp/bench"), sha], {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "inherit"],
+  });
   if (built.status !== 0) throw new Error(`could not build ${sha}`);
   const wasm = join(root, "tmp/bench", built.stdout.trim().split("\n").at(-1)!, "build", `${name}.wasm`);
   if (!existsSync(wasm)) throw new Error(`${sha} has no engine ${name}`);

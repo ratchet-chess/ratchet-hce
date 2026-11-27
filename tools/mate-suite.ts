@@ -51,7 +51,7 @@ function slides(from: number, target: number, blocker: number, dirs: number[]): 
 }
 
 function fen(wk: number, piece: string, ps: number, bk: number): string {
-  const board: string[] = Array(64).fill("");
+  const board = Array.from({ length: 64 }, () => "");
   board[wk] = "K";
   board[ps] = piece;
   board[bk] = "k";
@@ -118,11 +118,14 @@ function score(pgnPath: string, engine: string): void {
     games += t.games;
     mates += t.mates;
     const other = [...t.other].map(([k, v]) => `${v} ${k}`).join(", ");
-    console.log(`${name}: ${t.mates}/${t.games} mated (${((100 * t.mates) / t.games).toFixed(1)}%)${other ? `; ${other}` : ""}`);
+    console.log(
+      `${name}: ${t.mates}/${t.games} mated (${((100 * t.mates) / t.games).toFixed(1)}%)${other ? `; ${other}` : ""}`,
+    );
   }
   if (!games) throw new Error(`no games with ${engine} as White in ${pgnPath}`);
   const rate = mates / games;
-  console.log(`${engine}: ${mates}/${games} mated (${(100 * rate).toFixed(1)}%), ${rate >= PASS_RATE ? "PASS" : "FAIL"} at ${100 * PASS_RATE}%`);
+  const verdict = rate >= PASS_RATE ? "PASS" : "FAIL";
+  console.log(`${engine}: ${mates}/${games} mated (${(100 * rate).toFixed(1)}%), ${verdict} at ${100 * PASS_RATE}%`);
 }
 
 const [cmd, ...args] = process.argv.slice(2);

@@ -2,7 +2,20 @@
  * Pseudo-legal move generation for the 0x88 position. Legality is the caller's job:
  * make the move, then reject it if the mover's king is attacked.
  */
-import { BISHOP, BLACK, CASTLE_BK, CASTLE_BQ, CASTLE_WK, CASTLE_WQ, KING, KNIGHT, PAWN, QUEEN, ROOK, WHITE } from "../../../host/fen.ts";
+import {
+  BISHOP,
+  BLACK,
+  CASTLE_BK,
+  CASTLE_BQ,
+  CASTLE_WK,
+  CASTLE_WQ,
+  KING,
+  KNIGHT,
+  PAWN,
+  QUEEN,
+  ROOK,
+  WHITE,
+} from "../../../host/fen.ts";
 import {
   DIAG_OFFSETS,
   FLAG_CASTLE,
@@ -92,7 +105,14 @@ export function generateMoves(pos: Position, out: Int32Array, start: number): nu
     if (cr & CASTLE_BK && !b[0x75] && !b[0x76] && !pos.attacked(0x74, WHITE) && !pos.attacked(0x75, WHITE)) {
       out[n++] = 0x74 | (0x76 << 7) | FLAG_CASTLE;
     }
-    if (cr & CASTLE_BQ && !b[0x73] && !b[0x72] && !b[0x71] && !pos.attacked(0x74, WHITE) && !pos.attacked(0x73, WHITE)) {
+    if (
+      cr & CASTLE_BQ &&
+      !b[0x73] &&
+      !b[0x72] &&
+      !b[0x71] &&
+      !pos.attacked(0x74, WHITE) &&
+      !pos.attacked(0x73, WHITE)
+    ) {
       out[n++] = 0x74 | (0x72 << 7) | FLAG_CASTLE;
     }
   }

@@ -7,7 +7,25 @@
  */
 import { generateMoves } from "./movegen";
 import { MAX_MOVES, MAX_PLY } from "./constants";
-import { addPiece, attackedWith, bb, castling, clear, ep, halfmove, hash, inCheck, initPosition, make, playMove, ply, setState, side, unmake, board } from "./position";
+import {
+  addPiece,
+  attackedWith,
+  bb,
+  board,
+  castling,
+  clear,
+  ep,
+  halfmove,
+  hash,
+  inCheck,
+  initPosition,
+  make,
+  playMove,
+  ply,
+  setState,
+  side,
+  unmake,
+} from "./position";
 import { initTables, magicAt } from "./tables";
 import { Z_CASTLE, Z_EP, Z_PIECE, Z_SIDE, initZobrist } from "./zobrist";
 

@@ -9,8 +9,25 @@
  */
 import { UciEngine, uciMain } from "../../core/uci";
 import {
-  clear, evaluate, go, goClock, hashfull, initNoTable, legalMoves, newGame, nodesSearched, playMove, put, pvLength, pvMove, rootMove, setHash, setNodeLimit, setState,
-  timeTrace, version,
+  clear,
+  evaluate,
+  go,
+  goClock,
+  hashfull,
+  initNoTable,
+  legalMoves,
+  newGame,
+  nodesSearched,
+  playMove,
+  put,
+  pvLength,
+  pvMove,
+  rootMove,
+  setHash,
+  setNodeLimit,
+  setState,
+  timeTrace,
+  version,
 } from "./index";
 
 // Allocate UciEngine before any TT allocation so the transposition table stays at the top of the stub heap

@@ -8,10 +8,14 @@
  * its union at 16; an event is 32 bytes, its error at 8 and its type at 10.
  */
 
-@external("wasi_snapshot_preview1", "fd_read") declare function fd_read(fd: u32, iovs: usize, iovsLen: u32, nread: usize): u16;
-@external("wasi_snapshot_preview1", "fd_write") declare function fd_write(fd: u32, iovs: usize, iovsLen: u32, nwritten: usize): u16;
-@external("wasi_snapshot_preview1", "poll_oneoff") declare function poll_oneoff(subs: usize, events: usize, n: u32, nevents: usize): u16;
-@external("wasi_snapshot_preview1", "clock_time_get") declare function clock_time_get(id: u32, precision: u64, time: usize): u16;
+@external("wasi_snapshot_preview1", "fd_read")
+declare function fd_read(fd: u32, iovs: usize, iovsLen: u32, nread: usize): u16;
+@external("wasi_snapshot_preview1", "fd_write")
+declare function fd_write(fd: u32, iovs: usize, iovsLen: u32, nwritten: usize): u16;
+@external("wasi_snapshot_preview1", "poll_oneoff")
+declare function poll_oneoff(subs: usize, events: usize, n: u32, nevents: usize): u16;
+@external("wasi_snapshot_preview1", "clock_time_get")
+declare function clock_time_get(id: u32, precision: u64, time: usize): u16;
 @external("wasi_snapshot_preview1", "args_sizes_get") declare function args_sizes_get(argc: usize, bufSize: usize): u16;
 @external("wasi_snapshot_preview1", "args_get") declare function args_get(argv: usize, buf: usize): u16;
 @external("wasi_snapshot_preview1", "proc_exit") declare function proc_exit(code: u32): void;

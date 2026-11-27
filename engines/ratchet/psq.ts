@@ -7,7 +7,20 @@
 import { BISHOP, KING, KNIGHT, PAWN, QUEEN, ROOK } from "../../core/constants";
 import { board } from "../../core/position";
 import {
-  BISHOP_EG, BISHOP_MG, KING_EG, KING_MG, KNIGHT_EG, KNIGHT_MG, MAT_EG, MAT_MG, PAWN_EG, PAWN_MG, QUEEN_EG, QUEEN_MG, ROOK_EG, ROOK_MG,
+  BISHOP_EG,
+  BISHOP_MG,
+  KING_EG,
+  KING_MG,
+  KNIGHT_EG,
+  KNIGHT_MG,
+  MAT_EG,
+  MAT_MG,
+  PAWN_EG,
+  PAWN_MG,
+  QUEEN_EG,
+  QUEEN_MG,
+  ROOK_EG,
+  ROOK_MG,
 } from "./params";
 import { S } from "./score";
 

@@ -11,13 +11,22 @@
  * The tables last between moves of a game (Stockfish 946fa476 id_loop) and are emptied
  * by newGame; a fresh go() empties them too, so a node signature starts clean.
  *
- * Features: Killer_Heuristic, History_Heuristic, Threat_History, History_Heuristic#Continuation_History, Pawn_History, History_Heuristic#Capture_History.
+ * Features: Killer_Heuristic, History_Heuristic, Threat_History, Pawn_History.
+ * Features: History_Heuristic#Continuation_History, History_Heuristic#Capture_History.
  */
 import { BISHOP, KING, KNIGHT, MAX_PLY, PAWN, QUEEN, ROOK, moveFrom, moveTo } from "../../core/constants";
 import { bb, hash, side } from "../../core/position";
 import { KING_ATT, KNIGHT_ATT, bishopAttacks, rookAttacks } from "../../core/tables";
 import {
-  CAPTURE_THREATS, HIST_BONUS_MAX, HIST_BONUS_MUL, HIST_BONUS_SUB, HIST_MALUS_MAX, HIST_MALUS_MUL, HIST_MALUS_SUB, HIST_PAWN_MAX, THREAT_HISTORY,
+  CAPTURE_THREATS,
+  HIST_BONUS_MAX,
+  HIST_BONUS_MUL,
+  HIST_BONUS_SUB,
+  HIST_MALUS_MAX,
+  HIST_MALUS_MUL,
+  HIST_MALUS_SUB,
+  HIST_PAWN_MAX,
+  THREAT_HISTORY,
 } from "./params";
 import { pawnAttacks } from "./geometry";
 import { pawnKey } from "./state";
@@ -35,7 +44,10 @@ const threatSet = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * (MAX_
 const threatKey = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * (MAX_PLY + 2)));
 /** (previous piece << 6 | its square) << 10 | (piece << 6 | square): 16 piece codes, so 2 MiB */
 export const contHist = changetype<StaticArray<i16>>(memory.data(sizeof<i16>() * 1024 * 1024));
-/** (from attacked << 1 | to attacked) << 13 | (piece << 6 | square) << 3 | victim type; the attacked bits are 0 without CAPTURE_THREATS */
+/**
+ * (from attacked << 1 | to attacked) << 13 | (piece << 6 | square) << 3 | victim type;
+ * the attacked bits are 0 without CAPTURE_THREATS.
+ */
 export const captureHist = changetype<StaticArray<i16>>(memory.data(sizeof<i16>() * 4 * 16 * 64 * 8));
 /** one killer per ply, with room for the child of the deepest ply */
 export const killers = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + 2)));
@@ -72,8 +84,8 @@ export function clearHistory(): void {
 }
 
 /**
- * every square the opponent attacks, x-rays not counted (Ethereal 341c43f allAttackedSquares), for the node at `p`: made on
- * first use and kept while the ply stays at this position, so its singular search and each later move reuse it.
+ * Every square the opponent attacks, x-rays not counted (Ethereal 341c43f allAttackedSquares), for the node at `p`:
+ * made on first use and kept while the ply stays at this position, so its singular search and each later move reuse it.
  * Feature: Threat_History.
  */
 @inline export function attackedAt(p: i32): u64 {
@@ -86,7 +98,10 @@ export function clearHistory(): void {
   return THREAT_HISTORY == 0 ? 0 : attackedAt(p);
 }
 
-/** the set that keys capture history: attackedAt, or 0 when CAPTURE_THREATS is off. Feature: History_Heuristic#Capture_History. */
+/**
+ * The set that keys capture history: attackedAt, or 0 when CAPTURE_THREATS is off.
+ * Feature: History_Heuristic#Capture_History.
+ */
 @inline export function captureThreatsAt(p: i32): u64 {
   return CAPTURE_THREATS == 0 ? 0 : attackedAt(p);
 }
@@ -140,7 +155,11 @@ function makeThreats(p: i32): u64 {
   gravityWithin(pawnHist, pawnHistIndex(pt), bonus, HIST_PAWN_MAX);
 }
 
-/** gravity against `base` instead of the entry itself, clamped to +-HIST_MAX (Stash 93a6d5f update_piece_hist_entry). Feature: History_Heuristic#Continuation_History. */
+/**
+ * Gravity against `base` instead of the entry itself, clamped to +-HIST_MAX
+ * (Stash 93a6d5f update_piece_hist_entry).
+ * Feature: History_Heuristic#Continuation_History.
+ */
 @inline export function gravityFrom(table: StaticArray<i16>, i: i32, base: i32, bonus: i32): void {
   const e = <i32>unchecked(table[i]) + bonus - (base * abs(bonus)) / HIST_MAX;
   unchecked((table[i] = <i16>max(-HIST_MAX, min(HIST_MAX, e))));

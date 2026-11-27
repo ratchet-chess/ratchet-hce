@@ -68,10 +68,16 @@ const send = (c: WorkerCommand) => worker.postMessage(c);
 send({ cmd: "hash", mb: HASH_MB });
 
 /** the elements a tuning build exposes as UCI options, from --tunables; a release build offers none */
-interface Tunable { name: string; id: number; value: number; min: number; max: number }
+interface Tunable {
+  name: string;
+  id: number;
+  value: number;
+  min: number;
+  max: number;
+}
 const tuneFile = args.includes("--tunables") ? args[args.indexOf("--tunables") + 1] : "";
 if (tuneFile && !existsSync(tuneFile)) throw new Error(`no tunables file ${tuneFile}`);
-const tunables: Tunable[] = tuneFile ? JSON.parse(readFileSync(tuneFile, "utf8")) : [];
+const tunables = (tuneFile ? JSON.parse(readFileSync(tuneFile, "utf8")) : []) as Tunable[];
 const out = (s: string) => process.stdout.write(s + "\n");
 
 function parsePosition(tokens: string[]): WorkerCommand {
@@ -88,8 +94,14 @@ function parseGo(tokens: string[]): GoLimits {
     const t = tokens[i];
     const v = Number(tokens[i + 1]);
     switch (t) {
-      case "wtime": case "btime": case "winc": case "binc":
-      case "movestogo": case "movetime": case "depth": case "nodes":
+      case "wtime":
+      case "btime":
+      case "winc":
+      case "binc":
+      case "movestogo":
+      case "movetime":
+      case "depth":
+      case "nodes":
         l[t] = v;
         i++;
         break;
@@ -131,7 +143,10 @@ for await (const raw of rl) {
       send({ cmd: "newgame" });
       break;
     case "setoption": {
-      const name = tokens.slice(tokens.indexOf("name") + 1, tokens.indexOf("value")).join(" ").toLowerCase();
+      const name = tokens
+        .slice(tokens.indexOf("name") + 1, tokens.indexOf("value"))
+        .join(" ")
+        .toLowerCase();
       const value = tokens[tokens.indexOf("value") + 1];
       if (name === "hash") send({ cmd: "hash", mb: Number(value) });
       if (name === "timerecord" && timeRecord) send({ cmd: "timerecord", on: value === "true" });

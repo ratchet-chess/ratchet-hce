@@ -29,8 +29,22 @@
  * Features: Time_Management, Time_Management#Soft_Bound, Best_Move_Node_Share, Extra_Time_on_Falling_Score.
  */
 import {
-  TM_HARD_CAP, TM_HARD_MUL, TM_INC_MOVES, TM_INC_MOVES_PER_MS, TM_MTG_CAP, TM_MTG_SHARE, TM_NODE_BASE, TM_NODE_MUL, TM_ONE_MOVE, TM_OVERHEAD, TM_SHARE,
-  TM_FALL_BASE, TM_FALL_MAX, TM_FALL_MIN, TM_FALL_PER, TM_SHARE_CAP,
+  TM_FALL_BASE,
+  TM_FALL_MAX,
+  TM_FALL_MIN,
+  TM_FALL_PER,
+  TM_HARD_CAP,
+  TM_HARD_MUL,
+  TM_INC_MOVES,
+  TM_INC_MOVES_PER_MS,
+  TM_MTG_CAP,
+  TM_MTG_SHARE,
+  TM_NODE_BASE,
+  TM_NODE_MUL,
+  TM_ONE_MOVE,
+  TM_OVERHEAD,
+  TM_SHARE,
+  TM_SHARE_CAP,
 } from "./params";
 import { hostClock, hostPoll } from "../../core/host";
 
@@ -116,7 +130,10 @@ export function setNodeLimit(nodes: f64): void {
   nodeLimit = nodes;
 }
 
-/** whether the search must stop now: the host has input waiting, its node limit is reached, or the hard limit has passed */
+/**
+ * Whether the search must stop now: the host has input waiting, its node limit
+ * is reached, or the hard limit has passed.
+ */
 export function mustStop(nodes: f64): bool {
   if (hostPoll()) {
     traceRule = RULE_HOST;
@@ -145,7 +162,10 @@ export function mayContinue(nodes: f64, bestShare: f64, uncertain: bool, score: 
   }
   if (!timed) return true;
   // a rise counts as no fall; before three iterations there is no window, so no factor
-  const scale: f64 = scores >= 3 ? max<f64>(TM_FALL_MIN, min<f64>(TM_FALL_MAX, TM_FALL_BASE + TM_FALL_PER * <f64>max(0, score1 - score))) : 1;
+  const scale: f64 =
+    scores >= 3
+      ? max<f64>(TM_FALL_MIN, min<f64>(TM_FALL_MAX, TM_FALL_BASE + TM_FALL_PER * <f64>max(0, score1 - score)))
+      : 1;
   score1 = score2;
   score2 = score3;
   score3 = score;
@@ -170,10 +190,10 @@ export function mayContinue(nodes: f64, bestShare: f64, uncertain: bool, score: 
 
 /**
  * The last timed search's record, by field: 0 the rule that ended it (0 none: its depth, or no move to search; 1 the
- * soft limit; 2 the hard limit between iterations; 3 the hard limit inside one; 4 the host's stop; 5 the node limit), 1 the clock's
- * milliseconds it took, 2 the soft limit, 3 the hard limit, 4 the score factor, 5 the node factor, 6 the iterations that
- * went on past the soft limit because the best move had just changed. Four engines had a time rule dead or wrong for
- * months unseen.
+ * soft limit; 2 the hard limit between iterations; 3 the hard limit inside one; 4 the host's stop; 5 the node limit),
+ * 1 the clock's milliseconds it took, 2 the soft limit, 3 the hard limit, 4 the score factor, 5 the node factor, 6 the
+ * iterations that went on past the soft limit because the best move had just changed. Four engines had a time rule dead
+ * or wrong for months unseen.
  */
 export function timeTrace(field: i32): f64 {
   switch (field) {

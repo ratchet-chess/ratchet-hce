@@ -15,24 +15,149 @@ import { bb, halfmove, hash, inCheck, isRepetition, make, ply, side, unmake } fr
 import { contSlot, correction, updateCorrection } from "./correction";
 import { upcomingRepetition } from "./cycle";
 import { UNITS_PER_CP, evalCached } from "./eval";
-import { bonusAt, butterfly, butterflyIndex, captureHist, captureThreatsAt, contHist, gravity, gravityFrom, killers, malusAt, rewardPawn, threatsAt } from "./history";
 import {
-  MOVES, SCORES, STAGE_BAD_NOISY, STAGE_GOOD_NOISY, STAGE_QUIET, captureIndex, captureScore, initPicker, isNoisy, nextMove, pickedStage, pieceTo,
-  quietScore, resumeAfterTT, selectBest, victimOf,
+  bonusAt,
+  butterfly,
+  butterflyIndex,
+  captureHist,
+  captureThreatsAt,
+  contHist,
+  gravity,
+  gravityFrom,
+  killers,
+  malusAt,
+  rewardPawn,
+  threatsAt,
+} from "./history";
+import {
+  MOVES,
+  SCORES,
+  STAGE_BAD_NOISY,
+  STAGE_GOOD_NOISY,
+  STAGE_QUIET,
+  captureIndex,
+  captureScore,
+  initPicker,
+  isNoisy,
+  nextMove,
+  pickedStage,
+  pieceTo,
+  quietScore,
+  resumeAfterTT,
+  selectBest,
+  victimOf,
 } from "./movepick";
 import {
-  ASP_DELTA, ASP_DEPTH, CHECK_EXT, CONT6, CORR_CONT, DRAW_JITTER, FUT_BASE, FUT_DEPTH, FUT_HISTORY, FUT_PER_DEPTH, HIST_DEEP_MARGIN, HIST_PRIOR_BONUS_DEPTH, HIST_PRIOR_MALUS, HIST_PRUNE_DEPTH, HIST_PRUNE_LIMIT, IIR_DEPTH, LMP_BASE, LMP_DEPTH, LMP_IMPROVING_BASE, LMP_IMPROVING_PER_DEPTH,
-  LMP_IMPROVING_PER_DEPTH_SQ, LMP_PER_DEPTH, LMP_PER_DEPTH_SQ, LMR_ALPHA_RAISE,
-  LMR_BASE, LMR_CONT_UPDATE, LMR_CUT_NODE, LMR_DEEPER, LMR_DIV, LMR_EARLY_STAGE, LMR_FAIL_HIGH, LMR_FAIL_HIGH_COUNT, LMR_HISTORY_DIV, LMR_HISTORY_MAX,
-  LMR_HISTORY_STEP, LMR_MIN_DEPTH, LMR_NOISY_BASE, LMR_NOISY_DIV, LMR_NOISY_HISTORY_DIV, LMR_NOISY_MIN_DEPTH, LMR_NON_PV, LMR_NOT_IMPROVING,
-  LMR_SHALLOWER, LMR_TT_NOISY, LMR_TT_PV, MAT_EG, BAD_NOISY_FUT_DEPTH, BAD_NOISY_FUT_MARGIN, NMP_BASE, NMP_CUT_NODE, NMP_EVAL_MARGIN, NMP_STATIC, NMP_STATIC_BASE, NMP_STATIC_PER, PAWN_HISTORY, PROBCUT_DEPTH, PROBCUT_MARGIN, PROBCUT_REDUCTION, PRUNE_BASE, PRUNE_DIV, SE_DEPTH, SE_DOUBLE_MARGIN,
-  SE_DOUBLE_MAX, SE_MARGIN, SE_MARGIN_DIV, SE_NEG_ALPHA, SE_NEG_CUT, SE_SEARCH_ADD, SE_TRIPLE_MARGIN, SE_TT_DEPTH, NMP_DEPTH, NMP_DEPTH_DIV, NMP_EVAL_DIV, NMP_EVAL_MAX, QS_DELTA,
-  QS_EVASIONS, QS_SEE, RAZOR_DEPTH, RAZOR_DROP, RAZOR_MARGIN, RAZOR_QS_DEPTH, RFP_DEPTH, RFP_IMPROVING, RFP_MARGIN, RFP_QUAD, SEE_DEPTH, SEE_HISTORY, SEE_NOISY, SEE_QUIET, TT_CUT_NODE, UPCOMING_REP,
+  ASP_DELTA,
+  ASP_DEPTH,
+  BAD_NOISY_FUT_DEPTH,
+  BAD_NOISY_FUT_MARGIN,
+  CHECK_EXT,
+  CONT6,
+  CORR_CONT,
+  DRAW_JITTER,
+  FUT_BASE,
+  FUT_DEPTH,
+  FUT_HISTORY,
+  FUT_PER_DEPTH,
+  HIST_DEEP_MARGIN,
+  HIST_PRIOR_BONUS_DEPTH,
+  HIST_PRIOR_MALUS,
+  HIST_PRUNE_DEPTH,
+  HIST_PRUNE_LIMIT,
+  IIR_DEPTH,
+  LMP_BASE,
+  LMP_DEPTH,
+  LMP_IMPROVING_BASE,
+  LMP_IMPROVING_PER_DEPTH,
+  LMP_IMPROVING_PER_DEPTH_SQ,
+  LMP_PER_DEPTH,
+  LMP_PER_DEPTH_SQ,
+  LMR_ALPHA_RAISE,
+  LMR_BASE,
+  LMR_CONT_UPDATE,
+  LMR_CUT_NODE,
+  LMR_DEEPER,
+  LMR_DIV,
+  LMR_EARLY_STAGE,
+  LMR_FAIL_HIGH,
+  LMR_FAIL_HIGH_COUNT,
+  LMR_HISTORY_DIV,
+  LMR_HISTORY_MAX,
+  LMR_HISTORY_STEP,
+  LMR_MIN_DEPTH,
+  LMR_NOISY_BASE,
+  LMR_NOISY_DIV,
+  LMR_NOISY_HISTORY_DIV,
+  LMR_NOISY_MIN_DEPTH,
+  LMR_NON_PV,
+  LMR_NOT_IMPROVING,
+  LMR_SHALLOWER,
+  LMR_TT_NOISY,
+  LMR_TT_PV,
+  MAT_EG,
+  NMP_BASE,
+  NMP_CUT_NODE,
+  NMP_DEPTH,
+  NMP_DEPTH_DIV,
+  NMP_EVAL_DIV,
+  NMP_EVAL_MARGIN,
+  NMP_EVAL_MAX,
+  NMP_STATIC,
+  NMP_STATIC_BASE,
+  NMP_STATIC_PER,
+  PAWN_HISTORY,
+  PROBCUT_DEPTH,
+  PROBCUT_MARGIN,
+  PROBCUT_REDUCTION,
+  PRUNE_BASE,
+  PRUNE_DIV,
+  QS_DELTA,
+  QS_EVASIONS,
+  QS_SEE,
+  RAZOR_DEPTH,
+  RAZOR_DROP,
+  RAZOR_MARGIN,
+  RAZOR_QS_DEPTH,
+  RFP_DEPTH,
+  RFP_IMPROVING,
+  RFP_MARGIN,
+  RFP_QUAD,
+  SEE_DEPTH,
+  SEE_HISTORY,
+  SEE_NOISY,
+  SEE_QUIET,
+  SE_DEPTH,
+  SE_DOUBLE_MARGIN,
+  SE_DOUBLE_MAX,
+  SE_MARGIN,
+  SE_MARGIN_DIV,
+  SE_NEG_ALPHA,
+  SE_NEG_CUT,
+  SE_SEARCH_ADD,
+  SE_TRIPLE_MARGIN,
+  SE_TT_DEPTH,
+  TT_CUT_NODE,
+  UPCOMING_REP,
 } from "./params";
 import { seeGe } from "./see";
 import { doMove, doNull, psq, undoMove, undoNull } from "./state";
 import { mayContinue, mustStop } from "./time";
-import { BOUND_EXACT, BOUND_LOWER, BOUND_UPPER, ttMoveOf, ttBound, ttDepth, ttEval, ttMove, ttNewSearch, ttProbe, ttPv, ttScore, ttStore } from "./tt";
+import {
+  BOUND_EXACT,
+  BOUND_LOWER,
+  BOUND_UPPER,
+  ttBound,
+  ttDepth,
+  ttEval,
+  ttMove,
+  ttMoveOf,
+  ttNewSearch,
+  ttProbe,
+  ttPv,
+  ttScore,
+  ttStore,
+} from "./tt";
 import { hostIteration } from "../../core/host";
 
 export const MATE = 32000;
@@ -60,9 +185,16 @@ const ssStatic = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_P
 const ssRaw = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + SS + 1)));
 /** double extensions on the line to a ply, Stash f91e750 double_extensions. Feature: Singular_Extensions. */
 const ssDouble = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + SS + 1)));
-/** per ply, the number of the move made there when it is quiet, 1 for the node's first move, else 0: what the child reads of its parent's move */
+/**
+ * Per ply, the number of the move made there when it is quiet, 1 for the node's
+ * first move, else 0: what the child reads of its parent's move.
+ */
 const ssQuietNumber = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + SS + 1)));
-/** how many of a ply's nodes have failed high since their parent's move loop began; a node reads its children's count (Clockwork 641d9f5 fail_high_count). Feature: Late_Move_Reductions. */
+/**
+ * How many of a ply's nodes have failed high since their parent's move loop
+ * began; a node reads its children's count (Clockwork 641d9f5 fail_high_count).
+ * Feature: Late_Move_Reductions.
+ */
 const ssFailHigh = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + 2)));
 /** the move a ply's singular search leaves out, 0 for none */
 const excludedAt = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + 1)));
@@ -91,9 +223,9 @@ const capturesTried = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * M
 const LN = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 64));
 
 /**
- * late move pruning's move count by depth, not improving then improving, from the LMP_ values in params.ts. A row has a
- * fixed size and is filled whole, because a tuning build makes LMP_DEPTH a runtime value; LMP_DEPTH stays below LMP_ROW.
- * Depth 0 is never read
+ * late move pruning's move count by depth, not improving then improving, from the LMP_ values in params.ts. A row has
+ * a fixed size and is filled whole, because a tuning build makes LMP_DEPTH a runtime value; LMP_DEPTH stays below
+ * LMP_ROW. Depth 0 is never read.
  */
 const LMP_ROW = 64;
 const LMP = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 2 * LMP_ROW));
@@ -120,7 +252,10 @@ export function initSearch(): void {
   for (let i = 1; i < 64; i++) LN[i] = <i32>Math.round(Math.log(<f64>i) * 1024);
   for (let d = 1; d < LMP_ROW; d++) {
     LMP[d] = max(1, (LMP_BASE + LMP_PER_DEPTH * d + LMP_PER_DEPTH_SQ * d * d) >> 10);
-    LMP[LMP_ROW + d] = max(1, (LMP_IMPROVING_BASE + LMP_IMPROVING_PER_DEPTH * d + LMP_IMPROVING_PER_DEPTH_SQ * d * d) >> 10);
+    LMP[LMP_ROW + d] = max(
+      1,
+      (LMP_IMPROVING_BASE + LMP_IMPROVING_PER_DEPTH * d + LMP_IMPROVING_PER_DEPTH_SQ * d * d) >> 10,
+    );
   }
 }
 
@@ -194,7 +329,14 @@ function rewardQuiet(m: i32, bonus: i32, p: i32): void {
   gravity(butterfly, butterflyIndex(m, threatsAt(p)), bonus);
   // pawn history takes what the butterfly table takes, Weiss 20c95ce UpdateQuietHistory. Feature: Pawn_History.
   if (PAWN_HISTORY != 0) rewardPawn(pt, bonus);
-  rewardCont(pt, ssCont[p + SS - 1], ssCont[p + SS - 2], ssCont[p + SS - 4], CONT6 != 0 ? ssCont[p + SS - 6] : -1, bonus);
+  rewardCont(
+    pt,
+    ssCont[p + SS - 1],
+    ssCont[p + SS - 2],
+    ssCont[p + SS - 4],
+    CONT6 != 0 ? ssCont[p + SS - 6] : -1,
+    bonus,
+  );
 }
 
 /** the continuation part of rewardQuiet, for a piece and square after the moves 1, 2, 4 and 6 plies back */
@@ -211,15 +353,25 @@ function rewardCont(pt: i32, cm: i32, fm: i32, f4: i32, f6: i32, bonus: i32): vo
 }
 
 /**
- * moves the continuation entries of the parent's move by `bonus`: the rows are the moves 1, 2, 4 and 6 plies before
- * that move (Stockfish 11 update_continuation_histories on ss-1). The caller has checked that the parent's move is quiet.
- * Feature: History_Heuristic#Continuation_History.
+ * Moves the continuation entries of the parent's move by `bonus`: the rows are the moves 1, 2, 4 and 6 plies before
+ * that move (Stockfish 11 update_continuation_histories on ss-1). The caller has checked that the parent's move is
+ * quiet. Feature: History_Heuristic#Continuation_History.
  */
 function rewardPrior(p: i32, bonus: i32): void {
-  rewardCont(ssCont[p + SS - 1] >> 10, ssCont[p + SS - 2], ssCont[p + SS - 3], ssCont[p + SS - 5], CONT6 != 0 ? ssCont[p + SS - 7] : -1, bonus);
+  rewardCont(
+    ssCont[p + SS - 1] >> 10,
+    ssCont[p + SS - 2],
+    ssCont[p + SS - 3],
+    ssCont[p + SS - 5],
+    CONT6 != 0 ? ssCont[p + SS - 7] : -1,
+    bonus,
+  );
 }
 
-/** a draw's score, DRAW_JITTER above or below zero by a bit of the node count (Stash f91e750 worker_draw_score). Feature: Draw_Score_Randomization. */
+/**
+ * A draw's score, DRAW_JITTER above or below zero by a bit of the node count
+ * (Stash f91e750 worker_draw_score). Feature: Draw_Score_Randomization.
+ */
 @inline function drawScore(): i32 {
   return DRAW_JITTER == 0 ? 0 : (nodeCount & 2) != 0 ? DRAW_JITTER : -DRAW_JITTER;
 }
@@ -319,7 +471,13 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     // no cut at PV nodes (Stockfish 4739037f search), nor late in the fifty-move count (Stockfish bae019b5 search);
     // a node not expected to cut takes a fail low only (Ethereal 311d110 search).
     // Feature: Transposition_Table#Transposition_Table_Cutoffs.
-    if (!pvNode && ttDepth >= depth && halfmove < 90 && boundCuts(tBound, tScore, alpha, beta) && (TT_CUT_NODE == 0 || cutNode || tScore <= alpha)) {
+    if (
+      !pvNode &&
+      ttDepth >= depth &&
+      halfmove < 90 &&
+      boundCuts(tBound, tScore, alpha, beta) &&
+      (TT_CUT_NODE == 0 || cutNode || tScore <= alpha)
+    ) {
       // Weiss 5168a50 AlphaBeta: a quiet TT move that cuts earns its bonus; the killer is Ratchet's addition, after
       // Stockfish 11 update_quiet_stats. Features: History_Heuristic, Killer_Heuristic.
       if (tScore >= beta) {
@@ -353,7 +511,13 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     if (halfmove > 12) staticEval = (staticEval * (256 - halfmove)) / 256;
     pruneEval = staticEval;
     // the TT score stands in only where a TT cut may, before the fifty-move count nears its end: Ratchet's guard
-    if (hit && halfmove < 90 && (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > pruneEval : tScore < pruneEval))) pruneEval = tScore;
+    if (
+      hit &&
+      halfmove < 90 &&
+      (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > pruneEval : tScore < pruneEval))
+    ) {
+      pruneEval = tScore;
+    }
     // improving, Alexandria 829daf4 Negamax: against two plies up, else four, else true. Feature: Improving.
     const s2 = ssStatic[p + SS - 2];
     const s4 = ssStatic[p + SS - 4];
@@ -369,7 +533,14 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     // reverse futility, Stash f91e750 search, skipped inside a singular search as Weiss c735b8f AlphaBeta skips its
     // pruning there; Stash f91e750 runs it there too. The margin per ply grows with depth, Lynx f87f5d5f NegaMax; not
     // taken: Stockfish 7da31a1f search, whose margin per ply stops growing at a cap. Feature: Reverse_Futility_Pruning.
-    if (excl == 0 && depth <= RFP_DEPTH && pruneEval < MATE_IN_MAX && pruneEval - ((RFP_MARGIN + RFP_QUAD * depth) * depth - (improving ? RFP_IMPROVING : 0)) >= beta) return pruneEval;
+    if (
+      excl == 0 &&
+      depth <= RFP_DEPTH &&
+      pruneEval < MATE_IN_MAX &&
+      pruneEval - ((RFP_MARGIN + RFP_QUAD * depth) * depth - (improving ? RFP_IMPROVING : 0)) >= beta
+    ) {
+      return pruneEval;
+    }
 
     // razoring, Stash 13ac9e7 search: to qsearch at depth 2 or less, a null-window qsearch below alpha at depth 3,
     // and a ply less for the node when that qsearch beats beta by a ply's margin. Feature: Razoring.
@@ -382,8 +553,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     }
 
     // null move, Ethereal 12.75 search's R and guards, with the eval >= static eval gate of Stash f91e750 search,
-    // at an expected cut node only, as Stash does;
-    // it returns the search's score, as Stash does, where Ethereal returns beta. Features: Null_Move_Pruning, Depth_Reduction_R.
+    // at an expected cut node only, as Stash does; it returns the search's score, as Stash does, where Ethereal
+    // returns beta. Features: Null_Move_Pruning, Depth_Reduction_R.
     if (
       excl == 0 &&
       (NMP_CUT_NODE == 0 || cutNode) &&
@@ -412,7 +583,13 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
   // The bar's gap is in the eval's unit, and SEE_VALUE is about half that scale, so the bar is stricter than its
   // source's. It stands because easing it showed no gain in games. Feature: ProbCut.
   const probcutBeta = beta + PROBCUT_MARGIN;
-  if (!root && !check && depth >= PROBCUT_DEPTH && abs(beta) < MATE_IN_MAX && !(hit && tDepth >= depth - PROBCUT_REDUCTION && tScore < probcutBeta)) {
+  if (
+    !root &&
+    !check &&
+    depth >= PROBCUT_DEPTH &&
+    abs(beta) < MATE_IN_MAX &&
+    !(hit && tDepth >= depth - PROBCUT_REDUCTION && tScore < probcutBeta)
+  ) {
     const bar = probcutBeta - staticEval;
     const base = p * MAX_MOVES;
     const e = generateCaptures(MOVES, base);
@@ -467,7 +644,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     let cmh = 0;
     let fmh = 0;
     let hist = 0;
-    // a node's first move is neither pruned nor reduced, so it reads no history; a node that it cuts needs no attacked squares here
+    // a node's first move is neither pruned nor reduced, so it reads no history; a node that it cuts needs no
+    // attacked squares here
     if (played != 0) {
       if (noisy) hist = <i32>captureHist[captureIndex(m, captureThreatsAt(p))];
       else {
@@ -482,7 +660,10 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
 
     // pruning, once a move has kept the node from a mated score; the root is spared, Ratchet's guard
     if (!root && best > -MATE_IN_MAX) {
-      const lmrDepth = max(0, depth - 1 - ((PRUNE_BASE + (LN[min(depth, 63)] * LN[min(played, 63)]) / PRUNE_DIV) >> 10));
+      const lmrDepth = max(
+        0,
+        depth - 1 - ((PRUNE_BASE + (LN[min(depth, 63)] * LN[min(played, 63)]) / PRUNE_DIV) >> 10),
+      );
       if (!noisy) {
         // late move pruning, Ethereal 12.75 LateMovePruningCounts: it counts moves played and drops the move that
         // triggers it, as Weiss 2.0 AlphaBeta does, where Ethereal counts quiets seen and searches that move.
@@ -492,22 +673,38 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
           continue;
         }
         // futility on the reduced depth, Ethereal 0e47e9b fmpMargin. Feature: Futility_Pruning.
-        if (!check && lmrDepth <= FUT_DEPTH && pruneEval + FUT_BASE + FUT_PER_DEPTH * lmrDepth <= alpha && hist < FUT_HISTORY[improving ? 1 : 0]) {
+        if (
+          !check &&
+          lmrDepth <= FUT_DEPTH &&
+          pruneEval + FUT_BASE + FUT_PER_DEPTH * lmrDepth <= alpha &&
+          hist < FUT_HISTORY[improving ? 1 : 0]
+        ) {
           skipQuiets = true;
           continue;
         }
         // history pruning, after Ethereal 12.75 search's Step 11D and 11E (CounterMoveHistoryLimit,
-        // FollowUpMoveHistoryLimit): counter-move and follow-up history, with one limit and depth for both, and with the
-        // killer not exempt, where Ethereal exempts it and the counter move. Feature: History_Leaf_Pruning.
+        // FollowUpMoveHistoryLimit): counter-move and follow-up history, with one limit and depth for both, and with
+        // the killer not exempt, where Ethereal exempts it and the counter move. Feature: History_Leaf_Pruning.
         const imp = improving ? 1 : 0;
         if (lmrDepth <= HIST_PRUNE_DEPTH[imp] && (cmh < HIST_PRUNE_LIMIT[imp] || fmh < HIST_PRUNE_LIMIT[imp])) continue;
       }
       // SEE pruning, Ethereal 12.75 SEEPruningDepth: past the good captures; a quiet's bar moves by its history,
       // Clockwork f236181 Worker::search. Feature: Static_Exchange_Evaluation#Pruning.
-      if (depth <= SEE_DEPTH && picked > STAGE_GOOD_NOISY && !seeGe(m, noisy ? -SEE_NOISY * depth * depth : -SEE_QUIET * depth - ((hist * SEE_HISTORY) >> 10))) continue;
+      if (
+        depth <= SEE_DEPTH &&
+        picked > STAGE_GOOD_NOISY &&
+        !seeGe(m, noisy ? -SEE_NOISY * depth * depth : -SEE_QUIET * depth - ((hist * SEE_HISTORY) >> 10))
+      ) {
+        continue;
+      }
       // futility for the bad captures, Clockwork 662c568 Worker::search: they are the picker's last stage, so the loop
       // ends, and the score rises to the test's estimate. Feature: Futility_Pruning.
-      if (!check && depth <= BAD_NOISY_FUT_DEPTH && picked == STAGE_BAD_NOISY && staticEval + BAD_NOISY_FUT_MARGIN * depth <= alpha) {
+      if (
+        !check &&
+        depth <= BAD_NOISY_FUT_DEPTH &&
+        picked == STAGE_BAD_NOISY &&
+        staticEval + BAD_NOISY_FUT_MARGIN * depth <= alpha
+      ) {
         const estimate = staticEval + BAD_NOISY_FUT_MARGIN * depth;
         if (abs(beta) < MATE_IN_MAX && best < estimate) best = estimate;
         break;
@@ -519,7 +716,15 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     let ext = 0;
     const mayExtend = !root && p < 2 * rootDepth && 2 * ssDouble[p + SS] < rootDepth;
     let singular = false;
-    if (mayExtend && depth >= SE_DEPTH && m == tMove && excl == 0 && (tBound & BOUND_LOWER) != 0 && abs(tScore) < MATE_IN_MAX && tDepth >= depth - SE_TT_DEPTH) {
+    if (
+      mayExtend &&
+      depth >= SE_DEPTH &&
+      m == tMove &&
+      excl == 0 &&
+      (tBound & BOUND_LOWER) != 0 &&
+      abs(tScore) < MATE_IN_MAX &&
+      tDepth >= depth - SE_TT_DEPTH
+    ) {
       // singular extension: the node without its TT move, searched shallow below the TT score
       singular = true;
       const sBeta = tScore - (SE_MARGIN * depth) / SE_MARGIN_DIV;
@@ -535,8 +740,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       // Clockwork 641d9f5 Worker::search keeps. Feature: Late_Move_Reductions.
       ssFailHigh[p + 1] = 0;
       if (sv < sBeta) {
-        // double extension, Stash f91e750 search, and its triple for a quiet TT move, which counts once against the line's limit.
-        // Feature: Singular_Extensions.
+        // double extension, Stash f91e750 search, and its triple for a quiet TT move, which counts once against the
+        // line's limit. Feature: Singular_Extensions.
         if (!pvNode && sBeta - sv > SE_DOUBLE_MARGIN && ssDouble[p + SS] <= SE_DOUBLE_MAX) {
           ext = !tNoisy && sBeta - sv > SE_TRIPLE_MARGIN ? 3 : 2;
           ssDouble[p + SS]++;
@@ -576,17 +781,17 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     } else {
       let full = true;
       let reSearch = false;
-      // late move reductions, Ethereal 12.75 search's Step 15A, with r counted past the move's own ply, so 0 is no reduction
-      // where Ethereal's R = 1 is. Its extension and king-evasion terms are left out, so an extension stays in the reduced
-      // search, as in Weiss 2.0 AlphaBeta. A move that gives check gets no term of its own, where Ethereal fcb6f77 search
-      // reduces it less, because the check extension already searches it a ply deeper here.
+      // late move reductions, Ethereal 12.75 search's Step 15A, with r counted past the move's own ply, so 0 is no
+      // reduction where Ethereal's R = 1 is. Its extension and king-evasion terms are left out, so an extension stays
+      // in the reduced search, as in Weiss 2.0 AlphaBeta. A move that gives check gets no term of its own, where
+      // Ethereal fcb6f77 search reduces it less, because the check extension already searches it a ply deeper here.
       // Feature: Late_Move_Reductions.
       if (depth >= (noisy ? LMR_NOISY_MIN_DEPTH : LMR_MIN_DEPTH)) {
         const logs = LN[min(depth, 63)] * LN[min(played, 63)];
         let sum = 0;
         if (noisy) {
-          // noisy moves, Weiss 95b0951 InitReductions's table with the quiets' node terms; Ethereal 12.75 search's Step 15B
-          // reads capture history alone. Feature: Late_Move_Reductions.
+          // noisy moves, Weiss 95b0951 InitReductions's table with the quiets' node terms; Ethereal 12.75 search's
+          // Step 15B reads capture history alone. Feature: Late_Move_Reductions.
           sum = LMR_NOISY_BASE + logs / LMR_NOISY_DIV;
           sum -= LMR_HISTORY_STEP * max(-LMR_HISTORY_MAX, min(LMR_HISTORY_MAX, hist / LMR_NOISY_HISTORY_DIV));
         } else {
@@ -596,12 +801,13 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
           if (tNoisy) sum += LMR_TT_NOISY;
           sum -= LMR_HISTORY_STEP * max(-LMR_HISTORY_MAX, min(LMR_HISTORY_MAX, hist / LMR_HISTORY_DIV));
         }
-        // a node that is or was on a PV is spared the non-PV term, Berserk f05f9dc Negamax. Feature: Late_Move_Reductions.
+        // a node that is or was on a PV is spared the non-PV term, Berserk f05f9dc Negamax.
+        // Feature: Late_Move_Reductions.
         if (!pvNode && !(LMR_TT_PV != 0 && tPv)) sum += LMR_NON_PV;
         if (!improving) sum += LMR_NOT_IMPROVING;
         if (cutNode) sum += LMR_CUT_NODE;
-        // this node's children keep failing high, Clockwork 641d9f5 fail_high_count; Stockfish a32d2086 cutoffCnt counts
-        // over the parent's whole subtree. Feature: Late_Move_Reductions.
+        // this node's children keep failing high, Clockwork 641d9f5 fail_high_count; Stockfish a32d2086 cutoffCnt
+        // counts over the parent's whole subtree. Feature: Late_Move_Reductions.
         if (ssFailHigh[p + 1] > LMR_FAIL_HIGH_COUNT) sum += LMR_FAIL_HIGH;
         // each raise of alpha here, Clockwork 641d9f5 alpha_raises; Stockfish 9eb7b607 search lowers the node's depth
         // instead. Feature: Late_Move_Reductions.
@@ -612,9 +818,10 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
           v = -search(-alpha - 1, -alpha, reduced, true);
           full = v > alpha;
           if (full) {
-            // the re-search's depth follows how far the reduced search beat the best, Stockfish c228f319 doDeeperSearch in
-            // Clockwork 641d9f5 Worker::search's form: a fixed margin. Weiss 95b0951 AlphaBeta's margin grows with the
-            // reduction, and it has no shallower step. Feature: Late_Move_Reductions#Re-searches.
+            // the re-search's depth follows how far the reduced search beat the best, Stockfish c228f319
+            // doDeeperSearch in Clockwork 641d9f5 Worker::search's form: a fixed margin. Weiss 95b0951 AlphaBeta's
+            // margin grows with the reduction, and it has no shallower step.
+            // Feature: Late_Move_Reductions#Re-searches.
             if (v > best + LMR_DEEPER) newDepth++;
             else if (newDepth > 1 && v < best + LMR_SHALLOWER * newDepth) newDepth--;
             full = reduced < newDepth;
@@ -672,7 +879,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     }
   }
 
-  // with its one move left out, a node with no other move fails low (Stash f91e750 search). Feature: Singular_Extensions.
+  // with its one move left out, a node with no other move fails low (Stash f91e750 search).
+  // Feature: Singular_Extensions.
   if (played == 0) return excl ? alpha : check ? -MATE + p : 0;
   // a cut far above beta counts as one from a ply deeper, for the bonus and the malus, Clockwork 641d9f5 bonus_depth.
   // Feature: History_Heuristic.
@@ -681,15 +889,21 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     // the parent's first move, a quiet, is refuted here, Stockfish 11 update_all_stats.
     // Feature: History_Heuristic#Continuation_History.
     if (HIST_PRIOR_MALUS != 0 && ssQuietNumber[p + SS - 1] == 1) rewardPrior(p, -malusAt(depth + 1));
-  } else if (!bestMove && HIST_PRIOR_BONUS_DEPTH != 0 && (depth >= HIST_PRIOR_BONUS_DEPTH || pvNode) && ssQuietNumber[p + SS - 1] != 0) {
+  } else if (
+    !bestMove &&
+    HIST_PRIOR_BONUS_DEPTH != 0 &&
+    (depth >= HIST_PRIOR_BONUS_DEPTH || pvNode) &&
+    ssQuietNumber[p + SS - 1] != 0
+  ) {
     // no move raised alpha: the parent's quiet move caused the fail low, Stockfish 8fd34d77 search.
     // Feature: History_Heuristic#Continuation_History.
     rewardPrior(p, bonusAt(depth));
   }
   const bound = best >= beta ? BOUND_LOWER : bestMove ? BOUND_EXACT : BOUND_UPPER;
   // correction history, Stash 302136d search: not in check, not an excluded search (Clockwork 641d9f5 Worker::search;
-  // Stash f91e750 search updates there too), non-mate score (Ratchet's own guard: Stockfish 17 search and Stash 302136d have none),
-  // no noisy best move, and the bound says the eval was wrong in that direction. Feature: Static_Evaluation_Correction_History.
+  // Stash f91e750 search updates there too), non-mate score (Ratchet's own guard: Stockfish 17 search and Stash
+  // 302136d have none), no noisy best move, and the bound says the eval was wrong in that direction.
+  // Feature: Static_Evaluation_Correction_History.
   if (
     !check &&
     excl == 0 &&
@@ -750,7 +964,9 @@ function qsearch(alpha: i32, beta: i32): i32 {
     raw = hit && ttEval != EVAL_NONE ? ttEval : evalCached(psq);
     best = raw + correction(side, contSlot(ssCont[p + SS - 1], ssCont[p + SS - 2]));
     if (halfmove > 12) best = (best * (256 - halfmove)) / 256;
-    if (hit && halfmove < 90 && (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > best : tScore < best))) best = tScore;
+    if (hit && halfmove < 90 && (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > best : tScore < best))) {
+      best = tScore;
+    }
     if (best >= beta) return best;
     if (best > alpha) alpha = best;
   }
@@ -766,7 +982,8 @@ function qsearch(alpha: i32, beta: i32): i32 {
   const ct = end > base ? captureThreatsAt(p) : 0;
   for (let i = base; i < end; i++) {
     const m = MOVES[i];
-    SCORES[i] = m == tMove ? 1 << 30 : isNoisy(m) ? captureScore(m, ct) + (1 << 18) : quietScore(m, -1, -1, -1, -1, threats);
+    SCORES[i] =
+      m == tMove ? 1 << 30 : isNoisy(m) ? captureScore(m, ct) + (1 << 18) : quietScore(m, -1, -1, -1, -1, threats);
   }
   let bestMove = 0;
   for (let i = base; i < end; i++) {
@@ -775,8 +992,8 @@ function qsearch(alpha: i32, beta: i32): i32 {
     if (!check) {
       if (!seeGe(m, 0)) continue;
       if (!movePromo(m) && deltaBase > -MATE_IN_MAX) {
-        // Stash 007850d qsearch's second test: when stand pat is that far below alpha without a victim, only a capture that wins material is searched.
-        // Feature: Delta_Pruning.
+        // Stash 007850d qsearch's second test: when stand pat is that far below alpha without a victim, only a
+        // capture that wins material is searched. Feature: Delta_Pruning.
         const low = deltaBase + QS_DELTA;
         let estimate = low + MAT_EG[victimOf(m)];
         if (estimate > alpha && QS_SEE != 0 && low <= alpha && !seeGe(m, 1)) estimate = low;
@@ -786,8 +1003,8 @@ function qsearch(alpha: i32, beta: i32): i32 {
         }
       }
     } else if (QS_EVASIONS != 0 && best > -MATE_IN_MAX && (!isNoisy(m) || !seeGe(m, 0))) {
-      // Weiss 95b0951 Quiescence: one evasion that is not mated answers the check, and the rest are held to qsearch's moves.
-      // Feature: Quiescence_Search.
+      // Weiss 95b0951 Quiescence: one evasion that is not mated answers the check, and the rest are held to
+      // qsearch's moves. Feature: Quiescence_Search.
       continue;
     }
     // the main search's rows end at the horizon; the sixth correction table reads on through qsearch
@@ -811,7 +1028,10 @@ function qsearch(alpha: i32, beta: i32): i32 {
 
 // ---------------------------------------------------------------- iterative deepening
 
-/** the state a search starts from: the counters at zero, the stack empty, the root's moves listed with no nodes spent */
+/**
+ * The state a search starts from: the counters at zero, the stack empty, the
+ * root's moves listed with no nodes spent.
+ */
 function startSearch(): void {
   stopped = false;
   nodeCount = 0;
@@ -865,8 +1085,8 @@ export function think(maxDepth: i32): i32 {
   let previous = 0;
   for (let depth = 1; depth <= maxDepth; depth++) {
     rootDepth = depth;
-    // aspiration, Ethereal 12.75 aspirationWindow: fail low halves beta down, fail high searches one ply less; the failed
-    // bound widens from the score, as in Stockfish 11 Thread::search, where Ethereal widens from the old bound.
+    // aspiration, Ethereal 12.75 aspirationWindow: fail low halves beta down, fail high searches one ply less; the
+    // failed bound widens from the score, as in Stockfish 11 Thread::search, where Ethereal widens from the old bound.
     // Feature: Aspiration_Windows.
     let delta = ASP_DELTA;
     let alpha = -INF;
@@ -899,8 +1119,8 @@ export function think(maxDepth: i32): i32 {
       delta += delta / 2;
     }
     if (stopped) {
-      // the root's row of the PV table is written only after a root move's search has finished above alpha, so at a stop
-      // it holds a finished move's line or nothing
+      // the root's row of the PV table is written only after a root move's search has finished above alpha, so at a
+      // stop it holds a finished move's line or nothing
       if (pvLen[0] > 0) {
         rootPvLen = pvLen[0];
         for (let i = 0; i < rootPvLen; i++) rootPv[i] = pvTable[i];

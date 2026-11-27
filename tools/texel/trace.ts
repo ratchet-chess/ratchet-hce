@@ -74,7 +74,10 @@ export async function probe(
   const base = await adapter.eval();
   const evalMs = performance.now() - t0;
   const free = m.elements.filter((e) => !e.fixed);
-  log(`${count} positions, ${free.length} free elements: ${free.length * 2} evals of about ${Math.round(evalMs)} ms, about ${Math.round((free.length * 2 * evalMs) / 60000)} min`);
+  log(
+    `${count} positions, ${free.length} free elements: ${free.length * 2} evals` +
+      ` of about ${Math.round(evalMs)} ms, about ${Math.round((free.length * 2 * evalMs) / 60000)} min`,
+  );
 
   // per element, its nonzero coefficients by position
   const perElement: { id: number; pos: Uint32Array; coef: Float32Array }[] = [];
@@ -93,7 +96,9 @@ export async function probe(
         await adapter.set(e.id, v);
         return await adapter.eval();
       } catch (err) {
-        throw new Error(`${e.name} = ${v} stopped the subject: ${(err as Error).message}; give the element bounds in the map`);
+        throw new Error(
+          `${e.name} = ${v} stopped the subject: ${(err as Error).message}; give the element bounds in the map`,
+        );
       }
     };
     const plus = await at(e.default + delta);
@@ -181,7 +186,9 @@ export function linearEval(t: Trace, theta: Float64Array, out = new Float64Array
 export function writeTrace(path: string, t: Trace): void {
   const json = Buffer.from(JSON.stringify(t.header));
   const start = Math.ceil((8 + json.length) / 8) * 8;
-  const parts = [t.rowStart, t.col, t.val, t.base, t.offset].map((a) => Buffer.from(a.buffer, a.byteOffset, a.byteLength));
+  const parts = [t.rowStart, t.col, t.val, t.base, t.offset].map((a) =>
+    Buffer.from(a.buffer, a.byteOffset, a.byteLength),
+  );
   const head = Buffer.alloc(start);
   head.write("TXTR", 0, "latin1");
   head.writeUInt32LE(json.length, 4);

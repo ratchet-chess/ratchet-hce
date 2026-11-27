@@ -9,12 +9,23 @@
  * Each ply owns a slice of MOVES and SCORES and a row of picker state, so a node
  * keeps its picker while its children run theirs.
  *
- * Features: Move_Generation#Staged_Move_Generation, Move_Ordering, Hash_Move, Static_Exchange_Evaluation#Move_Ordering, Killer_Heuristic, History_Heuristic.
+ * Features: Move_Generation#Staged_Move_Generation, Move_Ordering, Hash_Move.
+ * Features: Static_Exchange_Evaluation#Move_Ordering, Killer_Heuristic, History_Heuristic.
  */
 import { FLAG_EP, MAX_MOVES, MAX_PLY, PAWN, QUEEN, moveFrom, movePromo, moveTo } from "../../core/constants";
 import { generateCaptures, generateQuiets, isLegal } from "../../core/movegen";
 import { bb, board, side } from "../../core/position";
-import { butterfly, butterflyIndex, captureHist, captureThreatsAt, contHist, pawnHist, pawnHistIndex, pawnHistRow, threatsAt } from "./history";
+import {
+  butterfly,
+  butterflyIndex,
+  captureHist,
+  captureThreatsAt,
+  contHist,
+  pawnHist,
+  pawnHistIndex,
+  pawnHistRow,
+  threatsAt,
+} from "./history";
 import { CAPTURE_THREATS, GOOD_CAPTURE_DIV, MVV, PAWN_HISTORY, PROMO_NOISY } from "./params";
 import { seeGe } from "./see";
 
@@ -74,7 +85,10 @@ export let pickedStage = 0;
   return ((<i32>board[moveFrom(m)]) << 6) | moveTo(m);
 }
 
-/** a capture's order: the victim's value plus capture history; a queen promotion adds a queen. `threats` is captureIndex's */
+/**
+ * A capture's order: the victim's value plus capture history; a queen promotion
+ * adds a queen. `threats` is captureIndex's.
+ */
 @inline export function captureScore(m: i32, threats: u64): i32 {
   let s = MVV[victimOf(m)] + <i32>captureHist[captureIndex(m, threats)];
   const promo = movePromo(m);
@@ -86,8 +100,8 @@ export let pickedStage = 0;
 /**
  * a quiet's order: butterfly plus 1-, 2- and 4-ply continuation history (Stockfish
  * 10 MovePicker::score<QUIETS>) plus the 6-ply (Clockwork 3dd022c History::get_conthist) plus pawn
- * history (Stockfish b0658f09 MovePicker::score<QUIETS>, Weiss 20c95ce GetQuietHistory); `cm`, `fm`, `f4` and `f6` are -1 when there is no such move, and `threats` is
- * the node's attacked squares.
+ * history (Stockfish b0658f09 MovePicker::score<QUIETS>, Weiss 20c95ce GetQuietHistory); `cm`, `fm`, `f4` and `f6`
+ * are -1 when there is no such move, and `threats` is the node's attacked squares.
  * Features: History_Heuristic, Threat_History, History_Heuristic#Continuation_History, Pawn_History.
  */
 @inline export function quietScore(m: i32, cm: i32, fm: i32, f4: i32, f6: i32, threats: u64): i32 {
@@ -191,8 +205,8 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
       case STAGE_GEN_NOISY: {
         let e = generateCaptures(MOVES, base);
         // the core lists a queen promotion without a capture among the quiets; check unblocked 7th-rank pawns directly
-        // in square order so noisy generation avoids a full quiet pass (Stockfish 10 make_promotions, Stash 37 extmove_generate_pawn_noisy).
-        // Feature: Move_Ordering.
+        // in square order so noisy generation avoids a full quiet pass (Stockfish 10 make_promotions,
+        // Stash 37 extmove_generate_pawn_noisy). Feature: Move_Ordering.
         if (PROMO_NOISY != 0) {
           let pawns = unchecked(bb[(side << 3) | PAWN]) & (side == 0 ? RANK_7 : RANK_2);
           if (pawns) {

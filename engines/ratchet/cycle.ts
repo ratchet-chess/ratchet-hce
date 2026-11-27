@@ -67,7 +67,9 @@ export function initCycle(): i32 {
 
           let path: u64 = 0;
           if (type != KNIGHT && type != KING) {
-            path = onLine ? rookAttacks(a, bit(b)) & rookAttacks(b, bit(a)) : bishopAttacks(a, bit(b)) & bishopAttacks(b, bit(a));
+            path = onLine
+              ? rookAttacks(a, bit(b)) & rookAttacks(b, bit(a))
+              : bishopAttacks(a, bit(b)) & bishopAttacks(b, bit(a));
           }
           let key = Z_PIECE[code * 64 + a] ^ Z_PIECE[code * 64 + b] ^ Z_SIDE;
           let squares: u16 = <u16>(a | (b << 6));
@@ -123,8 +125,8 @@ export function upcomingRepetition(excluded: i32): bool {
       if (moveFrom(excluded) == from && moveTo(excluded) == a + b - from) continue;
     }
     if (ply <= i) {
-      // the matched position is at or before the root, so a draw needs an earlier occurrence of it (Stockfish 6b782211).
-      // Feature: Upcoming_Repetition_Detection.
+      // the matched position is at or before the root, so a draw needs an earlier occurrence
+      // (Stockfish 6b782211). Feature: Upcoming_Repetition_Detection.
       let repeated = false;
       for (let k = i + 4; k <= end; k += 2) {
         if (hashBack(k) == then) {

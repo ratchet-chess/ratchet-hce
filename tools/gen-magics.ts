@@ -8,11 +8,19 @@ import { readFileSync, writeFileSync } from "node:fs";
 
 const bytes = readFileSync(new URL("../build/core.wasm", import.meta.url));
 const { instance } = await WebAssembly.instantiate(bytes, {
-  env: { abort: () => { throw new Error("abort"); }, poll: () => 0 },
+  env: {
+    abort: () => {
+      throw new Error("abort");
+    },
+    poll: () => 0,
+  },
 });
 const w = instance.exports as unknown as { initCore(): void; magicNumber(k: number): bigint };
 w.initCore();
-const hex = Array.from({ length: 128 }, (_, k) => "0x" + BigInt.asUintN(64, w.magicNumber(k)).toString(16).padStart(16, "0"));
+const hex = Array.from(
+  { length: 128 },
+  (_, k) => "0x" + BigInt.asUintN(64, w.magicNumber(k)).toString(16).padStart(16, "0"),
+);
 const rows: string[] = [];
 for (let i = 0; i < 128; i += 4) rows.push("  " + hex.slice(i, i + 4).join(", ") + ",");
 writeFileSync(

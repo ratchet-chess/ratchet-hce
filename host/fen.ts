@@ -62,10 +62,18 @@ export function parseFen(fen: string): ParsedFen {
     if (i < 0) continue;
     const color = i >> 1;
     const base = color * 56;
-    if (board[base + 4] === ((color << 3) | KING) && board[base + (i & 1 ? 0 : 7)] === ((color << 3) | ROOK)) rights |= 1 << i;
+    if (board[base + 4] === ((color << 3) | KING) && board[base + (i & 1 ? 0 : 7)] === ((color << 3) | ROOK))
+      rights |= 1 << i;
   }
   const epSq = ep && ep !== "-" ? (ep.charCodeAt(1) - 49) * 8 + (ep.charCodeAt(0) - 97) : -1;
-  return { board, side: side === "b" ? BLACK : WHITE, castling: rights, ep: epSq, halfmove: Number(halfmove ?? 0) || 0, fullmove: Number(fullmove ?? 1) || 1 };
+  return {
+    board,
+    side: side === "b" ? BLACK : WHITE,
+    castling: rights,
+    ep: epSq,
+    halfmove: Number(halfmove ?? 0) || 0,
+    fullmove: Number(fullmove ?? 1) || 1,
+  };
 }
 
 /** the FEN of `f` */

@@ -12,7 +12,6 @@ import { ENGINES } from "../test/boards/engines.ts";
 import { PERFT_SUITE, type PerftMode } from "../test/boards/suite.ts";
 import { WORKLOAD } from "./workload.ts";
 
-
 const args = process.argv.slice(2);
 const opt = (name: string) => (args.includes(name) ? args[args.indexOf(name) + 1] : "");
 const filter = opt("--engine");
@@ -41,15 +40,19 @@ for (const engine of ENGINES.filter((e) => e.name.includes(filter))) {
       const nodes = engine.perft(c.fen, depth, mode);
       const ms = performance.now() - t0;
       if (nodes !== c.counts[depth - 1]) {
-        console.log(`${engine.name} ${mode} ${c.name} d${depth}: WRONG COUNT ${nodes}, expected ${c.counts[depth - 1]}`);
+        console.log(
+          `${engine.name} ${mode} ${c.name} d${depth}: WRONG COUNT ${nodes}, expected ${c.counts[depth - 1]}`,
+        );
         process.exit(1);
       }
       totalNodes += nodes;
       totalMs += ms;
       if (verbose) {
-        console.log(`  ${c.name.padEnd(16)} d${depth} ${nodes.toString().padStart(10)}  ${(nodes / ms / 1000).toFixed(2).padStart(7)} Mnps`);
+        const mnps = (nodes / ms / 1000).toFixed(2).padStart(7);
+        console.log(`  ${c.name.padEnd(16)} d${depth} ${nodes.toString().padStart(10)}  ${mnps} Mnps`);
       }
     }
-    console.log(`${engine.name.padEnd(18)} ${mode}  ${(totalNodes / totalMs / 1000).toFixed(2).padStart(7)} Mnps  (${(totalMs / 1000).toFixed(2)}s)`);
+    const mnps = (totalNodes / totalMs / 1000).toFixed(2).padStart(7);
+    console.log(`${engine.name.padEnd(18)} ${mode}  ${mnps} Mnps  (${(totalMs / 1000).toFixed(2)}s)`);
   }
 }

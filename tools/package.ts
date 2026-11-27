@@ -181,7 +181,8 @@ if (bunTargets.length) {
     `import { readFileSync } from "node:fs";\n` +
       `import wasm from ${JSON.stringify(wasi)} with { type: "file" };\n` +
       `import { runEngine } from ${JSON.stringify(join(root, "vendor/uci-over-wasi/main.ts"))};\n\n` +
-      `runEngine(readFileSync(wasm), [${JSON.stringify(name)}, ...process.argv.slice(2)], new URL("./vendor/uci-over-wasi/thread.js", import.meta.url));\n`,
+      `runEngine(readFileSync(wasm), [${JSON.stringify(name)}, ...process.argv.slice(2)],` +
+      ` new URL("./vendor/uci-over-wasi/thread.js", import.meta.url));\n`,
   );
   for (const target of bunTargets) {
     const os = target.replace(/^bun-/, "").replace("darwin", "macos").replace("x64", "x86-64");
@@ -204,11 +205,14 @@ const tool = run("bun", ["bench/search.ts", "--engine", release, "--repeat", "1"
 const found = /d(\d+)\s+signature (\d+)/.exec(tool);
 if (!found) throw new Error(`no signature from bench/search.ts:\n${tool}`);
 const [depth, signature] = [found[1], Number(found[2])];
-const wine = process.platform === "win32" ? "" : spawnSync("sh", ["-c", "command -v wine64"], { encoding: "utf8" }).stdout.trim();
+const wine =
+  process.platform === "win32" ? "" : spawnSync("sh", ["-c", "command -v wine64"], { encoding: "utf8" }).stdout.trim();
 const hostOs = process.platform === "win32" ? "windows" : process.platform === "darwin" ? "macos" : process.platform;
 const hostArch = process.arch === "x64" ? "x86-64" : process.arch;
-const cpuFlags = process.platform === "linux" && existsSync("/proc/cpuinfo") ? readFileSync("/proc/cpuinfo", "utf8") : "";
-const hasV3 = process.arch === "x64" && (process.platform !== "linux" || (/\bavx2\b/.test(cpuFlags) && /\bbmi2\b/.test(cpuFlags)));
+const cpuFlags =
+  process.platform === "linux" && existsSync("/proc/cpuinfo") ? readFileSync("/proc/cpuinfo", "utf8") : "";
+const hasV3 =
+  process.arch === "x64" && (process.platform !== "linux" || (/\bavx2\b/.test(cpuFlags) && /\bbmi2\b/.test(cpuFlags)));
 
 for (const f of files) {
   let cmd: string[] | undefined;
@@ -230,10 +234,19 @@ for (const f of files) {
     env: { ...process.env, WINEDEBUG: "-all" },
   });
   const nodes = Number(/Nodes searched\s*:\s*(\d+)/.exec(r.stdout)?.[1]);
-  if (nodes !== signature) throw new Error(`${f}: bench ${depth} gave ${nodes} nodes, bench/search.ts ${signature}\n${r.stderr}`);
+  if (nodes !== signature)
+    throw new Error(`${f}: bench ${depth} gave ${nodes} nodes, bench/search.ts ${signature}\n${r.stderr}`);
   console.error(`${f}: ${nodes} nodes at depth ${depth}, the release's node signature`);
 }
 
-const sums = files.map((f) => `${createHash("sha256").update(readFileSync(join(dir, f))).digest("hex")}  ${f}`).join("\n") + "\n";
+const sums =
+  files
+    .map(
+      (f) =>
+        `${createHash("sha256")
+          .update(readFileSync(join(dir, f)))
+          .digest("hex")}  ${f}`,
+    )
+    .join("\n") + "\n";
 writeFileSync(join(dir, "SHA256SUMS"), sums);
 process.stdout.write(`${dir}\n${sums}`);

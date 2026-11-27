@@ -54,7 +54,12 @@ function comments(text: string): Comment[] {
   const merged: Comment[] = [];
   for (const c of out) {
     const last = merged[merged.length - 1];
-    if (last && c.body.startsWith("//") && last.body.startsWith("//") && c.line === last.line + last.body.split("\n").length) {
+    if (
+      last &&
+      c.body.startsWith("//") &&
+      last.body.startsWith("//") &&
+      c.line === last.line + last.body.split("\n").length
+    ) {
       last.body += "\n" + c.body;
       last.end = c.end;
     } else merged.push({ ...c });
@@ -62,14 +67,20 @@ function comments(text: string): Comment[] {
   return merged;
 }
 
-const names = [...table.keys()].sort((a, b) => b.length - a.length).map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+const names = [...table.keys()]
+  .sort((a, b) => b.length - a.length)
+  .map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
 // a possessive ("Stash's 98") names a value of the engine's, not a revision
 const mention = new RegExp(`\\b(${names.join("|")})\\b(?:'s|(?:\\s+([\\w.]+)))?`, "g");
 const unknown = /\b([A-Z][\w-]+) ([0-9a-f]{7,40})\b/g;
 /** the feature keys a comment names, on one line: "Feature: Delta_Pruning." or "Features: A, B#C." */
 const keyList = /\bFeatures?: (\S+(?:, \S+)*?)\.(?=\s|$)/g;
 
-/** the citations of one line, checked against the table; a finding goes to `findings` with `at`; `count` marks a comment's line, which adds to the census and must give a bare engine name a revision */
+/**
+ * The citations of one line, checked against the table; findings go to `findings`
+ * with `at`. `count` marks a comment's line, which adds to the census and requires
+ * a bare engine name to carry a revision.
+ */
 function citationsOf(line: string, at: string, cited: Set<string>, count = true): string[] {
   // FEATURES.md's prose names engines without a revision ("Computer Chess Club"); only its citations are checked
   const out: string[] = [];
@@ -82,7 +93,8 @@ function citationsOf(line: string, at: string, cited: Set<string>, count = true)
     } else if (count && !cited.has(engine)) findings.push(`${at}: ${engine}: no revision`);
   }
   for (const m of line.matchAll(unknown)) {
-    if (!table.has(m[1]) && !/^(Ratchet|Merge)$/.test(m[1])) findings.push(`${at}: ${m[1]} ${m[2]}: engine not in SOURCES.md`);
+    if (!table.has(m[1]) && !/^(Ratchet|Merge)$/.test(m[1]))
+      findings.push(`${at}: ${m[1]} ${m[2]}: engine not in SOURCES.md`);
   }
   return out;
 }
@@ -90,7 +102,11 @@ function citationsOf(line: string, at: string, cited: Set<string>, count = true)
 /** the declaration a comment documents, or else the function it sits in; only an unindented comment documents one */
 function declaration(text: string, c: Comment): string {
   const indented = text.lastIndexOf("\n", c.start - 1) + 1 < c.start;
-  const after = indented ? null : /^\s*(?:@inline\s+)?(?:export\s+)?(?:declare\s+)?(?:function|const|let|var|class|type|interface)\s+(\w+)/.exec(text.slice(c.end));
+  const after = indented
+    ? null
+    : /^\s*(?:@inline\s+)?(?:export\s+)?(?:declare\s+)?(?:function|const|let|var|class|type|interface)\s+(\w+)/.exec(
+        text.slice(c.end),
+      );
   if (after) return after[1];
   const fns = [...text.slice(0, c.start).matchAll(/^(?:@inline\s+)?(?:export\s+)?function\s+(\w+)/gm)];
   if (!text.slice(0, c.start).trim()) return "header";
@@ -101,7 +117,9 @@ const findings: string[] = [];
 const census = new Map<string, number>();
 /** feature key -> file -> declarations that name it */
 const used = new Map<string, Map<string, Set<string>>>();
-for (const file of readdirSync(dir).filter((f) => f.endsWith(".ts")).sort()) {
+for (const file of readdirSync(dir)
+  .filter((f) => f.endsWith(".ts"))
+  .sort()) {
   const text = readFileSync(join(dir, file), "utf8");
   for (const c of comments(text)) {
     const cited = new Set<string>();
@@ -117,7 +135,8 @@ for (const file of readdirSync(dir).filter((f) => f.endsWith(".ts")).sort()) {
       if (!byFile.has(file)) byFile.set(file, new Set());
       byFile.get(file)!.add(declaration(text, c));
     }
-    if (found.length && !keys.length) findings.push(`engines/ratchet/${file}:${c.line}: cites ${found[0]} and names no feature`);
+    if (found.length && !keys.length)
+      findings.push(`engines/ratchet/${file}:${c.line}: cites ${found[0]} and names no feature`);
   }
 }
 
@@ -134,7 +153,10 @@ if (existsSync(featuresPath)) {
   let doc = readFileSync(featuresPath, "utf8");
   if (process.argv.includes("--write")) {
     // a block holds only the lines between its two markers, never a heading, so an empty block does not run on
-    doc = doc.replace(/^## (.+)\n<!-- used-in -->\n(?:(?!## |<!-- \/used-in -->)[^\n]*\n)*<!-- \/used-in -->/gm, (_, key: string) => `## ${key}\n<!-- used-in -->\n${usedIn(key.trim())}\n<!-- /used-in -->`);
+    doc = doc.replace(
+      /^## (.+)\n<!-- used-in -->\n(?:(?!## |<!-- \/used-in -->)[^\n]*\n)*<!-- \/used-in -->/gm,
+      (_, key: string) => `## ${key}\n<!-- used-in -->\n${usedIn(key.trim())}\n<!-- /used-in -->`,
+    );
     writeFileSync(featuresPath, doc);
   }
   const sections = new Set<string>();
@@ -162,21 +184,26 @@ if (existsSync(featuresPath)) {
       const source = l.slice(0, bare.includes(": ") ? bare.indexOf(": ") : l.length);
       const cites = citationsOf(l, at, new Set(), false);
       if (!citationsOf(source, at, new Set(), false).length && !/\*[^*]+\*/.test(source)) {
-        findings.push(`${at}: the line's source is neither an engine revision of SOURCES.md nor a publication in italics`);
+        findings.push(
+          `${at}: the line's source is neither an engine revision of SOURCES.md nor a publication in italics`,
+        );
       }
       for (const c of cites) {
         const label = assumed.get(c.slice(0, c.lastIndexOf(" ")));
-        if (label && !l.includes(`assumed ${label}`)) findings.push(`${at}: ${c} is a disputed clone; the line names "assumed ${label}"`);
+        if (label && !l.includes(`assumed ${label}`))
+          findings.push(`${at}: ${c} is a disputed clone; the line names "assumed ${label}"`);
       }
     }
   });
-  for (const k of sections) if (!withUsedIn.has(k)) findings.push(`engines/ratchet/FEATURES.md: ${k}: no "Used in" block`);
-  for (const k of used.keys()) if (!sections.has(k)) findings.push(`engines/ratchet/FEATURES.md: ${k}: named in a comment, no section`);
+  for (const k of sections)
+    if (!withUsedIn.has(k)) findings.push(`engines/ratchet/FEATURES.md: ${k}: no "Used in" block`);
+  for (const k of used.keys())
+    if (!sections.has(k)) findings.push(`engines/ratchet/FEATURES.md: ${k}: named in a comment, no section`);
 }
 
 for (const f of findings) console.log(f);
 if (process.argv.includes("--census")) {
-  for (const [k, n] of [...census].sort()) console.log(`census ${k} ${n}`);
+  for (const [k, n] of [...census].sort((a, b) => a[0].localeCompare(b[0]))) console.log(`census ${k} ${n}`);
 }
 console.error(`${findings.length} finding(s)`);
 process.exit(findings.length ? 1 : 0);

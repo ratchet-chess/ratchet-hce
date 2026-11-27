@@ -21,9 +21,31 @@ import { clearCorrection } from "./correction";
 import { initCycle } from "./cycle";
 import { clearPawns } from "./pawns";
 import { clearHistory } from "./history";
-import { MAX_DEPTH, bestScore, completedDepth, hostScore, initSearch, pvAt, rootPvLen, searchWindow, think } from "./search";
 import {
-  doMove, majorKey, minorKey, nonPawnKey, pawnKey, psq, refresh, scratchMajorKey, scratchMinorKey, scratchNonPawnKey, scratchPawnKey, setPawnKey, undoMove,
+  MAX_DEPTH,
+  bestScore,
+  completedDepth,
+  hostScore,
+  initSearch,
+  pvAt,
+  rootPvLen,
+  searchWindow,
+  think,
+} from "./search";
+import {
+  doMove,
+  majorKey,
+  minorKey,
+  nonPawnKey,
+  pawnKey,
+  psq,
+  refresh,
+  scratchMajorKey,
+  scratchMinorKey,
+  scratchNonPawnKey,
+  scratchPawnKey,
+  setPawnKey,
+  undoMove,
 } from "./state";
 import { noClock, setNodeLimit, startClock } from "./time";
 import { ttAlloc, ttClear, ttEnable, ttHashfull } from "./tt";
@@ -34,7 +56,10 @@ import { ttAlloc, ttClear, ttEnable, ttHashfull } from "./tt";
  */
 const VERSION = (0 << 16) | (3 << 8) | 16;
 
-/** the table init allocates: a fresh search's, so bench and the node signature run at it; play's default is wasi.ts's */
+/**
+ * The table init allocates: a fresh search's, so bench and the node signature
+ * run at it; play's default is wasi.ts's.
+ */
 const HASH_MB = 16;
 
 export function initNoTable(): void {
@@ -53,7 +78,10 @@ export function init(): void {
   ttAlloc(HASH_MB);
 }
 
-/** empties every table a search fills: the TT, the histories, the correction history, the king-pawn table and the eval cache */
+/**
+ * Empties every table a search fills: the TT, the histories, the correction
+ * history, the king-pawn table and the eval cache.
+ */
 function clearTables(): void {
   ttClear();
   clearHistory();
@@ -173,7 +201,10 @@ function evalWalkRec(depth: i32, at: i32): i32 {
   return bad;
 }
 
-/** walks the tree to `depth` checking the incremental sum, the correction keys and the cached eval after every make and unmake; returns mismatches */
+/**
+ * Walks the tree to `depth` checking the incremental sum, the correction keys
+ * and the cached eval after every make and unmake; returns mismatches.
+ */
 export function evalWalk(depth: i32): i32 {
   refresh();
   return evalWalkRec(depth, 0);

@@ -40,7 +40,10 @@ function parseNumber(text: string): number {
 
 /** `symbol`'s declaration in `text`; throws if it is missing or not one of the two forms */
 export function findDeclaration(text: string, symbol: string, file: string): Declaration {
-  const head = new RegExp(`^[ \\t]*(?:export[ \\t]+)?(const)[ \\t]+${symbol}\\b[ \\t]*(:[ \\t]*([A-Za-z0-9_<>]+))?[ \\t]*=[ \\t]*`, "m");
+  const head = new RegExp(
+    `^[ \\t]*(?:export[ \\t]+)?(const)[ \\t]+${symbol}\\b[ \\t]*(:[ \\t]*([A-Za-z0-9_<>]+))?[ \\t]*=[ \\t]*`,
+    "m",
+  );
   const m = head.exec(text);
   if (!m) throw new Error(`${file}: no const ${symbol}`);
   const constAt = m.index + m[0].indexOf("const");
@@ -51,14 +54,28 @@ export function findDeclaration(text: string, symbol: string, file: string): Dec
     if (text[bodyAt] !== "[") throw new Error(`${file}: ${symbol} is not an array literal`);
     const close = text.indexOf("]", bodyAt);
     if (close < 0) throw new Error(`${file}: ${symbol} has no closing ]`);
-    return { symbol, kind: "array", type: array[1], constAt, nameEnd, literals: arrayLiterals(text, bodyAt + 1, close, symbol, file) };
+    return {
+      symbol,
+      kind: "array",
+      type: array[1],
+      constAt,
+      nameEnd,
+      literals: arrayLiterals(text, bodyAt + 1, close, symbol, file),
+    };
   }
   const semi = text.indexOf(";", bodyAt);
   const raw = text.slice(bodyAt, semi);
   const token = raw.trim();
   if (!NUMBER.test(token)) throw new Error(`${file}: ${symbol} = ${token} is not a numeric literal`);
   const start = bodyAt + raw.indexOf(token);
-  return { symbol, kind: "scalar", type: m[3] ?? "", constAt, nameEnd, literals: [{ start, end: start + token.length, value: parseNumber(token) }] };
+  return {
+    symbol,
+    kind: "scalar",
+    type: m[3] ?? "",
+    constAt,
+    nameEnd,
+    literals: [{ start, end: start + token.length, value: parseNumber(token) }],
+  };
 }
 
 /** the literals between `from` and `to`, comments skipped; every element must be one */
@@ -78,11 +95,25 @@ function arrayLiterals(text: string, from: number, to: number, symbol: string, f
     elementStart = -1;
   };
   while (i < to) {
-    if (text.startsWith("//", i)) { i = text.indexOf("\n", i); if (i < 0 || i > to) i = to; continue; }
-    if (text.startsWith("/*", i)) { i = text.indexOf("*/", i) + 2; continue; }
+    if (text.startsWith("//", i)) {
+      i = text.indexOf("\n", i);
+      if (i < 0 || i > to) i = to;
+      continue;
+    }
+    if (text.startsWith("/*", i)) {
+      i = text.indexOf("*/", i) + 2;
+      continue;
+    }
     const c = text[i];
-    if (c === ",") { flush(); i++; continue; }
-    if (/\s/.test(c) && !element.trim()) { i++; continue; }
+    if (c === ",") {
+      flush();
+      i++;
+      continue;
+    }
+    if (/\s/.test(c) && !element.trim()) {
+      i++;
+      continue;
+    }
     if (elementStart < 0) elementStart = i;
     element += c;
     i++;

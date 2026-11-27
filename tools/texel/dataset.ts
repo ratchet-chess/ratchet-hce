@@ -63,7 +63,15 @@ export interface Header {
   record: 48;
   count: number;
   name: string;
-  source: { set: string; url: string; sha256: string; license: string; member?: string; reader: Format; options?: Record<string, number | string> };
+  source: {
+    set: string;
+    url: string;
+    sha256: string;
+    license: string;
+    member?: string;
+    reader: Format;
+    options?: Record<string, number | string>;
+  };
   validPermille: number;
   resolver: "none" | "neutral";
   counts: Record<string, number>;
@@ -103,7 +111,12 @@ function position(fen: string, result: number, score: number): Position {
  *   it (an undated game is left out). gamePermille: only games whose text's hash,
  *   modulo 1000, is below it, a sample that is the same on every run.
  */
-export async function* readSet(path: string, format: Format, options: Record<string, number | string>, core: Engine): AsyncGenerator<Position> {
+export async function* readSet(
+  path: string,
+  format: Format,
+  options: Record<string, number | string>,
+  core: Engine,
+): AsyncGenerator<Position> {
   if (format === "pgn") {
     yield* readPgn(path, options, core);
     return;
@@ -138,7 +151,11 @@ export async function* readSet(path: string, format: Format, options: Record<str
   }
 }
 
-async function* readPgn(path: string, options: Record<string, number | string>, core: Engine): AsyncGenerator<Position> {
+async function* readPgn(
+  path: string,
+  options: Record<string, number | string>,
+  core: Engine,
+): AsyncGenerator<Position> {
   const skip = Number(options.skip ?? 8);
   const perGame = Number(options.perGame ?? 10);
   const before = options.before === undefined ? undefined : Number(options.before);
@@ -253,25 +270,43 @@ function keyOf(p: Position): string {
  * a position is in it when its key's hash, modulo 1000, is below `validPermille`.
  * Returns the merged positions and how many were merged away.
  */
-export function mergeAndSplit(positions: Iterable<Position>, validPermille: number): { positions: Position[]; merged: number } {
+export function mergeAndSplit(
+  positions: Iterable<Position>,
+  validPermille: number,
+): { positions: Position[]; merged: number } {
   const byKey = new Map<string, { p: Position; r: number; rn: number; s: number; sn: number }>();
   let n = 0;
   for (const p of positions) {
     n++;
     const k = keyOf(p);
     const e = byKey.get(k) ?? { p, r: 0, rn: 0, s: 0, sn: 0 };
-    if (!Number.isNaN(p.result)) { e.r += p.result; e.rn++; }
-    if (!Number.isNaN(p.score)) { e.s += p.score; e.sn++; }
+    if (!Number.isNaN(p.result)) {
+      e.r += p.result;
+      e.rn++;
+    }
+    if (!Number.isNaN(p.score)) {
+      e.s += p.score;
+      e.sn++;
+    }
     byKey.set(k, e);
   }
   const out: Position[] = [];
   for (const [k, e] of byKey) {
-    out.push({ ...e.p, result: e.rn ? e.r / e.rn : NaN, score: e.sn ? e.s / e.sn : NaN, valid: fnv(k) % 1000 < validPermille });
+    out.push({
+      ...e.p,
+      result: e.rn ? e.r / e.rn : NaN,
+      score: e.sn ? e.s / e.sn : NaN,
+      valid: fnv(k) % 1000 < validPermille,
+    });
   }
   return { positions: out, merged: n - out.length };
 }
 
-export function writeDataset(path: string, header: Omit<Header, "count" | "format" | "version" | "record">, positions: Position[]): void {
+export function writeDataset(
+  path: string,
+  header: Omit<Header, "count" | "format" | "version" | "record">,
+  positions: Position[],
+): void {
   // the written count and format come last, so a header carried over from another file cannot override them
   const full: Header = { ...header, format: "texel-dataset", version: 1, record: RECORD, count: positions.length };
   const json = Buffer.from(JSON.stringify(full));
@@ -296,7 +331,10 @@ export function writeDataset(path: string, header: Omit<Header, "count" | "forma
   writeFileSync(path, buf);
 }
 
-/** a dataset's header and its records as raw bytes, `count` records of RECORD bytes, copied into shared memory so workers can read them */
+/**
+ * A dataset's header and its records as raw bytes, `count` records of RECORD
+ * bytes, copied into shared memory so workers can read them.
+ */
 export function readDatasetRaw(path: string): { header: Header; records: Uint8Array } {
   const buf = readFileSync(path);
   if (buf.toString("latin1", 0, 4) !== "TXDS") throw new Error(`${path} is not a Texel dataset`);
@@ -308,7 +346,10 @@ export function readDatasetRaw(path: string): { header: Header; records: Uint8Ar
   return { header, records };
 }
 
-/** the records whose FNV-1a hash falls below `permille` of 1000: an even share whatever the file's order, in shared memory like readDatasetRaw's */
+/**
+ * The records whose FNV-1a hash falls below `permille` of 1000: an even share
+ * whatever the file's order, in shared memory like readDatasetRaw's.
+ */
 export function sampleRecords(records: Uint8Array, permille: number): Uint8Array {
   const keep: number[] = [];
   for (let n = 0; n < records.length / RECORD; n++) {
@@ -342,7 +383,17 @@ export function decodeRecord(records: Uint8Array, n: number, out: Position): Pos
 
 /** an empty position to decode into */
 export function blankPosition(): Position {
-  return { board: new Uint8Array(64), side: 0, castling: 0, ep: -1, halfmove: 0, fullmove: 1, result: NaN, score: NaN, valid: false };
+  return {
+    board: new Uint8Array(64),
+    side: 0,
+    castling: 0,
+    ep: -1,
+    halfmove: 0,
+    fullmove: 1,
+    result: NaN,
+    score: NaN,
+    valid: false,
+  };
 }
 
 export function readDataset(path: string): { header: Header; positions: Position[] } {
@@ -362,23 +413,50 @@ export function fenOf(p: Position): string {
  * by the end of its capture line. A position in check, before or after, is
  * dropped. Returns the resolved positions, re-merged and re-split, with counts.
  */
-export function resolveAll(positions: Position[], validPermille: number, core: Engine): { positions: Position[]; counts: Record<string, number> } {
+export function resolveAll(
+  positions: Position[],
+  validPermille: number,
+  core: Engine,
+): { positions: Position[]; counts: Record<string, number> } {
   const out: Position[] = [];
   let checkBefore = 0;
   let checkAfter = 0;
   let changed = 0;
   for (const p of positions) {
     core.setPosition(fenOf(p), []);
-    if (core.inCheck()) { checkBefore++; continue; }
+    if (core.inCheck()) {
+      checkBefore++;
+      continue;
+    }
     if (core.resolveQuiet() > 0) {
       changed++;
-      if (core.inCheck()) { checkAfter++; continue; }
+      if (core.inCheck()) {
+        checkAfter++;
+        continue;
+      }
       const q = core.corePosition();
-      out.push({ ...p, board: q.board, side: q.side, castling: q.castling, ep: q.ep === 64 ? -1 : q.ep, halfmove: q.halfmove });
+      out.push({
+        ...p,
+        board: q.board,
+        side: q.side,
+        castling: q.castling,
+        ep: q.ep === 64 ? -1 : q.ep,
+        halfmove: q.halfmove,
+      });
     } else out.push(p);
   }
   const { positions: merged, merged: mergedAway } = mergeAndSplit(out, validPermille);
-  return { positions: merged, counts: { input: positions.length, inCheckBefore: checkBefore, resolvedChanged: changed, inCheckAfter: checkAfter, mergedAway, output: merged.length } };
+  return {
+    positions: merged,
+    counts: {
+      input: positions.length,
+      inCheckBefore: checkBefore,
+      resolvedChanged: changed,
+      inCheckAfter: checkAfter,
+      mergedAway,
+      output: merged.length,
+    },
+  };
 }
 
 /** the sha256 of a file, hex, read in chunks so a file of any size is hashed */
@@ -387,7 +465,7 @@ export function sha256(path: string): string {
   const buf = Buffer.alloc(1 << 24);
   const fd = openSync(path, "r");
   try {
-    for (let n; (n = readSync(fd, buf, 0, buf.length, null)) > 0; ) hash.update(buf.subarray(0, n));
+    for (let n; (n = readSync(fd, buf, 0, buf.length, null)) > 0;) hash.update(buf.subarray(0, n));
   } finally {
     closeSync(fd);
   }

@@ -21,9 +21,16 @@ const ENGINE = "ratchet";
 /** a FEN's color mirror */
 function mirror(fen: string): string {
   const [placement, stm, castling, ep, ...rest] = fen.split(" ");
-  const swapCase = (s: string) => s.replace(/[a-zA-Z]/g, (c) => (c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()));
+  const swapCase = (s: string) =>
+    s.replace(/[a-zA-Z]/g, (c) => (c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()));
   const board = swapCase(placement.split("/").reverse().join("/"));
-  const rights = castling === "-" ? "-" : [...swapCase(castling)].sort((a, b) => "KQkq".indexOf(a) - "KQkq".indexOf(b)).join("");
+  const rights =
+    castling === "-"
+      ? "-"
+      : swapCase(castling)
+          .split("")
+          .sort((a, b) => "KQkq".indexOf(a) - "KQkq".indexOf(b))
+          .join("");
   const square = ep === "-" ? "-" : ep[0] + (9 - Number(ep[1]));
   return [board, stm === "w" ? "b" : "w", rights, square, ...rest].join(" ");
 }

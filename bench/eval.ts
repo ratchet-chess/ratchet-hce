@@ -45,7 +45,7 @@ function timing(engine: Engine): { checksum: number; ns: number } {
   const t1 = performance.now();
   engine.evalBenchRun(reps, false);
   const t2 = performance.now();
-  return { checksum, ns: (((t1 - t0) - (t2 - t1)) * 1e6) / (reps * fens.length) };
+  return { checksum, ns: ((t1 - t0 - (t2 - t1)) * 1e6) / (reps * fens.length) };
 }
 
 /** the median timing of `wasm`, in a fresh process on this runtime */
@@ -69,18 +69,24 @@ if (against) {
   ];
   const ratios: number[] = [];
   for (let i = 0; i < repeat; i++) {
-    for (const side of i % 2 == 0 ? sides : [...sides].reverse()) {
+    for (const side of i % 2 === 0 ? sides : [...sides].reverse()) {
       const r = child(side.wasm);
       side.checksum = r.checksum;
       side.ns.push(r.ns);
     }
     const [base, cand] = [sides[0].ns[i], sides[1].ns[i]];
     ratios.push(base / cand);
-    console.log(`round ${i + 1}  base ${base.toFixed(1).padStart(7)} ns  candidate ${cand.toFixed(1).padStart(7)} ns  speed ${(base / cand).toFixed(3)}`);
+    console.log(
+      `round ${i + 1}  base ${base.toFixed(1).padStart(7)} ns` +
+        `  candidate ${cand.toFixed(1).padStart(7)} ns  speed ${(base / cand).toFixed(3)}`,
+    );
   }
   const same = sides[0].checksum === sides[1].checksum ? "equal" : "DIFFERENT";
   console.log(`base ${sha} checksum ${sides[0].checksum}, candidate checksum ${sides[1].checksum} (${same})`);
-  console.log(`eval speed ${median(ratios).toFixed(3)}, median of ${repeat} rounds, from ${Math.min(...ratios).toFixed(3)} to ${Math.max(...ratios).toFixed(3)}`);
+  console.log(
+    `eval speed ${median(ratios).toFixed(3)}, median of ${repeat} rounds,` +
+      ` from ${Math.min(...ratios).toFixed(3)} to ${Math.max(...ratios).toFixed(3)}`,
+  );
 } else {
   const engine = await Engine.load(opt("--wasm") ?? "ratchet");
   engine.evalBenchSet(fens);

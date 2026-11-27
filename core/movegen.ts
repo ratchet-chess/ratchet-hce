@@ -9,7 +9,20 @@
  * keeps the order the moves have in generateMoves(), so a stage's sort sees the
  * same list a filter of the whole one would give.
  */
-import { BISHOP, FILE_A, FLAG_CASTLE, FLAG_DOUBLE, FLAG_EP, KING, KNIGHT, NO_SQ, PAWN, QUEEN, ROOK, movePromo } from "./constants";
+import {
+  BISHOP,
+  FILE_A,
+  FLAG_CASTLE,
+  FLAG_DOUBLE,
+  FLAG_EP,
+  KING,
+  KNIGHT,
+  NO_SQ,
+  PAWN,
+  QUEEN,
+  ROOK,
+  movePromo,
+} from "./constants";
 import { attackedWith, bb, board, castling, ep, make, side, unmake } from "./position";
 import { BETWEEN, KING_ATT, KNIGHT_ATT, LINE, PAWN_ATT, bishopAttacks, bit, rookAttacks } from "./tables";
 
@@ -192,7 +205,14 @@ export function generateQuiets(out: StaticArray<i32>, start: i32): i32 {
       if (cr & 4 && !board[61] && !board[62] && !attackedWith(61, them, occ) && !attackedWith(62, them, occ)) {
         out[n++] = 60 | (62 << 6) | FLAG_CASTLE;
       }
-      if (cr & 8 && !board[59] && !board[58] && !board[57] && !attackedWith(59, them, occ) && !attackedWith(58, them, occ)) {
+      if (
+        cr & 8 &&
+        !board[59] &&
+        !board[58] &&
+        !board[57] &&
+        !attackedWith(59, them, occ) &&
+        !attackedWith(58, them, occ)
+      ) {
         out[n++] = 60 | (58 << 6) | FLAG_CASTLE;
       }
     }
@@ -269,11 +289,33 @@ function castleLegal(m: i32, occ: u64): bool {
   const cr = castling;
   if (attackedWith(<i32>ctz(bb[(side << 3) | KING]), them, occ)) return false;
   if (side == 0) {
-    if (m == (4 | (6 << 6) | FLAG_CASTLE)) return (cr & 1) != 0 && !board[5] && !board[6] && !attackedWith(5, them, occ) && !attackedWith(6, them, occ);
-    if (m == (4 | (2 << 6) | FLAG_CASTLE)) return (cr & 2) != 0 && !board[3] && !board[2] && !board[1] && !attackedWith(3, them, occ) && !attackedWith(2, them, occ);
+    if (m == (4 | (6 << 6) | FLAG_CASTLE)) {
+      return (cr & 1) != 0 && !board[5] && !board[6] && !attackedWith(5, them, occ) && !attackedWith(6, them, occ);
+    }
+    if (m == (4 | (2 << 6) | FLAG_CASTLE)) {
+      return (
+        (cr & 2) != 0 &&
+        !board[3] &&
+        !board[2] &&
+        !board[1] &&
+        !attackedWith(3, them, occ) &&
+        !attackedWith(2, them, occ)
+      );
+    }
   } else {
-    if (m == (60 | (62 << 6) | FLAG_CASTLE)) return (cr & 4) != 0 && !board[61] && !board[62] && !attackedWith(61, them, occ) && !attackedWith(62, them, occ);
-    if (m == (60 | (58 << 6) | FLAG_CASTLE)) return (cr & 8) != 0 && !board[59] && !board[58] && !board[57] && !attackedWith(59, them, occ) && !attackedWith(58, them, occ);
+    if (m == (60 | (62 << 6) | FLAG_CASTLE)) {
+      return (cr & 4) != 0 && !board[61] && !board[62] && !attackedWith(61, them, occ) && !attackedWith(62, them, occ);
+    }
+    if (m == (60 | (58 << 6) | FLAG_CASTLE)) {
+      return (
+        (cr & 8) != 0 &&
+        !board[59] &&
+        !board[58] &&
+        !board[57] &&
+        !attackedWith(59, them, occ) &&
+        !attackedWith(58, them, occ)
+      );
+    }
   }
   return false;
 }

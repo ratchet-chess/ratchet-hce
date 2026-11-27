@@ -17,11 +17,19 @@ export type WorkerCommand =
   | { cmd: "eval" }
   | { cmd: "timerecord"; on: boolean };
 
+interface WorkerInit {
+  stop: Int32Array;
+  release: string;
+  level?: number;
+  nodesTime: number;
+}
+
+const data = workerData as WorkerInit;
 const port = parentPort!;
-const stop: Int32Array = workerData.stop;
-const engine = await Engine.load(workerData.release);
-if (!engine.clocked) throw new Error(`${workerData.release} does not time itself, so it cannot play`);
-if (workerData.level) engine.setGameLevel(workerData.level);
+const stop = data.stop;
+const engine = await Engine.load(data.release);
+if (!engine.clocked) throw new Error(`${data.release} does not time itself, so it cannot play`);
+if (data.level) engine.setGameLevel(data.level);
 let sideToMove = 0;
 /**
  * The TimeRecord option: each search then prints the engine's record of its time use as one
@@ -39,7 +47,7 @@ let timeRecord = false;
  * If nodesTime exceeds the host's speed, the GUI's real clock runs down faster than
  * this one, so the GUI needs a margin, as ratchet-bench's tools/pool.ts gives it.
  */
-const nodesTime: number = workerData.nodesTime;
+const nodesTime = data.nodesTime;
 
 /**
  * Ratchet's guard, for a release with levels in place of a clock: its move waits
@@ -91,7 +99,10 @@ function go(limits: GoLimits): void {
     const pv = engine.pv().map(moveToUci).join(" ");
     const full = engine.hashfull();
     const hashfull = full === undefined ? "" : ` hashfull ${full}`;
-    port.postMessage(`info depth ${depth} score ${scoreText(score)} nodes ${nodes} nps ${nps}${hashfull} time ${Math.round(ms)} pv ${pv}`);
+    port.postMessage(
+      `info depth ${depth} score ${scoreText(score)} nodes ${nodes} nps ${nps}${hashfull}` +
+        ` time ${Math.round(ms)} pv ${pv}`,
+    );
     return 0;
   };
   const white = sideToMove === 0;
@@ -114,7 +125,10 @@ function go(limits: GoLimits): void {
   const t = timeRecord ? engine.timeTrace() : undefined;
   if (t) {
     const f = (x: number, places: number) => (x > 1e15 ? "none" : String(Math.round(x * 10 ** places) / 10 ** places));
-    port.postMessage(`info string pgncomment tm rule=${t.rule} el=${f(t.elapsed, 1)} soft=${f(t.soft, 1)} hard=${f(t.hard, 1)} score=${f(t.score, 3)} node=${f(t.node, 3)} veto=${t.veto}`);
+    port.postMessage(
+      `info string pgncomment tm rule=${t.rule} el=${f(t.elapsed, 1)} soft=${f(t.soft, 1)}` +
+        ` hard=${f(t.hard, 1)} score=${f(t.score, 3)} node=${f(t.node, 3)} veto=${t.veto}`,
+    );
   }
   port.postMessage(`bestmove ${best ? moveToUci(best) : "0000"}`);
 }

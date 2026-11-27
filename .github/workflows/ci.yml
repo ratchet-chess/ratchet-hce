@@ -36,6 +36,15 @@ jobs:
       - name: Type check
         run: bun run typecheck
 
+      - name: Lint
+        run: bun run lint
+
+      - name: Format check
+        run: bun run format:check
+
+      - name: Line-length check
+        run: bun run check:lines
+
       - name: Build engine
         run: bun run build:wasm
 

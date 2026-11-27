@@ -89,7 +89,9 @@ export interface Progress {
 
 /** the elements a run tunes: free in the map, and touched by at least `minTouch` positions in the trace */
 export function tunable(m: LoadedMap, t: Trace | undefined, minTouch: number): number[] {
-  return m.elements.filter((e) => !e.fixed && (!t || (t.header.elements[e.id]?.touched ?? 0) >= minTouch)).map((e) => e.id);
+  return m.elements
+    .filter((e) => !e.fixed && (!t || (t.header.elements[e.id]?.touched ?? 0) >= minTouch))
+    .map((e) => e.id);
 }
 
 export function adam(

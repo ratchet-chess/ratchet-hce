@@ -24,14 +24,20 @@ export class WasmAdapter implements Adapter {
   }
 
   /** starts `workers` threads (default: all cores but one) on the tuning build at `wasm` */
-  static async open(wasm: string, m: LoadedMap, workers = Math.max(1, availableParallelism() - 1)): Promise<WasmAdapter> {
+  static async open(
+    wasm: string,
+    m: LoadedMap,
+    workers = Math.max(1, availableParallelism() - 1),
+  ): Promise<WasmAdapter> {
     const form = m.map.eval.form;
     const depth = m.map.eval.depth ?? 1;
     const defaults = m.elements.map((e) => e.default);
     const list: Worker[] = [];
     await Promise.all(
       Array.from({ length: workers }, (_, index) => {
-        const w = new Worker(new URL("./wasm-worker.ts", import.meta.url), { workerData: { wasm, form, depth, defaults, index, workers } });
+        const w = new Worker(new URL("./wasm-worker.ts", import.meta.url), {
+          workerData: { wasm, form, depth, defaults, index, workers },
+        });
         list.push(w);
         return new Promise<void>((resolve, reject) => {
           w.once("message", () => resolve());
@@ -60,8 +66,10 @@ export class WasmAdapter implements Adapter {
   }
 
   async load(records: Uint8Array, count: number): Promise<void> {
-    if (!(records.buffer instanceof SharedArrayBuffer) || records.byteOffset !== 0) throw new Error("records must start a shared buffer (dataset.ts readDatasetRaw)");
-    if (records.byteLength < count * RECORD) throw new Error(`${count} records do not fit in ${records.byteLength} bytes`);
+    if (!(records.buffer instanceof SharedArrayBuffer) || records.byteOffset !== 0)
+      throw new Error("records must start a shared buffer (dataset.ts readDatasetRaw)");
+    if (records.byteLength < count * RECORD)
+      throw new Error(`${count} records do not fit in ${records.byteLength} bytes`);
     const scores = new SharedArrayBuffer(count * 8);
     this.scores = new Float64Array(scores);
     this.count = count;

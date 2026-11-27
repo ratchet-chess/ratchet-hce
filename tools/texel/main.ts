@@ -11,7 +11,8 @@
  *                                                           the own engine's values, written into its own files
  *   bun tools/texel/main.ts dataset --set <name> [--valid <permille>] [--limit <n>]
  *                                                           tmp/texel/datasets/<set>.bin
- *   bun tools/texel/main.ts dataset --pgn <file> --name <name> [--opt <key>=<value> ...] [--valid <permille>] [--limit <n>]
+ *   bun tools/texel/main.ts dataset --pgn <file> --name <name> [--opt <key>=<value> ...]
+ *       [--valid <permille>] [--limit <n>]
  *                                                           the same from games Ratchet played itself, such
  *                                                           as self-play (pgn reader options, dataset.ts)
  *   bun tools/texel/main.ts resolve <dataset.bin>           <set>.resolved.bin, by the neutral resolver
@@ -30,7 +31,8 @@
  *
  *   bun tools/texel/main.ts eval <map.json> <dataset.bin> [--workers <n>] [--limit <n>]
  *                                                           scores every position at the map's defaults, timed
- *   bun tools/texel/main.ts trace <map.json> <dataset.bin> [--workers <n>] [--sample <permille>] [--limit <n>] [--delta <factor>] [--tol <cp>]
+ *   bun tools/texel/main.ts trace <map.json> <dataset.bin> [--workers <n>] [--sample <permille>]
+ *       [--limit <n>] [--delta <factor>] [--tol <cp>]
  *                                                           the probed trace, tmp/texel/traces/; reused when present
  *   bun tools/texel/main.ts tune <map.json> <dataset.bin> --optimizer adam|local [--over trace|adapter]
  *       [--workers <n>] [--sample <permille>] [--limit <n>] [--delta <factor>] [--tol <cp>] [--min-touch <n>]
@@ -59,7 +61,21 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { Engine } from "../../host/wasm.ts";
-import { type Position, RECORD, type SetEntry, blankPosition, decodeRecord, mergeAndSplit, readDataset, readDatasetRaw, readSet, resolveAll, sampleRecords, sha256, writeDataset } from "./dataset.ts";
+import {
+  type Position,
+  RECORD,
+  type SetEntry,
+  blankPosition,
+  decodeRecord,
+  mergeAndSplit,
+  readDataset,
+  readDatasetRaw,
+  readSet,
+  resolveAll,
+  sampleRecords,
+  sha256,
+  writeDataset,
+} from "./dataset.ts";
 import type { Adapter } from "./adapter.ts";
 import type { LoadedMap } from "./map.ts";
 import { loadMap } from "./map.ts";
@@ -82,13 +98,34 @@ function bench(): string {
 
 const [step, ...rest] = process.argv.slice(2);
 if (["eval", "trace", "tune"].includes(step) && !process.env.QUEUE_ALLOC) {
-  const held = spawnSync("bun", [join(bench(), "tools", "queue.ts"), "alloc", "--kind", "batch", "--name", `texel-${step}`,
-    "--priority", process.env.QUEUE_PRIORITY ?? "0", "--", process.execPath, ...process.argv.slice(1)], { stdio: "inherit" });
+  const held = spawnSync(
+    "bun",
+    [
+      join(bench(), "tools", "queue.ts"),
+      "alloc",
+      "--kind",
+      "batch",
+      "--name",
+      `texel-${step}`,
+      "--priority",
+      process.env.QUEUE_PRIORITY ?? "0",
+      "--",
+      process.execPath,
+      ...process.argv.slice(1),
+    ],
+    { stdio: "inherit" },
+  );
   process.exit(held.status ?? 1);
 }
 const opt = (name: string) => (rest.includes(name) ? rest[rest.indexOf(name) + 1] : undefined);
 const positional = rest[0] && !rest[0].startsWith("--") ? rest[0] : undefined;
-const usage = "usage: bun tools/texel/main.ts map|build <map.json> | write <map.json> --name <name> | --in-place [--values <values.json>] | dataset --set <name> | --pgn <file> --name <name> [--opt <key>=<value> ...] [--valid <permille>] [--limit <n>] | resolve <dataset.bin> | join <a.bin> <b.bin>... --name <name> | info <dataset.bin> | eval|trace <map.json> <dataset.bin> [--workers <n>] [--limit <n>] [--delta <factor>] [--tol <cp>] | tune <map.json> <dataset.bin> --optimizer adam|local [...] (see the header)";
+const usage =
+  "usage: bun tools/texel/main.ts map|build <map.json> | write <map.json> --name <name> | --in-place" +
+  " [--values <values.json>] | dataset --set <name> | --pgn <file> --name <name> [--opt <key>=<value> ...]" +
+  " [--valid <permille>] [--limit <n>] | resolve <dataset.bin> | join <a.bin> <b.bin>... --name <name>" +
+  " | info <dataset.bin> | eval|trace <map.json> <dataset.bin> [--workers <n>] [--limit <n>]" +
+  " [--delta <factor>] [--tol <cp>] | tune <map.json> <dataset.bin> --optimizer adam|local [...]" +
+  " (see the header)";
 const die = (msg: string): never => {
   console.error(msg);
   process.exit(2);
@@ -104,7 +141,11 @@ async function openAdapter(m: LoadedMap, records: Uint8Array, count: number): Pr
   let a: Adapter;
   if (kind === "uci") {
     const wasm = m.map.release ? buildTuning(m) : "";
-    a = await UciAdapter.open(m, Number(opt("--processes") ?? 8), wasm ? { build: wasm, tunables: join(dirname(wasm), "tunables.json") } : {});
+    a = await UciAdapter.open(
+      m,
+      Number(opt("--processes") ?? 8),
+      wasm ? { build: wasm, tunables: join(dirname(wasm), "tunables.json") } : {},
+    );
   } else if (kind === "wasm") {
     a = await WasmAdapter.open(buildTuning(m), m, opt("--workers") ? Number(opt("--workers")) : undefined);
   } else return die("--adapter wasm or uci");
@@ -112,19 +153,35 @@ async function openAdapter(m: LoadedMap, records: Uint8Array, count: number): Pr
   return a;
 }
 
-/** the trace of `m` over the positions of a dataset the adapter holds, read when present, else probed through `adapter`; `subset` names a sample or limit */
-async function ensureTrace(m: LoadedMap, dsPath: string, name: string, count: number, subset: string, adapter: Adapter, deltaFactor: number, tol: number): Promise<Trace> {
+/**
+ * The trace of `m` over the positions of a dataset the adapter holds, read when
+ * present, else probed through `adapter`; `subset` names a sample or limit.
+ */
+async function ensureTrace(
+  m: LoadedMap,
+  dsPath: string,
+  name: string,
+  count: number,
+  subset: string,
+  adapter: Adapter,
+  deltaFactor: number,
+  tol: number,
+): Promise<Trace> {
   // a trace depends on the build (m.hash), the dataset, and the code that probes and scores
   const code = createHash("sha256");
-  for (const f of ["trace.ts", "adapter.ts", "wasm.ts", "wasm-worker.ts", "uci.ts", "dataset.ts"]) code.update(readFileSync(join(REPO, "tools", "texel", f)));
+  for (const f of ["trace.ts", "adapter.ts", "wasm.ts", "wasm-worker.ts", "uci.ts", "dataset.ts"])
+    code.update(readFileSync(join(REPO, "tools", "texel", f)));
   const dir = join(REPO, "tmp", "texel", "traces");
-  const out = join(dir, `${m.map.subject}-${m.hash}-${code.digest("hex").slice(0, 8)}-${opt("--adapter") ?? "wasm"}-${name}${subset}-d${deltaFactor}-t${tol}.trace`);
+  const tag = `${m.map.subject}-${m.hash}-${code.digest("hex").slice(0, 8)}`;
+  const out = join(dir, `${tag}-${opt("--adapter") ?? "wasm"}-${name}${subset}-d${deltaFactor}-t${tol}.trace`);
   if (existsSync(out)) {
     const t = readTrace(out);
     console.log(`${out}: reused, ${t.header.usable} usable positions, ${t.header.nnz} coefficients`);
     return t;
   }
-  const t = await probe(adapter, m, { name, sha256: sha256(dsPath), count }, { deltaFactor, tol }, (l) => console.log(l));
+  const t = await probe(adapter, m, { name, sha256: sha256(dsPath), count }, { deltaFactor, tol }, (l) =>
+    console.log(l),
+  );
   mkdirSync(dir, { recursive: true });
   writeTrace(out, t);
   console.log(`${out}: ${t.header.usable} usable positions, ${t.header.nnz} coefficients`);
@@ -135,11 +192,22 @@ if (step === "map" || step === "build" || step === "write") {
   const m = loadMap(positional ?? die(usage));
   if (step === "map") {
     for (const e of m.elements) {
-      const slots = e.slots.map((s) => `${s.file}:${s.symbol}${s.index < 0 ? "" : `[${s.index}]`}${s.transform === "identity" ? "" : ` ${s.transform}`}`).join(" ");
-      console.log(`${String(e.id).padStart(4)} ${e.name.padEnd(14)} ${String(e.default).padStart(7)} ${e.fixed ? "fixed" : `step ${e.step}`.padEnd(7)} ${e.type} ${slots}`);
+      const slots = e.slots
+        .map((s) => {
+          const idx = s.index < 0 ? "" : `[${s.index}]`;
+          const xform = s.transform === "identity" ? "" : ` ${s.transform}`;
+          return `${s.file}:${s.symbol}${idx}${xform}`;
+        })
+        .join(" ");
+      const stepLabel = e.fixed ? "fixed" : `step ${e.step}`.padEnd(7);
+      const def = String(e.default).padStart(7);
+      console.log(`${String(e.id).padStart(4)} ${e.name.padEnd(14)} ${def} ${stepLabel} ${e.type} ${slots}`);
     }
     const free = m.elements.filter((e) => !e.fixed).length;
-    console.log(`${m.map.subject}: ${m.elements.length} elements, ${free} free, eval ${m.map.eval.form}${m.map.eval.depth ? ` ${m.map.eval.depth}` : ""}, hash ${m.hash}`);
+    const depth = m.map.eval.depth ? ` ${m.map.eval.depth}` : "";
+    console.log(
+      `${m.map.subject}: ${m.elements.length} elements, ${free} free, eval ${m.map.eval.form}${depth}, hash ${m.hash}`,
+    );
   } else if (step === "build") {
     console.log(buildTuning(m));
   } else {
@@ -153,18 +221,38 @@ if (step === "map" || step === "build" || step === "write") {
   let files: string[];
   const pgns = rest.flatMap((a, i) => (a === "--pgn" ? [rest[i + 1]] : []));
   const rawFile = opt("--file");
-  const options = Object.fromEntries(rest.flatMap((a, i) => (a === "--opt" ? [rest[i + 1].split("=")] : [])).map(([k, v]) => [k, Number.isNaN(Number(v)) ? v : Number(v)]));
+  const options = Object.fromEntries(
+    rest
+      .flatMap((a, i) => (a === "--opt" ? [rest[i + 1].split("=")] : []))
+      .map(([k, v]) => [k, Number.isNaN(Number(v)) ? v : Number(v)]),
+  );
   if (pgns.length) {
     // Sets Ratchet made itself, such as self-play games: no outside terms, so not on the allow-list.
     files = pgns.map((p) => resolve(p));
     const h = createHash("sha256");
     for (const f of files) h.update(sha256(f));
-    set = { name: opt("--name") ?? die(usage), url: files.length === 1 ? `file:${relative(REPO, files[0])}` : `files:${files.length}`, sha256: files.length === 1 ? sha256(files[0]) : h.digest("hex"), license: "Ratchet's own games", archive: basename(files[0]), format: "pgn", options };
+    set = {
+      name: opt("--name") ?? die(usage),
+      url: files.length === 1 ? `file:${relative(REPO, files[0])}` : `files:${files.length}`,
+      sha256: files.length === 1 ? sha256(files[0]) : h.digest("hex"),
+      license: "Ratchet's own games",
+      archive: basename(files[0]),
+      format: "pgn",
+      options,
+    };
   } else if (rawFile) {
     files = [resolve(rawFile)];
     const format = (opt("--format") ?? die("--file requires --format")) as SetEntry["format"];
     const license = opt("--license") ?? die("--file requires --license");
-    set = { name: opt("--name") ?? die(usage), url: opt("--url") ?? `file:${basename(files[0])}`, sha256: sha256(files[0]), license, archive: basename(files[0]), format, options };
+    set = {
+      name: opt("--name") ?? die(usage),
+      url: opt("--url") ?? `file:${basename(files[0])}`,
+      sha256: sha256(files[0]),
+      license,
+      archive: basename(files[0]),
+      format,
+      options,
+    };
   } else {
     const sets = JSON.parse(readFileSync(join(REPO, "tools", "texel", "sets.json"), "utf8")) as SetEntry[];
     const name = opt("--set") ?? die(usage);
@@ -198,13 +286,30 @@ if (step === "map" || step === "build" || step === "write") {
   const { positions, merged } = mergeAndSplit(read, validPermille);
   mkdirSync(DATASETS, { recursive: true });
   const out = join(DATASETS, `${set.name}${Number.isFinite(limit) ? `-${limit}` : ""}.bin`);
-  writeDataset(out, {
-    name: basename(out, ".bin"),
-    source: { set: set.name, url: set.url, sha256: set.sha256, license: set.license, member: set.member, reader: set.format, options: set.options },
-    validPermille,
-    resolver: "none",
-    counts: { read: read.length, mergedAway: merged, output: positions.length, validation: positions.filter((p) => p.valid).length },
-  }, positions);
+  writeDataset(
+    out,
+    {
+      name: basename(out, ".bin"),
+      source: {
+        set: set.name,
+        url: set.url,
+        sha256: set.sha256,
+        license: set.license,
+        member: set.member,
+        reader: set.format,
+        options: set.options,
+      },
+      validPermille,
+      resolver: "none",
+      counts: {
+        read: read.length,
+        mergedAway: merged,
+        output: positions.length,
+        validation: positions.filter((p) => p.valid).length,
+      },
+    },
+    positions,
+  );
   console.log(`${out}: ${read.length} read, ${merged} merged away, ${positions.length} kept`);
 } else if (step === "resolve") {
   const path = positional ?? die(usage);
@@ -213,7 +318,16 @@ if (step === "map" || step === "build" || step === "write") {
   const core = await Engine.load("core");
   const { positions: resolved, counts } = resolveAll(positions, header.validPermille, core);
   const out = path.replace(/\.bin$/, ".resolved.bin");
-  writeDataset(out, { ...header, name: `${header.name}.resolved`, resolver: "neutral", counts: { ...header.counts, ...Object.fromEntries(Object.entries(counts).map(([k, v]) => [`resolve.${k}`, v])) } }, resolved);
+  writeDataset(
+    out,
+    {
+      ...header,
+      name: `${header.name}.resolved`,
+      resolver: "neutral",
+      counts: { ...header.counts, ...Object.fromEntries(Object.entries(counts).map(([k, v]) => [`resolve.${k}`, v])) },
+    },
+    resolved,
+  );
   console.log(`${out}: ${JSON.stringify(counts)}`);
 } else if (step === "join") {
   const name = opt("--name") ?? die(usage);
@@ -222,29 +336,56 @@ if (step === "map" || step === "build" || step === "write") {
   const parts = paths.map((path) => ({ path, ...readDataset(path) }));
   const { resolver, validPermille } = parts[0].header;
   for (const p of parts) {
-    if (p.header.resolver !== resolver || p.header.validPermille !== validPermille) die(`${p.path}: its resolver or validation share differs from ${parts[0].path}'s`);
+    if (p.header.resolver !== resolver || p.header.validPermille !== validPermille)
+      die(`${p.path}: its resolver or validation share differs from ${parts[0].path}'s`);
   }
-  const { positions, merged } = mergeAndSplit(parts.flatMap((p) => p.positions), validPermille);
+  const { positions, merged } = mergeAndSplit(
+    parts.flatMap((p) => p.positions),
+    validPermille,
+  );
   const digest = createHash("sha256");
   for (const p of parts) digest.update(p.header.source.sha256);
   const out = join(DATASETS, `${name}.bin`);
   mkdirSync(DATASETS, { recursive: true });
-  writeDataset(out, {
-    name,
-    source: { set: name, url: "join", sha256: digest.digest("hex"), license: parts.map((p) => `${p.header.source.set}: ${p.header.source.license}`).join("; "), reader: parts[0].header.source.reader },
-    parts: parts.map((p) => ({ name: p.header.name, source: p.header.source, count: p.header.count })),
-    validPermille,
-    resolver,
-    counts: { input: parts.reduce((a, p) => a + p.positions.length, 0), mergedAway: merged, output: positions.length, validation: positions.filter((p) => p.valid).length },
-  }, positions);
-  console.log(`${out}: ${parts.map((p) => `${p.header.name} ${p.positions.length}`).join(" + ")}, ${merged} merged away, ${positions.length} kept`);
+  writeDataset(
+    out,
+    {
+      name,
+      source: {
+        set: name,
+        url: "join",
+        sha256: digest.digest("hex"),
+        license: parts.map((p) => `${p.header.source.set}: ${p.header.source.license}`).join("; "),
+        reader: parts[0].header.source.reader,
+      },
+      parts: parts.map((p) => ({ name: p.header.name, source: p.header.source, count: p.header.count })),
+      validPermille,
+      resolver,
+      counts: {
+        input: parts.reduce((a, p) => a + p.positions.length, 0),
+        mergedAway: merged,
+        output: positions.length,
+        validation: positions.filter((p) => p.valid).length,
+      },
+    },
+    positions,
+  );
+  const summary = parts.map((p) => `${p.header.name} ${p.positions.length}`).join(" + ");
+  console.log(`${out}: ${summary}, ${merged} merged away, ${positions.length} kept`);
 } else if (step === "info") {
   const { header, positions } = readDataset(positional ?? die(usage));
   const results = new Map<number, number>();
   for (const p of positions) results.set(p.result, (results.get(p.result) ?? 0) + 1);
   console.log(JSON.stringify(header, null, 2));
-  console.log(`results: ${[...results].sort((a, b) => a[0] - b[0]).map(([r, n]) => `${Number.isNaN(r) ? "none" : r}: ${n}`).join(", ")}`);
-  console.log(`scores: ${positions.filter((p) => !Number.isNaN(p.score)).length}; validation: ${positions.filter((p) => p.valid).length}`);
+  console.log(
+    `results: ${[...results]
+      .sort((a, b) => a[0] - b[0])
+      .map(([r, n]) => `${Number.isNaN(r) ? "none" : r}: ${n}`)
+      .join(", ")}`,
+  );
+  const scored = positions.filter((p) => !Number.isNaN(p.score)).length;
+  const valid = positions.filter((p) => p.valid).length;
+  console.log(`scores: ${scored}; validation: ${valid}`);
 } else if (step === "eval") {
   const m = loadMap(positional ?? die(usage));
   const { header, records } = readDatasetRaw(rest[1] ?? die(usage));
@@ -256,7 +397,10 @@ if (step === "map" || step === "build" || step === "write") {
   await adapter.close();
   const usable = scores.filter((s) => !Number.isNaN(s));
   const mean = usable.reduce((a, s) => a + Math.abs(s), 0) / usable.length;
-  console.log(`${count} positions, ${count - usable.length} unusable, mean |score| ${mean.toFixed(1)} cp, ${Math.round(ms)} ms, ${Math.round((count / ms) * 1000)} positions/s`);
+  console.log(
+    `${count} positions, ${count - usable.length} unusable, mean |score| ${mean.toFixed(1)} cp,` +
+      ` ${Math.round(ms)} ms, ${Math.round((count / ms) * 1000)} positions/s`,
+  );
 } else if (step === "trace" || step === "tune") {
   const m = loadMap(positional ?? die(usage));
   const dsPath = rest[1] ?? die(usage);
@@ -276,11 +420,23 @@ if (step === "map" || step === "build" || step === "write") {
   } else {
     const optimizer = opt("--optimizer") ?? die(usage);
     const over = opt("--over") ?? "trace";
-    if (!["adam", "local"].includes(optimizer) || !["trace", "adapter"].includes(over) || (optimizer === "adam" && over !== "trace")) die("--optimizer adam (over the trace) or local (over the trace or the adapter)");
+    if (
+      !["adam", "local"].includes(optimizer) ||
+      !["trace", "adapter"].includes(over) ||
+      (optimizer === "adam" && over !== "trace")
+    )
+      die("--optimizer adam (over the trace) or local (over the trace or the adapter)");
     const minTouch = Number(opt("--min-touch") ?? 100);
-    const trace = over === "trace" ? await ensureTrace(m, dsPath, header.name, count, subset, adapter, deltaFactor, tol) : undefined;
+    const trace =
+      over === "trace"
+        ? await ensureTrace(m, dsPath, header.name, count, subset, adapter, deltaFactor, tol)
+        : undefined;
     const base = trace ? trace.base : await adapter.eval();
-    const labels: Labels = { result: new Float64Array(count), score: new Float64Array(count), valid: new Uint8Array(count) };
+    const labels: Labels = {
+      result: new Float64Array(count),
+      score: new Float64Array(count),
+      valid: new Uint8Array(count),
+    };
     const p = blankPosition();
     for (let i = 0; i < count; i++) {
       decodeRecord(records, i, p);
@@ -293,11 +449,21 @@ if (step === "map" || step === "build" || step === "write") {
     const K = givenK !== undefined ? Number(givenK) : fitK(base, labels);
     const train0 = loss(base, labels, K, false);
     const valid0 = loss(base, labels, K, true);
-    console.log(`K ${K.toFixed(4)}${givenK !== undefined ? " (held)" : ""}; at defaults: train ${train0.toFixed(6)}, valid ${valid0.toFixed(6)}`);
-    const holdPrefixes = (opt("--hold") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
-    const ids = tunable(m, trace, minTouch).filter((i) => !holdPrefixes.some((pfx) => m.elements[i].name.startsWith(pfx)));
+    console.log(
+      `K ${K.toFixed(4)}${givenK !== undefined ? " (held)" : ""};` +
+        ` at defaults: train ${train0.toFixed(6)}, valid ${valid0.toFixed(6)}`,
+    );
+    const holdPrefixes = (opt("--hold") ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const ids = tunable(m, trace, minTouch).filter(
+      (i) => !holdPrefixes.some((pfx) => m.elements[i].name.startsWith(pfx)),
+    );
     const held = m.elements.filter((e) => !e.fixed && !ids.includes(e.id)).map((e) => e.name);
-    console.log(`${ids.length} elements tuned${held.length ? `; held (${holdPrefixes.length ? `hold=${holdPrefixes.join(",")} or ` : ""}< ${minTouch} touched): ${held.join(" ")}` : ""}`);
+    const holdReason = holdPrefixes.length ? `hold=${holdPrefixes.join(",")} or ` : "";
+    const heldNote = held.length ? `; held (${holdReason}< ${minTouch} touched): ${held.join(" ")}` : "";
+    console.log(`${ids.length} elements tuned${heldNote}`);
     const runs = join(REPO, "tmp", "texel", "runs");
     mkdirSync(runs, { recursive: true });
     const id = `${m.map.subject}-${new Date().toISOString().replace(/[:.]/g, "-")}`;
@@ -320,10 +486,14 @@ if (step === "map" || step === "build" || step === "write") {
       const cosine = rest.includes("--cosine");
       const l2 = Number(opt("--l2") ?? 0);
       const scoreWeight = Number(opt("--score-weight") ?? 0);
-      const r = adam(trace!, m, labels, K, ids, { alpha, epochs, patience, cosine, l2, scoreWeight }, (q) => console.log(`epoch ${q.epoch}: train ${q.train.toFixed(6)}, valid ${q.valid.toFixed(6)}`));
+      const r = adam(trace!, m, labels, K, ids, { alpha, epochs, patience, cosine, l2, scoreWeight }, (q) =>
+        console.log(`epoch ${q.epoch}: train ${q.train.toFixed(6)}, valid ${q.valid.toFixed(6)}`),
+      );
       theta = r.theta;
       console.log(`best epoch ${r.best.epoch}: valid ${r.best.valid.toFixed(6)} (linear)`);
-      protocol = `adam α ${alpha}${cosine ? " cosine" : ""}${l2 > 0 ? ` l2 ${l2}` : ""}${scoreWeight > 0 ? ` sw ${scoreWeight}` : ""}, at most ${epochs} epochs, patience ${patience}`;
+      protocol =
+        `adam α ${alpha}${cosine ? " cosine" : ""}${l2 > 0 ? ` l2 ${l2}` : ""}` +
+        `${scoreWeight > 0 ? ` sw ${scoreWeight}` : ""}, at most ${epochs} epochs, patience ${patience}`;
     } else {
       const passes = Number(opt("--passes") ?? 20);
       const grow = Number(opt("--grow") ?? 16);
@@ -340,8 +510,21 @@ if (step === "map" || step === "build" || step === "write") {
       const saved = join(runs, `${id}.pass.values.json`);
       console.log(`values after each pass: ${saved}`);
       const target = trace ? traceTarget(trace, m, labels, K) : adapterTarget(adapter, m, labels, K);
-      theta = await localSearch(target, m, ids, { maxPasses: passes, grow, start, onPass: (t) => writeFileSync(saved, `${JSON.stringify(valuesOf(t), null, 2)}\n`) }, (l) => console.log(l));
-      protocol = `local over the ${over}, at most ${passes} passes${grow > 1 ? `, steps grow to ×${grow}` : ""}${from ? `, from ${basename(from)}` : ""}`;
+      theta = await localSearch(
+        target,
+        m,
+        ids,
+        {
+          maxPasses: passes,
+          grow,
+          start,
+          onPass: (t) => writeFileSync(saved, `${JSON.stringify(valuesOf(t), null, 2)}\n`),
+        },
+        (l) => console.log(l),
+      );
+      protocol =
+        `local over the ${over}, at most ${passes} passes` +
+        `${grow > 1 ? `, steps grow to ×${grow}` : ""}${from ? `, from ${basename(from)}` : ""}`;
     }
     // the values as the subject stores them, verified through the adapter
     const values = valuesOf(theta);
@@ -366,16 +549,32 @@ if (step === "map" || step === "build" || step === "write") {
       linearValid1: linear ? loss(linear, labels, K, true) : null,
       tuned: ids.length,
       changed: Object.keys(values).length,
-      protocol: `${header.name}${sample !== undefined ? `, sample ${sample}‰` : ""}${limit !== undefined ? `, first ${count}` : ""}; ${givenK !== undefined ? "K held; " : ""}${holdPrefixes.length ? `hold ${holdPrefixes.join(",")}; ` : ""}${protocol}${trace ? `; trace Δ ×${deltaFactor}, tol ${tol} cp; touched ≥ ${minTouch}` : ""}`,
+      protocol:
+        `${header.name}${sample !== undefined ? `, sample ${sample}‰` : ""}` +
+        `${limit !== undefined ? `, first ${count}` : ""}; ` +
+        `${givenK !== undefined ? "K held; " : ""}` +
+        `${holdPrefixes.length ? `hold ${holdPrefixes.join(",")}; ` : ""}` +
+        `${protocol}` +
+        `${trace ? `; trace Δ ×${deltaFactor}, tol ${tol} cp; touched ≥ ${minTouch}` : ""}`,
       values,
     };
-    console.log(`after (true, rounded): train ${result.train1.toFixed(6)}, valid ${result.valid1.toFixed(6)}${linear ? `; linear: train ${result.linearTrain1!.toFixed(6)}, valid ${result.linearValid1!.toFixed(6)}` : ""}; ${result.changed} values changed`);
+    const linearNote = linear
+      ? `; linear: train ${result.linearTrain1!.toFixed(6)}, valid ${result.linearValid1!.toFixed(6)}`
+      : "";
+    console.log(
+      `after (true, rounded): train ${result.train1.toFixed(6)}, valid ${result.valid1.toFixed(6)}` +
+        `${linearNote}; ${result.changed} values changed`,
+    );
     writeFileSync(join(runs, `${id}.json`), `${JSON.stringify(result, null, 2)}\n`);
     writeFileSync(join(runs, `${id}.values.json`), `${JSON.stringify(values, null, 2)}\n`);
     console.log(`${join(runs, id)}.json; values for write: ${join(runs, id)}.values.json`);
     const commit = spawnSync("git", ["rev-parse", "--short", "HEAD"], { cwd: REPO, encoding: "utf8" }).stdout.trim();
     // the testing platform's results tool writes the row into the worktree it is started in
-    const r = spawnSync("bun", [join(bench(), "tools", "results.ts"), "tuning", m.map.subject, commit, result.protocol], { cwd: REPO, input: JSON.stringify(result), encoding: "utf8" });
+    const r = spawnSync(
+      "bun",
+      [join(bench(), "tools", "results.ts"), "tuning", m.map.subject, commit, result.protocol],
+      { cwd: REPO, input: JSON.stringify(result), encoding: "utf8" },
+    );
     if (r.status !== 0) console.error(`results.ts tuning failed: ${r.stderr}`);
   }
   await adapter.close();

@@ -54,7 +54,8 @@ const opt = (name: string) => (args.includes(name) ? args[args.indexOf(name) + 1
 const against = opt("--against");
 const hash = opt("--hash");
 const keep = args.includes("--keep");
-if (against && (hash || keep)) throw new Error("--hash and --keep do not apply to --against, whose child passes use the defaults");
+if (against && (hash || keep))
+  throw new Error("--hash and --keep do not apply to --against, whose child passes use the defaults");
 const repeat = Number(opt("--repeat") ?? (against ? 6 : 3));
 const positionsPath = opt("--positions") ?? fileURLToPath(new URL("./positions.txt", import.meta.url));
 const positions = readFileSync(positionsPath, "utf8")
@@ -101,7 +102,20 @@ function pass(engine: Engine, depth: number, set: string[] = positions): { nodes
 /** one warm-up and one timed pass of `wasm` in a fresh process on this runtime */
 function childPass(name: string, wasm: string, depth: number): { signature: number; knps: number } {
   const script = join(root, "bench/search.ts");
-  const own = ["--engine", name, "--wasm", wasm, "--depth", String(depth), "--repeat", "1", "--positions", positionsPath, "--warmup", String(warmup)];
+  const own = [
+    "--engine",
+    name,
+    "--wasm",
+    wasm,
+    "--depth",
+    String(depth),
+    "--repeat",
+    "1",
+    "--positions",
+    positionsPath,
+    "--warmup",
+    String(warmup),
+  ];
   const argv = runtime().startsWith("deno") ? ["run", "--allow-read", script, ...own] : [script, ...own];
   const r = spawnSync(process.execPath, argv, { encoding: "utf8" });
   const m = /signature (\d+), median (\d+) knps/.exec(r.stdout);
@@ -122,10 +136,12 @@ if (against) {
   ];
   const ratios: number[] = [];
   for (let i = 0; i < repeat; i++) {
-    for (const side of i % 2 == 0 ? sides : [...sides].reverse()) {
+    for (const side of i % 2 === 0 ? sides : [...sides].reverse()) {
       const r = childPass(name, side.wasm, depth);
       if (side.signature && r.signature !== side.signature) {
-        console.log(`${side.label} depth ${depth}: NODES DIFFER BETWEEN PROCESSES, ${r.signature} after ${side.signature}`);
+        console.log(
+          `${side.label} depth ${depth}: NODES DIFFER BETWEEN PROCESSES, ${r.signature} after ${side.signature}`,
+        );
         process.exit(1);
       }
       side.signature = r.signature;
@@ -133,11 +149,20 @@ if (against) {
     }
     const [base, cand] = [sides[0].knps[i], sides[1].knps[i]];
     ratios.push(cand / base);
-    console.log(`round ${i + 1}  base ${base.toFixed(0).padStart(6)} knps  candidate ${cand.toFixed(0).padStart(6)} knps  ratio ${(cand / base).toFixed(3)}`);
+    console.log(
+      `round ${i + 1}  base ${base.toFixed(0).padStart(6)} knps` +
+        `  candidate ${cand.toFixed(0).padStart(6)} knps  ratio ${(cand / base).toFixed(3)}`,
+    );
   }
   const same = sides[0].signature === sides[1].signature ? "equal" : "different";
-  console.log(`${name} d${depth}  base ${sha} signature ${sides[0].signature}, candidate signature ${sides[1].signature} (${same})`);
-  console.log(`SPEED ${median(ratios).toFixed(3)}, median of ${repeat} rounds, from ${Math.min(...ratios).toFixed(3)} to ${Math.max(...ratios).toFixed(3)}`);
+  console.log(
+    `${name} d${depth}  base ${sha} signature ${sides[0].signature},` +
+      ` candidate signature ${sides[1].signature} (${same})`,
+  );
+  console.log(
+    `SPEED ${median(ratios).toFixed(3)}, median of ${repeat} rounds,` +
+      ` from ${Math.min(...ratios).toFixed(3)} to ${Math.max(...ratios).toFixed(3)}`,
+  );
 } else {
   for (const name of engines) {
     const engine = await Engine.load(wasmPath ?? name);
@@ -155,8 +180,14 @@ if (against) {
       }
       signature = r.nodes;
       times.push(r.ms);
-      console.log(`${name.padEnd(26)} d${depth}  ${String(signature).padStart(11)} nodes  ${(signature / r.ms).toFixed(0).padStart(6)} knps  (${(r.ms / 1000).toFixed(2)}s)`);
+      const knps = (signature / r.ms).toFixed(0).padStart(6);
+      console.log(
+        `${name.padEnd(26)} d${depth}  ${String(signature).padStart(11)} nodes` +
+          `  ${knps} knps  (${(r.ms / 1000).toFixed(2)}s)`,
+      );
     }
-    console.log(`${name.padEnd(26)} d${depth}  signature ${signature}, median ${(signature / median(times)).toFixed(0)} knps`);
+    console.log(
+      `${name.padEnd(26)} d${depth}  signature ${signature}, median ${(signature / median(times)).toFixed(0)} knps`,
+    );
   }
 }

@@ -32,7 +32,9 @@ import type { LoadedMap } from "./map.ts";
 export interface UciSection {
   command: string[];
   options?: Record<string, string | number>;
-  eval: { form: "search"; depth: number } | { form: "command"; command: string; pattern: string; view?: "side" | "white"; scale?: number };
+  eval:
+    | { form: "search"; depth: number }
+    | { form: "command"; command: string; pattern: string; view?: "side" | "white"; scale?: number };
 }
 
 const REPO = new URL("../../", import.meta.url).pathname;
@@ -111,7 +113,7 @@ export class UciAdapter implements Adapter {
   static async open(m: LoadedMap, processes: number, subst: Record<string, string> = {}): Promise<UciAdapter> {
     const section = (m.map as { uci?: UciSection }).uci;
     if (!section) throw new Error(`${m.path} has no uci section`);
-    const argv = section.command.map((a) => a.replace(/\{(\w+)\}/g, (w, k) => subst[k] ?? w));
+    const argv = section.command.map((a) => a.replace(/\{(\w+)\}/g, (w: string, k: string) => subst[k] ?? w));
     const engines = Array.from({ length: processes }, () => new UciProcess(argv));
     await Promise.all(
       engines.map(async (e) => {
@@ -190,7 +192,8 @@ export class UciAdapter implements Adapter {
   async reset(): Promise<void> {
     await Promise.all(
       this.engines.map(async (e) => {
-        for (let id = 0; id < this.defaults.length; id++) e.send(`setoption name ${this.optionName[id]} value ${Math.round(this.defaults[id])}`);
+        for (let id = 0; id < this.defaults.length; id++)
+          e.send(`setoption name ${this.optionName[id]} value ${Math.round(this.defaults[id])}`);
         await e.ready();
       }),
     );

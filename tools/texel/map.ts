@@ -105,7 +105,10 @@ export interface Element {
   type: string;
   fixed: boolean;
   slots: Slot[];
-  /** the value that turns its block off, in a flag screen or the window gate's plain configuration; the default is on */
+  /**
+   * The value that turns its block off, in a flag screen or the window gate's
+   * plain configuration; the default is on.
+   */
   off?: number;
 }
 
@@ -146,7 +149,8 @@ function slotIndex(i: number, src: SourceRef): number {
 export function loadMap(path: string): LoadedMap {
   const text = readFileSync(path, "utf8");
   const map = JSON.parse(text) as ParameterMap;
-  if (!map.subject || !map.eval || !Array.isArray(map.blocks)) throw new Error(`${path}: needs subject, eval and blocks`);
+  if (!map.subject || !map.eval || !Array.isArray(map.blocks))
+    throw new Error(`${path}: needs subject, eval and blocks`);
   const releaseDir = map.release ? join(REPO, "engines", map.release) : undefined;
   const sources = new Map<string, string>();
   const declarations = new Map<string, Map<string, Declaration>>();
@@ -193,13 +197,20 @@ export function loadMap(path: string): LoadedMap {
       for (const i of g) {
         for (const src of block.sources) {
           const decl = declOf(src);
-          if (scalar !== (decl.kind === "scalar")) throw new Error(`${path}: ${block.name} is ${scalar ? "a scalar" : "a table"}, ${src.file} ${src.symbol} is not`);
+          if (scalar !== (decl.kind === "scalar"))
+            throw new Error(
+              `${path}: ${block.name} is ${scalar ? "a scalar" : "a table"}, ${src.file} ${src.symbol} is not`,
+            );
           const index = scalar ? -1 : slotIndex(i, src);
           const lit = decl.literals[scalar ? 0 : index];
           if (!lit) throw new Error(`${path}: ${block.name}[${i}] is past the end of ${src.symbol}`);
           const v = stored(lit.value, src.transform ?? "identity");
           if (value === undefined) value = v;
-          else if (v !== value) throw new Error(`${path}: ${block.name}[${i}] reads ${v} in ${src.file} ${src.symbol}, ${value} elsewhere in its tie or sources`);
+          else if (v !== value)
+            throw new Error(
+              `${path}: ${block.name}[${i}] reads ${v} in ${src.file} ${src.symbol},` +
+                ` ${value} elsewhere in its tie or sources`,
+            );
           slots.push({ file: src.file, symbol: src.symbol, index, transform: src.transform ?? "identity" });
         }
       }
@@ -224,8 +235,16 @@ export function loadMap(path: string): LoadedMap {
   // A build depends on the map, the release, the core it imports and the writer that made it.
   const hash = createHash("sha256").update(text);
   const files = [
-    ...(releaseDir ? readdirSync(releaseDir).filter((f) => f.endsWith(".ts")).sort().map((f) => join(releaseDir, f)) : []),
-    ...readdirSync(join(REPO, "core")).filter((f) => f.endsWith(".ts")).sort().map((f) => join(REPO, "core", f)),
+    ...(releaseDir
+      ? readdirSync(releaseDir)
+          .filter((f) => f.endsWith(".ts"))
+          .sort()
+          .map((f) => join(releaseDir, f))
+      : []),
+    ...readdirSync(join(REPO, "core"))
+      .filter((f) => f.endsWith(".ts"))
+      .sort()
+      .map((f) => join(REPO, "core", f)),
     ...["map.ts", "source.ts", "write.ts"].map((f) => join(REPO, "tools", "texel", f)),
   ];
   for (const f of files) hash.update(f.slice(REPO.length)).update(readFileSync(f));

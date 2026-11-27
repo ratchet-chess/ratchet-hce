@@ -11,7 +11,10 @@ import { readGames } from "./pgn.ts";
 
 const COMMENT = /^[+-]?(?:\d+(?:\.\d+)?|M\d+)\/(\d+) ([\d.]+)s/;
 const engine = await Engine.load("core");
-const replayer = { setPosition: (f: string, m: string[]) => engine.setPosition(f, m), legalUci: () => engine.legalMoves().map(moveToUci) };
+const replayer = {
+  setPosition: (f: string, m: string[]) => engine.setPosition(f, m),
+  legalUci: () => engine.legalMoves().map(moveToUci),
+};
 for (const path of process.argv.slice(2)) {
   const per = new Map<string, { moves: number; depth: number; secs: number }>();
   for (const g of readGames(path, replayer)) {
@@ -28,7 +31,10 @@ for (const path of process.argv.slice(2)) {
     });
   }
   console.log(path);
-  for (const [name, e] of [...per].sort()) {
-    console.log(`  ${name}: ${e.moves} moves, mean depth ${(e.depth / e.moves).toFixed(2)}, mean time ${(e.secs / e.moves).toFixed(3)}s`);
+  for (const [name, e] of [...per].sort((a, b) => a[0].localeCompare(b[0]))) {
+    console.log(
+      `  ${name}: ${e.moves} moves, mean depth ${(e.depth / e.moves).toFixed(2)},` +
+        ` mean time ${(e.secs / e.moves).toFixed(3)}s`,
+    );
   }
 }

@@ -22,8 +22,14 @@ function sections(path: string): Map<string, Buffer> {
   const out = new Map<string, Buffer>();
   let i = 8;
   const leb = (): number => {
-    let r = 0, s = 0, x: number;
-    do { x = b[i++]; r |= (x & 0x7f) << s; s += 7; } while (x & 0x80);
+    let r = 0,
+      s = 0,
+      x: number;
+    do {
+      x = b[i++];
+      r |= (x & 0x7f) << s;
+      s += 7;
+    } while (x & 0x80);
     return r >>> 0;
   };
   while (i < b.length) {
@@ -31,7 +37,10 @@ function sections(path: string): Map<string, Buffer> {
     const n = leb();
     const start = i;
     let key = String(id);
-    if (id === 0) { const l = leb(); key = `custom:${b.subarray(i, i + l).toString()}`; }
+    if (id === 0) {
+      const l = leb();
+      key = `custom:${b.subarray(i, i + l).toString()}`;
+    }
     out.set(key, b.subarray(start, start + n));
     i = start + n;
   }
@@ -40,16 +49,24 @@ function sections(path: string): Map<string, Buffer> {
 
 /** the names build's sections equal the plain build's, the name section aside */
 function sameCode(plain: string, names: string): void {
-  const a = sections(plain), c = sections(names);
+  const a = sections(plain),
+    c = sections(names);
   for (const k of new Set([...a.keys(), ...c.keys()])) {
     if (k === "custom:name") continue;
-    if (!a.get(k)?.equals(c.get(k) ?? Buffer.alloc(0))) throw new Error(`${names} differs from ${plain} in section ${k}`);
+    if (!a.get(k)?.equals(c.get(k) ?? Buffer.alloc(0)))
+      throw new Error(`${names} differs from ${plain} in section ${k}`);
   }
+}
+
+interface CpuProfile {
+  nodes: { id: number; callFrame: { functionName: string; url?: string } }[];
+  samples: number[];
+  timeDeltas: number[];
 }
 
 /** self time per function from one .cpuprofile, in ms */
 function selfTimes(file: string): Map<string, number> {
-  const p = JSON.parse(readFileSync(file, "utf8"));
+  const p = JSON.parse(readFileSync(file, "utf8")) as CpuProfile;
   const name = new Map<number, string>();
   for (const n of p.nodes) {
     const f = n.callFrame;
@@ -69,8 +86,20 @@ function run(out: string, engine: string, repeat: string, positions: string | un
   const dir = join(out, inlining ? "inlining-on" : "inlining-off");
   mkdirSync(dir, { recursive: true });
   const wasm = join(root, "build", `${engine}.names.wasm`);
-  const argv = [inlining ? "--wasm-inlining" : "--no-wasm-inlining", "--cpu-prof", `--cpu-prof-dir=${dir}`,
-    join(root, "bench/search.ts"), "--engine", engine, "--wasm", wasm, "--repeat", repeat, "--warmup", "24"];
+  const argv = [
+    inlining ? "--wasm-inlining" : "--no-wasm-inlining",
+    "--cpu-prof",
+    `--cpu-prof-dir=${dir}`,
+    join(root, "bench/search.ts"),
+    "--engine",
+    engine,
+    "--wasm",
+    wasm,
+    "--repeat",
+    repeat,
+    "--warmup",
+    "24",
+  ];
   if (positions) argv.push("--positions", positions);
   const r = spawnSync("node", argv, { encoding: "utf8" });
   if (r.status !== 0) throw new Error(`node failed:\n${r.stdout}${r.stderr}`);
@@ -78,8 +107,10 @@ function run(out: string, engine: string, repeat: string, positions: string | un
   if (!prof) throw new Error(`no profile in ${dir}`);
   const t = selfTimes(join(dir, prof));
   const total = [...t.values()].reduce((a, b) => a + b, 0);
-  const lines = [`config\t${inlining ? "inlining on" : "inlining off"}\t${r.stdout.trim().split("\n").pop()}\ttotal ms ${total.toFixed(0)}`];
-  for (const [k, v] of [...t].sort((a, b) => b[1] - a[1])) lines.push(`fn\t${inlining ? "on" : "off"}\t${(100 * v / total).toFixed(2)}\t${v.toFixed(0)}\t${k}`);
+  const summary = r.stdout.trim().split("\n").pop();
+  const lines = [`config\t${inlining ? "inlining on" : "inlining off"}\t${summary}\ttotal ms ${total.toFixed(0)}`];
+  for (const [k, v] of [...t].sort((a, b) => b[1] - a[1]))
+    lines.push(`fn\t${inlining ? "on" : "off"}\t${((100 * v) / total).toFixed(2)}\t${v.toFixed(0)}\t${k}`);
   return lines;
 }
 

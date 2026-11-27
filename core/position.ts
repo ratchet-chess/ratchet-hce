@@ -15,7 +15,22 @@
  * new StaticArray<T>(...). Its address is then a constant in the code, not a global
  * to load on every read. It has no header, so its length is not readable.
  */
-import { BISHOP, FLAG_CASTLE, FLAG_DOUBLE, FLAG_EP, KING, KNIGHT, MAX_PLY, NO_SQ, PAWN, QUEEN, ROOK, moveFrom, movePromo, moveTo } from "./constants";
+import {
+  BISHOP,
+  FLAG_CASTLE,
+  FLAG_DOUBLE,
+  FLAG_EP,
+  KING,
+  KNIGHT,
+  MAX_PLY,
+  NO_SQ,
+  PAWN,
+  QUEEN,
+  ROOK,
+  moveFrom,
+  movePromo,
+  moveTo,
+} from "./constants";
 import { KING_ATT, KNIGHT_ATT, PAWN_ATT, bishopAttacks, bit, rookAttacks } from "./tables";
 import { Z_CASTLE, Z_EP, Z_PIECE, Z_SIDE } from "./zobrist";
 
@@ -243,7 +258,8 @@ export function playMove(m: i32): void {
 /**
  * True if the current position draws by repetition within the halfmove window (Stockfish 6b782211 Position::is_draw,
  * Stash 079fcba game_is_drawn): once earlier strictly after the root (i > gameLen), or twice earlier at or before the
- * root (i <= gameLen). Incipit be29d4f is_repetition also draws on one earlier match at the root itself, the form not taken.
+ * root (i <= gameLen). Incipit be29d4f is_repetition also draws on one earlier match at the root itself, the form not
+ * taken.
  */
 export function isRepetition(): bool {
   const cur = gameLen + ply;

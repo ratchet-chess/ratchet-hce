@@ -37,9 +37,14 @@ function fromSan(san: string, board: Uint8Array, side: number, legal: string[]):
   const m = /^([KQRBN])?([a-h])?([1-8])?x?([a-h][1-8])=?([QRBN])?$/.exec(s);
   if (!m) throw new Error(`bad SAN ${san}`);
   const piece = (side << 3) | PIECES.indexOf(m[1] ?? "P");
-  const found = legal.filter((u) =>
-    u.slice(2, 4) === m[4] && board[square(u)] === piece && (!m[2] || u[0] === m[2]) && (!m[3] || u[1] === m[3])
-    && (m[5] ? u[4] === m[5].toLowerCase() : u.length === 4));
+  const found = legal.filter(
+    (u) =>
+      u.slice(2, 4) === m[4] &&
+      board[square(u)] === piece &&
+      (!m[2] || u[0] === m[2]) &&
+      (!m[3] || u[1] === m[3]) &&
+      (m[5] ? u[4] === m[5].toLowerCase() : u.length === 4),
+  );
   if (found.length !== 1) throw new Error(`SAN ${san} matches ${found.length} legal moves`);
   return found[0];
 }

@@ -144,7 +144,9 @@ export function ttStore(key: u64, move: i32, score: i32, rawEval: i32, depth: i3
     idx = (<i32>ctz(matches) * 3) >> 6;
     const e = b + 8 + (<usize>idx << 3);
     const flags = <i32>load<u8>(e, 7);
-    if (bound != BOUND_EXACT && depth < <i32>load<u8>(e, 6) - 2 && (TT_AGE_STORE == 0 || flags >> 3 == generation)) return;
+    if (bound != BOUND_EXACT && depth < <i32>load<u8>(e, 6) - 2 && (TT_AGE_STORE == 0 || flags >> 3 == generation)) {
+      return;
+    }
     if (!stored) stored = <i32>load<u16>(e);
   } else {
     const empty = (frags - FRAG_LSB) & ~frags & FRAG_MSB;

@@ -14,23 +14,114 @@ import { bb, castling, side } from "../../core/position";
 import { KING_ATT, KNIGHT_ATT, bishopAttacks, bit, rookAttacks } from "../../core/tables";
 import { DARK, FILE_H, RANK_1, distance, pawnAttacks, relRank } from "./geometry";
 import {
-  BEHIND_BISHOP_EG, BEHIND_BISHOP_MG, BEHIND_KNIGHT_EG, BEHIND_KNIGHT_MG, BISHOP_BAD_PAWNS_EG, BISHOP_BAD_PAWNS_MG, BISHOP_KING_RING_EG,
-  BISHOP_KING_RING_MG, BISHOP_LONG_EG, BISHOP_LONG_MG, BISHOP_PAIR_EG, BISHOP_PAIR_MG, BISHOP_PAWNS_EG, BISHOP_PAWNS_MG, BISHOP_RAMMED_EG,
-  BISHOP_RAMMED_MG, BISHOP_XRAY_PAWNS_EG, BISHOP_XRAY_PAWNS_MG, FAR_KNIGHT_EG, FAR_KNIGHT_MG, FLANK_ATTACK_EG, FLANK_ATTACK_MG,
-  MOB_BISHOP_EG, MOB_BISHOP_MG, MOB_KNIGHT_EG, MOB_KNIGHT_MG, MOB_QUEEN_EG, MOB_QUEEN_MG, MOB_ROOK_EG, MOB_ROOK_MG, OUTPOST_BISHOP_EG,
-  OUTPOST_BISHOP_MG, OUTPOST_KNIGHT_EG, OUTPOST_KNIGHT_MG, PASSED_ADVANCE_EG, PASSED_ADVANCE_MG, PASSED_DEFENDED_STOP_EG,
-  PASSED_DEFENDED_STOP_MG, PASSED_ENEMY_ROOK_BEHIND_EG, PASSED_ENEMY_ROOK_BEHIND_MG, PASSED_ROOK_BEHIND_EG, PASSED_ROOK_BEHIND_MG,
-  PASSED_SAFE_PATH_EG, PASSED_SAFE_PATH_MG, PASSED_SQUARE_EG, ROOK_BURIED_EG, ROOK_BURIED_MG,
-  ROOK_FILE_EG, ROOK_FILE_MG, ROOK_QUEEN_FILE_EG, ROOK_QUEEN_FILE_MG, ROOK_TRAPPED_EG, ROOK_TRAPPED_MG,
-  SAFETY_ATTACK_EG, SAFETY_ATTACK_MG, SAFETY_BISHOP_EG, SAFETY_BISHOP_MG, SAFETY_CHECK_BISHOP_EG, SAFETY_CHECK_BISHOP_MG,
-  SAFETY_CHECK_KNIGHT_EG, SAFETY_CHECK_KNIGHT_MG, SAFETY_CHECK_QUEEN_EG, SAFETY_CHECK_QUEEN_MG, SAFETY_CHECK_ROOK_EG, SAFETY_CHECK_ROOK_MG,
-  SAFETY_FLANK_ATTACK2_EG, SAFETY_FLANK_ATTACK2_MG, SAFETY_FLANK_ATTACK_EG, SAFETY_FLANK_ATTACK_MG, SAFETY_FLANK_DEFENSE2_EG,
-  SAFETY_FLANK_DEFENSE2_MG, SAFETY_FLANK_DEFENSE_EG, SAFETY_FLANK_DEFENSE_MG, SAFETY_KNIGHT_EG, SAFETY_KNIGHT_MG, SAFETY_NO_QUEEN_EG,
-  SAFETY_NO_QUEEN_MG, SAFETY_OFFSET_EG, SAFETY_OFFSET_MG, SAFETY_QUEEN_EG, SAFETY_QUEEN_MG, SAFETY_ROOK_EG, SAFETY_ROOK_MG, SAFETY_UNSAFE_EG,
-  SAFETY_UNSAFE_MG, SAFETY_WEAK_EG, SAFETY_WEAK_MG, SPACE_EG, SPACE_MG, THREAT_MINOR_BY_KING_EG, THREAT_MINOR_BY_KING_MG,
-  THREAT_MINOR_BY_MAJOR_EG, THREAT_MINOR_BY_MAJOR_MG, THREAT_MINOR_BY_MINOR_EG, THREAT_MINOR_BY_MINOR_MG, THREAT_MINOR_BY_PAWN_EG,
-  THREAT_MINOR_BY_PAWN_MG, THREAT_OVERLOADED_EG, THREAT_OVERLOADED_MG, THREAT_PUSH_EG, THREAT_PUSH_MG, THREAT_QUEEN_EG, THREAT_QUEEN_MG,
-  THREAT_ROOK_BY_KING_EG, THREAT_ROOK_BY_KING_MG, THREAT_ROOK_BY_LESSER_EG, THREAT_ROOK_BY_LESSER_MG, THREAT_WEAK_PAWN_EG,
+  BEHIND_BISHOP_EG,
+  BEHIND_BISHOP_MG,
+  BEHIND_KNIGHT_EG,
+  BEHIND_KNIGHT_MG,
+  BISHOP_BAD_PAWNS_EG,
+  BISHOP_BAD_PAWNS_MG,
+  BISHOP_KING_RING_EG,
+  BISHOP_KING_RING_MG,
+  BISHOP_LONG_EG,
+  BISHOP_LONG_MG,
+  BISHOP_PAIR_EG,
+  BISHOP_PAIR_MG,
+  BISHOP_PAWNS_EG,
+  BISHOP_PAWNS_MG,
+  BISHOP_RAMMED_EG,
+  BISHOP_RAMMED_MG,
+  BISHOP_XRAY_PAWNS_EG,
+  BISHOP_XRAY_PAWNS_MG,
+  FAR_KNIGHT_EG,
+  FAR_KNIGHT_MG,
+  FLANK_ATTACK_EG,
+  FLANK_ATTACK_MG,
+  MOB_BISHOP_EG,
+  MOB_BISHOP_MG,
+  MOB_KNIGHT_EG,
+  MOB_KNIGHT_MG,
+  MOB_QUEEN_EG,
+  MOB_QUEEN_MG,
+  MOB_ROOK_EG,
+  MOB_ROOK_MG,
+  OUTPOST_BISHOP_EG,
+  OUTPOST_BISHOP_MG,
+  OUTPOST_KNIGHT_EG,
+  OUTPOST_KNIGHT_MG,
+  PASSED_ADVANCE_EG,
+  PASSED_ADVANCE_MG,
+  PASSED_DEFENDED_STOP_EG,
+  PASSED_DEFENDED_STOP_MG,
+  PASSED_ENEMY_ROOK_BEHIND_EG,
+  PASSED_ENEMY_ROOK_BEHIND_MG,
+  PASSED_ROOK_BEHIND_EG,
+  PASSED_ROOK_BEHIND_MG,
+  PASSED_SAFE_PATH_EG,
+  PASSED_SAFE_PATH_MG,
+  PASSED_SQUARE_EG,
+  ROOK_BURIED_EG,
+  ROOK_BURIED_MG,
+  ROOK_FILE_EG,
+  ROOK_FILE_MG,
+  ROOK_QUEEN_FILE_EG,
+  ROOK_QUEEN_FILE_MG,
+  ROOK_TRAPPED_EG,
+  ROOK_TRAPPED_MG,
+  SAFETY_ATTACK_EG,
+  SAFETY_ATTACK_MG,
+  SAFETY_BISHOP_EG,
+  SAFETY_BISHOP_MG,
+  SAFETY_CHECK_BISHOP_EG,
+  SAFETY_CHECK_BISHOP_MG,
+  SAFETY_CHECK_KNIGHT_EG,
+  SAFETY_CHECK_KNIGHT_MG,
+  SAFETY_CHECK_QUEEN_EG,
+  SAFETY_CHECK_QUEEN_MG,
+  SAFETY_CHECK_ROOK_EG,
+  SAFETY_CHECK_ROOK_MG,
+  SAFETY_FLANK_ATTACK2_EG,
+  SAFETY_FLANK_ATTACK2_MG,
+  SAFETY_FLANK_ATTACK_EG,
+  SAFETY_FLANK_ATTACK_MG,
+  SAFETY_FLANK_DEFENSE2_EG,
+  SAFETY_FLANK_DEFENSE2_MG,
+  SAFETY_FLANK_DEFENSE_EG,
+  SAFETY_FLANK_DEFENSE_MG,
+  SAFETY_KNIGHT_EG,
+  SAFETY_KNIGHT_MG,
+  SAFETY_NO_QUEEN_EG,
+  SAFETY_NO_QUEEN_MG,
+  SAFETY_OFFSET_EG,
+  SAFETY_OFFSET_MG,
+  SAFETY_QUEEN_EG,
+  SAFETY_QUEEN_MG,
+  SAFETY_ROOK_EG,
+  SAFETY_ROOK_MG,
+  SAFETY_UNSAFE_EG,
+  SAFETY_UNSAFE_MG,
+  SAFETY_WEAK_EG,
+  SAFETY_WEAK_MG,
+  SPACE_EG,
+  SPACE_MG,
+  THREAT_MINOR_BY_KING_EG,
+  THREAT_MINOR_BY_KING_MG,
+  THREAT_MINOR_BY_MAJOR_EG,
+  THREAT_MINOR_BY_MAJOR_MG,
+  THREAT_MINOR_BY_MINOR_EG,
+  THREAT_MINOR_BY_MINOR_MG,
+  THREAT_MINOR_BY_PAWN_EG,
+  THREAT_MINOR_BY_PAWN_MG,
+  THREAT_OVERLOADED_EG,
+  THREAT_OVERLOADED_MG,
+  THREAT_PUSH_EG,
+  THREAT_PUSH_MG,
+  THREAT_QUEEN_EG,
+  THREAT_QUEEN_MG,
+  THREAT_ROOK_BY_KING_EG,
+  THREAT_ROOK_BY_KING_MG,
+  THREAT_ROOK_BY_LESSER_EG,
+  THREAT_ROOK_BY_LESSER_MG,
+  THREAT_WEAK_PAWN_EG,
   THREAT_WEAK_PAWN_MG,
 } from "./params";
 import { FORWARD, passedOf, safetyOf, spanOf } from "./pawns";
@@ -44,7 +135,11 @@ const LONG_DIAGONALS: u64 = 0x8142241818244281;
 /** by square: empty-board bishop rays, for enemy-pawn x-ray counts without a slider lookup */
 const BISHOP_RAYS = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 64));
 
-/** by color and square: the king's area, Ethereal 12.75 kingAreaMasks: its moves, its square and the rank ahead, a file wider on the edge. Feature: King_Safety#Attacking_King_Zone. */
+/**
+ * By color and square: the king's area, Ethereal 12.75 kingAreaMasks: its moves,
+ * its square and the rank ahead, a file wider on the edge.
+ * Feature: King_Safety#Attacking_King_Zone.
+ */
 const KING_AREA = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 128));
 /**
  * by color and its king's file: the king's flank, files a to d, c to f or e to h, on the color's first five ranks
@@ -54,10 +149,11 @@ const KING_AREA = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 128))
 const KING_FLANK = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * 16));
 
 /**
- * the safety sum's divisors, Ethereal 12.75 evaluateKings's 720 and 20: the square's scales by the seeds' conversion, so its
- * output converts too. The endgame half is linear in its sum, so its divisor and every SAFETY_*_EG value are a quarter of
- * that scale: the penalty is the same, and the packed sum's endgame half stays within i16
- * Feature: King_Safety#Attacking_King_Zone.
+ * The safety sum's divisors, Ethereal 12.75 evaluateKings's 720 and 20: the
+ * square's scales by the seeds' conversion, so its output converts too. The
+ * endgame half is linear in its sum, so its divisor and every SAFETY_*_EG value
+ * are a quarter of that scale: the penalty is the same, and the packed sum's
+ * endgame half stays within i16. Feature: King_Safety#Attacking_King_Zone.
  */
 const KS_DIV_MG = 3512;
 const KS_DIV_EG = 5;
@@ -116,7 +212,11 @@ export let kingSafetyEg = 0;
   return us == 0 ? b << 8 : b >> 8;
 }
 
-/** records a piece's attacks in the maps; attacks on the enemy king's area count past squares its pawns hold twice, Ethereal 12.75 evaluateKnights. Features: Attack_and_Defend_Maps, King_Safety#Attacking_King_Zone. */
+/**
+ * Records a piece's attacks in the maps; attacks on the enemy king's area count
+ * past squares its pawns hold twice, Ethereal 12.75 evaluateKnights.
+ * Features: Attack_and_Defend_Maps, King_Safety#Attacking_King_Zone.
+ */
 @inline function record(us: i32, type: i32, att: u64, weight: i32): void {
   const them = us ^ 1;
   unchecked((attacked2[us] |= att & attacked[us]));
@@ -132,7 +232,11 @@ export let kingSafetyEg = 0;
 
 // ---------------------------------------------------------------- pieces
 
-/** a minor's outpost cell by [outside file][pawn-defended], or -1: Ethereal 12.75 KnightOutpost, on relative ranks 4 to 6 and out of every enemy pawn's reach. Feature: Outposts. */
+/**
+ * A minor's outpost cell by [outside file][pawn-defended], or -1: Ethereal 12.75
+ * KnightOutpost, on relative ranks 4 to 6 and out of every enemy pawn's reach.
+ * Feature: Outposts.
+ */
 @inline function outpost(us: i32, b: u64): i32 {
   const ranks = us == 0 ? (<u64>0xffffff) << 24 : (<u64>0xffffff) << 16;
   if (!(b & ranks & ~unchecked(spanOf[us ^ 1]))) return -1;
@@ -140,7 +244,11 @@ export let kingSafetyEg = 0;
   return outside + ((b & unchecked(attackedBy[(us << 3) | PAWN])) != 0 ? 1 : 0);
 }
 
-/** knights: Ethereal 12.75 evaluateKnights, less its pawn-king and closedness parts; the mobility table is Stash 37 KnightMobility. Features: Outposts, Minor_Behind_Pawn, Knight_In_Siberia, Mobility, King_Safety#Attacking_King_Zone. */
+/**
+ * Knights: Ethereal 12.75 evaluateKnights, less its pawn-king and closedness
+ * parts; the mobility table is Stash 37 KnightMobility.
+ * Features: Outposts, Minor_Behind_Pawn, Knight_In_Siberia, Mobility, King_Safety#Attacking_King_Zone.
+ */
 @inline function knights(us: i32, ownKing: i32, theirKing: i32): i32 {
   const weight = S(SAFETY_KNIGHT_MG, SAFETY_KNIGHT_EG);
   unchecked((attackedBy[(us << 3) | KNIGHT] = 0));
@@ -163,7 +271,14 @@ export let kingSafetyEg = 0;
   return v;
 }
 
-/** bishops: Ethereal 12.75 evaluateBishops, seeing through own bishops and queens; same-color pawn terms Laser 1.7, bad bishop Weiss 11a0f72, x-ray enemy pawns Stockfish a91cb9fc, king-ring alignment Stockfish d1ec10cd, mobility Stash 37. Features: Bishop_Pair, Bad_Bishop, Bishop_X-Ray_Pawns, Bishop_on_King_Ring, Bishop_Long_Diagonal, Outposts, Minor_Behind_Pawn, Mobility, King_Safety#Attacking_King_Zone. */
+/**
+ * Bishops: Ethereal 12.75 evaluateBishops, seeing through own bishops and
+ * queens; same-color pawn terms Laser 1.7, bad bishop Weiss 11a0f72, x-ray enemy
+ * pawns Stockfish a91cb9fc, king-ring alignment Stockfish d1ec10cd, mobility
+ * Stash 37.
+ * Features: Bishop_Pair, Bad_Bishop, Bishop_X-Ray_Pawns, Bishop_on_King_Ring, Bishop_Long_Diagonal.
+ * Features: Outposts, Minor_Behind_Pawn, Mobility, King_Safety#Attacking_King_Zone.
+ */
 @inline function bishops(us: i32, occ: u64, pawns: u64, blockedCentral: i32): i32 {
   const them = us ^ 1;
   const o = us << 3;
@@ -206,7 +321,11 @@ export let kingSafetyEg = 0;
   return v;
 }
 
-/** rooks, seeing through own rooks and queens (Ethereal 12.75 evaluateRooks): file terms Ethereal 12.75 RookFile; queen file, trapped and mobility Stash 37. Features: Rook_on_Open_File, Rook_on_Queen_File, Trapped_Pieces, Mobility, King_Safety#Attacking_King_Zone. */
+/**
+ * Rooks, seeing through own rooks and queens (Ethereal 12.75 evaluateRooks):
+ * file terms Ethereal 12.75 RookFile; queen file, trapped and mobility Stash 37.
+ * Features: Rook_on_Open_File, Rook_on_Queen_File, Trapped_Pieces, Mobility, King_Safety#Attacking_King_Zone.
+ */
 @inline function rooks(us: i32, occ: u64, kingSq: i32): i32 {
   const o = us << 3;
   const t = (us ^ 1) << 3;
@@ -229,7 +348,8 @@ export let kingSafetyEg = 0;
     if (file & bb[t | QUEEN]) v += S(ROOK_QUEEN_FILE_MG, ROOK_QUEEN_FILE_EG);
     const n = <i32>popcnt(att & unchecked(mobility[us]));
     v += S(unchecked(MOB_ROOK_MG[n]), unchecked(MOB_ROOK_EG[n]));
-    // hemmed in by its own king, Stash 37 RookTrapped: king off the start e-file and between rook and center. Feature: Trapped_Pieces.
+    // hemmed in by its own king, Stash 37 RookTrapped: king off the start e-file and between rook and center.
+    // Feature: Trapped_Pieces.
     if (n <= 4 && relRank(s, us) <= 1 && kingFile != 4 && kingFile != f && kingFile < f == kingFile > 4) {
       v += castling & (us == 0 ? 3 : 12) ? S(ROOK_TRAPPED_MG, ROOK_TRAPPED_EG) : S(ROOK_BURIED_MG, ROOK_BURIED_EG);
     }
@@ -238,7 +358,10 @@ export let kingSafetyEg = 0;
   return v;
 }
 
-/** queens: mobility over Stash 37 QueenMobility, seeing through nothing as Ethereal 12.75 evaluateQueens. Features: Mobility, King_Safety#Attacking_King_Zone. */
+/**
+ * Queens: mobility over Stash 37 QueenMobility, seeing through nothing as
+ * Ethereal 12.75 evaluateQueens. Features: Mobility, King_Safety#Attacking_King_Zone.
+ */
 @inline function queens(us: i32, occ: u64): i32 {
   const o = us << 3;
   const weight = S(SAFETY_QUEEN_MG, SAFETY_QUEEN_EG);
@@ -256,7 +379,10 @@ export let kingSafetyEg = 0;
   return v;
 }
 
-/** phase-gated early-middlegame space, Clockwork 958d0d0 evaluate_sf_space and Stockfish db59696a space (vendor/cpw/pages/Space.wiki). Feature: Space. */
+/**
+ * Phase-gated early-middlegame space, Clockwork 958d0d0 evaluate_sf_space and
+ * Stockfish db59696a space (vendor/cpw/pages/Space.wiki). Feature: Space.
+ */
 @inline function space(us: i32, blockedPawns: i32): i32 {
   const them = us ^ 1;
   const o = us << 3;
@@ -321,7 +447,9 @@ export let kingSafetyEg = 0;
   sum += S(SAFETY_CHECK_KNIGHT_MG, SAFETY_CHECK_KNIGHT_EG) * <i32>popcnt(knightChecks & safe);
   const checks = (knightChecks | bishopChecks | rookChecks | queenChecks) & ~bb[t];
   sum += S(SAFETY_UNSAFE_MG, SAFETY_UNSAFE_EG) * <i32>popcnt(checks & ~safe);
-  sum += S(SAFETY_FLANK_ATTACK_MG, SAFETY_FLANK_ATTACK_EG) * flankAttacks + S(SAFETY_FLANK_ATTACK2_MG, SAFETY_FLANK_ATTACK2_EG) * flankAttacks2;
+  sum +=
+    S(SAFETY_FLANK_ATTACK_MG, SAFETY_FLANK_ATTACK_EG) * flankAttacks +
+    S(SAFETY_FLANK_ATTACK2_MG, SAFETY_FLANK_ATTACK2_EG) * flankAttacks2;
   sum += S(SAFETY_FLANK_DEFENSE_MG, SAFETY_FLANK_DEFENSE_EG) * <i32>popcnt(ours1 & flank);
   sum += S(SAFETY_FLANK_DEFENSE2_MG, SAFETY_FLANK_DEFENSE2_EG) * <i32>popcnt(ours2 & flank);
 
@@ -336,7 +464,13 @@ export let kingSafetyEg = 0;
 
 // ---------------------------------------------------------------- passed pawns
 
-/** each passer's room to advance (Ethereal 12.75 evaluatePassed), rook behind (Weiss c735b8f EvalPassedPawns), defended stop & enemy major behind (Sirius ideas, no constants taken), and rule of the square (Weiss 3e95de9 PassedSquare, vendor/cpw/pages/Rule_of_the_Square.wiki). Features: Passed_Pawn, Tarrasch_Rule, Rule_of_the_Square. */
+/**
+ * Each passer's room to advance (Ethereal 12.75 evaluatePassed), rook behind
+ * (Weiss c735b8f EvalPassedPawns), defended stop & enemy major behind (Sirius
+ * ideas, no constants taken), and rule of the square (Weiss 3e95de9 PassedSquare,
+ * vendor/cpw/pages/Rule_of_the_Square.wiki).
+ * Features: Passed_Pawn, Tarrasch_Rule, Rule_of_the_Square.
+ */
 @inline function passers(us: i32, occ: u64, theirKing: i32): i32 {
   const mine = unchecked(passedOf[us]);
   if (!mine) return 0;
@@ -373,7 +507,11 @@ export let kingSafetyEg = 0;
 
 // ---------------------------------------------------------------- threats
 
-/** threats against a color's pieces, and its safe pushes that attack non-pawn pieces, Ethereal 12.75 evaluateThreats. Features: Hanging_Piece, Overloading, Threat_by_Pawn_Push. */
+/**
+ * Threats against a color's pieces, and its safe pushes that attack non-pawn
+ * pieces, Ethereal 12.75 evaluateThreats.
+ * Features: Hanging_Piece, Overloading, Threat_by_Pawn_Push.
+ */
 @inline function threats(us: i32, occ: u64): i32 {
   const them = us ^ 1;
   const o = us << 3;
@@ -441,8 +579,8 @@ export function pieceTerms(wk: i32, bk: i32, pawns: u64, phase: i32): i32 {
   unchecked((attacked2[0] = wpAtt & wkAtt));
   unchecked((attacked[1] = bpAtt | bkAtt));
   unchecked((attacked2[1] = bpAtt & bkAtt));
-  // mobility area, Stash 37 evaldata_init_next: no enemy pawn attacks, own king, or own pawn that is blocked or on its low ranks
-  // Feature: Mobility.
+  // mobility area, Stash 37 evaldata_init_next: no enemy pawn attacks, own king, or own pawn that is blocked or on
+  // its low ranks. Feature: Mobility.
   const wBlocked = wp & (occ >> 8);
   const bBlocked = bp & (occ << 8);
   unchecked((mobility[0] = ~(bpAtt | bit(wk) | wBlocked | (wp & ((RANK_1 << 8) | (RANK_1 << 16))))));

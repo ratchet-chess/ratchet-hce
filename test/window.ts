@@ -100,7 +100,8 @@ interface Position {
 
 const map = loadMap(join(root, "tools/texel/maps/ratchet-flags.json"));
 const engine = await Engine.load(buildTuning(map));
-for (const name of on) if (!map.elements.some((e) => e.block === name)) throw new Error(`--on ${name}: no such block in the map`);
+for (const name of on)
+  if (!map.elements.some((e) => e.block === name)) throw new Error(`--on ${name}: no such block in the map`);
 const flags = map.elements.filter((e) => e.off !== undefined && !on.has(e.block));
 for (const e of flags) engine.tune(e.id, e.off!);
 
@@ -155,7 +156,8 @@ for (const [label, positions] of sets) {
         searches++;
         if (fishburn(y, v, a, b)) continue;
         bad++;
-        console.log(`FAIL ${p.name} d${depth} (${a}, ${b}): got ${y}, value ${v}${p.moves.length ? `; ${p.fen} moves ${p.moves.join(" ")}` : `; ${p.fen}`}`);
+        const pos = p.moves.length ? `${p.fen} moves ${p.moves.join(" ")}` : p.fen;
+        console.log(`FAIL ${p.name} d${depth} (${a}, ${b}): got ${y}, value ${v}; ${pos}`);
         if (!all) process.exit(1);
       }
     }
@@ -167,6 +169,10 @@ if (bad) {
   console.log(`${bad} mismatch(es) in ${searches} searches`);
   process.exit(1);
 }
+const totalPositions = sets.reduce((n, [, p]) => n + p.length, 0);
+const enabled = on.size ? ` (${[...on].join(", ")} on)` : "";
 console.log(
-  `window gate: ${searches} searches over ${sets.reduce((n, [, p]) => n + p.length, 0)} positions at depths 1 to ${maxDepth}, ${flags.length} flags off${on.size ? ` (${[...on].join(", ")} on)` : ""}, table ${table ? "on" : "off"}, all in Fishburn's relation (${seconds} s)`,
+  `window gate: ${searches} searches over ${totalPositions} positions at depths 1 to ${maxDepth},` +
+    ` ${flags.length} flags off${enabled}, table ${table ? "on" : "off"},` +
+    ` all in Fishburn's relation (${seconds} s)`,
 );

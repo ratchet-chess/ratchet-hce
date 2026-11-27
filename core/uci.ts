@@ -19,7 +19,22 @@
  * bench summary.
  */
 import { BENCH_FENS } from "./bench-fens";
-import { IN, arg, argc, cutInput, endLine, exit, fail, inEnd, nowMs, put, putByte, putInt, readArgs, readInput } from "./wasi";
+import {
+  IN,
+  arg,
+  argc,
+  cutInput,
+  endLine,
+  exit,
+  fail,
+  inEnd,
+  nowMs,
+  put,
+  putByte,
+  putInt,
+  readArgs,
+  readInput,
+} from "./wasi";
 
 /** a release's functions, as the UCI front end calls them; host/wasm.ts Engine wraps the same exports */
 export class UciEngine {
@@ -304,7 +319,9 @@ function fenField(field: i32, at: usize, len: i32): void {
       const color = c == lower ? 1 : 0;
       const r = (color << 1) | (lower == 113 ? 1 : 0);
       const base = color * 56;
-      if (board[base + 4] == ((color << 3) | 6) && board[base + (r & 1 ? 0 : 7)] == ((color << 3) | 4)) fenRights |= 1 << r;
+      if (board[base + 4] == ((color << 3) | 6) && board[base + (r & 1 ? 0 : 7)] == ((color << 3) | 4)) {
+        fenRights |= 1 << r;
+      }
     }
   } else if (field == 3) {
     if (len >= 2) fenEp = (<i32>load<u8>(at, 1) - 49) * 8 + (<i32>load<u8>(at) - 97);
@@ -435,7 +452,10 @@ function moveMatches(m: i32): bool {
 
 // ------------------------------------------------------------------ go
 
-/** the engine's own remaining time under --nodestime, from the game's first go; NaN before it (host/uci/worker.ts ownMs) */
+/**
+ * The engine's own remaining time under --nodestime, from the game's first go;
+ * NaN before it (host/uci/worker.ts ownMs).
+ */
 let ownMs: f64 = NaN;
 /**
  * The TimeRecord option: each search then prints the engine's record of its time use as one
@@ -472,7 +492,8 @@ function go(): void {
   }
   stopped = false;
   const white = sideToMove == 0;
-  // unbounded in the release's own terms: it acts on its own side's clock, a movetime, a depth and a node limit it takes, and on no other limit
+  // unbounded in the release's own terms: it acts on its own side's clock,
+  // a movetime, a depth and a node limit it takes, and on no other limit
   unbounded = infinite || (isNaN(white ? wtime : btime) && isNaN(movetime) && isNaN(depth) && !nodeLimited);
   if (nodesTime > 0) {
     const own = white ? wtime : btime;
@@ -527,7 +548,10 @@ function timeTrace(): void {
   endLine();
 }
 
-/** x to `places` decimals (1 or 3) as JavaScript prints Math.round(x * 10 ** places) / 10 ** places, or "none" beyond 1e15 */
+/**
+ * Prints x to `places` decimals (1 or 3) as JavaScript prints
+ * Math.round(x * 10 ** places) / 10 ** places, or "none" beyond 1e15.
+ */
 function putRounded(x: f64, places: i32): void {
   if (x > 1e15) {
     put("none");

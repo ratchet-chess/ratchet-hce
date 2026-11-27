@@ -6,7 +6,19 @@
  * Pins are ignored. Castling, en passant and promotions score as an even trade.
  * Feature: Static_Exchange_Evaluation.
  */
-import { BISHOP, FLAG_CASTLE, FLAG_EP, KING, KNIGHT, PAWN, QUEEN, ROOK, moveFrom, movePromo, moveTo } from "../../core/constants";
+import {
+  BISHOP,
+  FLAG_CASTLE,
+  FLAG_EP,
+  KING,
+  KNIGHT,
+  PAWN,
+  QUEEN,
+  ROOK,
+  moveFrom,
+  movePromo,
+  moveTo,
+} from "../../core/constants";
 import { bb, board, side } from "../../core/position";
 import { KING_ATT, KNIGHT_ATT, PAWN_ATT, bishopAttacks, bit, rookAttacks } from "../../core/tables";
 import { SEE_VALUE } from "./params";

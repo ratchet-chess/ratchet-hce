@@ -17,9 +17,20 @@ const wasm = buildTuning(map);
 const root = join(import.meta.dirname, "..");
 mkdirSync(join(root, "build"), { recursive: true });
 copyFileSync(wasm, join(root, "build/ratchet-spsa.wasm"));
-const tunables: { name: string }[] = JSON.parse(readFileSync(join(dirname(wasm), "tunables.json"), "utf8"));
+const tunables = JSON.parse(readFileSync(join(dirname(wasm), "tunables.json"), "utf8")) as { name: string }[];
 const flags = new Map(map.elements.map((e) => [e.name, e]));
-writeFileSync(join(root, "tunables.json"), `${JSON.stringify(tunables.map((t) => {
-  const e = flags.get(t.name)!;
-  return { ...t, ...(e.off === undefined ? {} : { off: e.off }), ...(e.block === undefined ? {} : { block: e.block }) };
-}), null, 1)}\n`);
+writeFileSync(
+  join(root, "tunables.json"),
+  `${JSON.stringify(
+    tunables.map((t) => {
+      const e = flags.get(t.name)!;
+      return {
+        ...t,
+        ...(e.off === undefined ? {} : { off: e.off }),
+        ...(e.block === undefined ? {} : { block: e.block }),
+      };
+    }),
+    null,
+    1,
+  )}\n`,
+);

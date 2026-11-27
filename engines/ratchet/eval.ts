@@ -1,6 +1,7 @@
 /**
  * The own engine's eval: material and piece-square tables, the king-pawn terms
- * (pawns.ts), the terms that read attack maps (pieces.ts), complexity, tapered between middlegame and endgame by phase (Fruit 2.1 material_comp_info's form;
+ * (pawns.ts), the terms that read attack maps (pieces.ts), complexity, tapered
+ * between middlegame and endgame by phase (Fruit 2.1 material_comp_info's form;
  * PeSTO's phase weights) after the endgame half is scaled (Stash 37 eval_scale_endgame), the side
  * to move's tempo, insufficient material, the wrong bishop with rook pawns, and KXK mop-up. Scores are for the
  * side to move, in the engine's unit.
@@ -14,9 +15,22 @@ import { BISHOP, FILE_A, KING, KNIGHT, PAWN, QUEEN, ROOK } from "../../core/cons
 import { bb, hash, side } from "../../core/position";
 import { KING_ATT } from "../../core/tables";
 import {
-  COMPLEXITY_ENDGAME, COMPLEXITY_FLANKS, COMPLEXITY_OFFSET, COMPLEXITY_PAWNS, MAT_MG, MOPUP_CLOSE, MOPUP_CORNER, MOPUP_EDGE, SCALE_BASE, SCALE_OCB,
+  COMPLEXITY_ENDGAME,
+  COMPLEXITY_FLANKS,
+  COMPLEXITY_OFFSET,
+  COMPLEXITY_PAWNS,
+  MAT_MG,
+  MOPUP_CLOSE,
+  MOPUP_CORNER,
+  MOPUP_EDGE,
+  SCALE_BASE,
+  SCALE_OCB,
   SCALE_OCB_PASSED,
-  SCALE_OCB_PIECES, SCALE_OCB_PIECES_PER, SCALE_PER_PAWN, TEMPO_EG, TEMPO_MG,
+  SCALE_OCB_PIECES,
+  SCALE_OCB_PIECES_PER,
+  SCALE_PER_PAWN,
+  TEMPO_EG,
+  TEMPO_MG,
 } from "./params";
 import { DARK, FILE_H, distance } from "./geometry";
 import { initPawns, kingPawn, passedOf } from "./pawns";
@@ -69,7 +83,9 @@ function wrongBishop(strong: i32, wKing: i32, bKing: i32): bool {
   const x = o ^ 8;
   const pawns = bb[o | PAWN];
   const bishops = bb[o | BISHOP];
-  if (!pawns || !bishops || bb[o] != (pawns | bishops | bb[o | KING]) || bb[x] != (bb[x | PAWN] | bb[x | KING])) return false;
+  if (!pawns || !bishops || bb[o] != (pawns | bishops | bb[o | KING]) || bb[x] != (bb[x | PAWN] | bb[x | KING])) {
+    return false;
+  }
   const file = !(pawns & ~FILE_A) ? 0 : !(pawns & ~FILE_H) ? 7 : -1;
   if (file < 0) return false;
   const q = strong == 0 ? 56 + file : file;
@@ -111,9 +127,9 @@ function endgameScale(eg: i32, wKing: i32, bKing: i32, phase: i32): i32 {
   const weak = strong ^ 1;
   const sPawns = bb[(strong << 3) | PAWN];
   const bishop = MAT_MG[BISHOP];
-  // no pawns, and at most a minor ahead. Stash 37 draws the line at its bishop, which its values make the greater minor;
-  // the line here is the greater of the two tuned minors, so a tune that puts the knight above the bishop cannot carry
-  // a lone knight past it
+  // no pawns, and at most a minor ahead. Stash 37 draws the line at its bishop, which its values make the greater
+  // minor; the line here is the greater of the two tuned minors, so a tune that puts the knight above the bishop
+  // cannot carry a lone knight past it
   // Feature: Draw_Evaluation.
   if (!sPawns) {
     const minor = max(MAT_MG[KNIGHT], bishop);
@@ -135,11 +151,13 @@ function endgameScale(eg: i32, wKing: i32, bKing: i32, phase: i32): i32 {
   // one minor vs one minor with a single strong pawn, Lynx 1d3047b5. Feature: Draw_Evaluation.
   if (phase == 2 && sPawnCount == 1 && (bb[KNIGHT] | wb) != 0 && (bb[8 | KNIGHT] | bbish) != 0) return 128;
   const oneWing = sPawns != 0 && (!(sPawns & KINGSIDE) || !(sPawns & QUEENSIDE));
-  // one-wing rook endgame with small pawn lead and defending king near its pawns, Stockfish 16836f39 and 67818ee9, Stash 37 eval_scale_endgame
-  // Feature: Draw_Evaluation.
+  // one-wing rook endgame with small pawn lead and defending king near its pawns,
+  // Stockfish 16836f39 and 67818ee9, Stash 37 eval_scale_endgame. Feature: Draw_Evaluation.
   if (phase == 4 && oneWing && popcnt(bb[ROOK]) == 1 && popcnt(bb[8 | ROOK]) == 1) {
     const wPawns = bb[(weak << 3) | PAWN];
-    if (sPawnCount <= <i32>popcnt(wPawns) + 1 && (unchecked(KING_ATT[weak == 0 ? wKing : bKing]) & wPawns) != 0) return 130;
+    if (sPawnCount <= <i32>popcnt(wPawns) + 1 && (unchecked(KING_ATT[weak == 0 ? wKing : bKing]) & wPawns) != 0) {
+      return 130;
+    }
   }
   let scale = min(SCALE_BASE + SCALE_PER_PAWN * sPawnCount, 256);
   // single-queen endgame scaled by enemy minor count, Stockfish c7194bd9 and 69d3be42. Feature: Draw_Evaluation.
@@ -186,8 +204,8 @@ export function evalWith(psq: i32, cached: bool): i32 {
   const bMinors = <i32>popcnt(bb[8 | KNIGHT] | bb[8 | BISHOP]);
   if (!(pawns | rooks | queens)) {
     if (wMinors <= 1 && bMinors <= 1) return 0;
-    // two knights against a bare king or one minor, CPW "Draw Evaluation"'s simple heuristics. Its other heuristics, two
-    // bishops against a bishop and two minors against one without the bishop pair, are not taken: the scale above
+    // two knights against a bare king or one minor, CPW "Draw Evaluation"'s simple heuristics. Its other heuristics,
+    // two bishops against a bishop and two minors against one without the bishop pair, are not taken: the scale above
     // already holds those endings near a draw
     if (wMinors == 2 && popcnt(bb[KNIGHT]) == 2 && bMinors <= 1) return 0;
     if (bMinors == 2 && popcnt(bb[8 | KNIGHT]) == 2 && wMinors <= 1) return 0;
@@ -198,7 +216,8 @@ export function evalWith(psq: i32, cached: bool): i32 {
   const wKing = <i32>ctz(bb[KING]);
   const bKing = <i32>ctz(bb[8 | KING]);
   const kp = kingPawn(cached, wKing, bKing);
-  const s = psq + kp + pieceTerms(wKing, bKing, pawns, phase) + (side == 0 ? S(TEMPO_MG, TEMPO_EG) : -S(TEMPO_MG, TEMPO_EG));
+  const s =
+    psq + kp + pieceTerms(wKing, bKing, pawns, phase) + (side == 0 ? S(TEMPO_MG, TEMPO_EG) : -S(TEMPO_MG, TEMPO_EG));
   let v = mgOf(s) + kingSafetyMg;
   // at the full phase the endgame half weighs nothing
   if (phase < PHASE_MAX) {
@@ -230,7 +249,10 @@ export function evalWith(psq: i32, cached: bool): i32 {
   return side == 0 ? v : -v;
 }
 
-/** by low bits of the position's hash: its high 48 bits and its eval in the low 16, Ethereal 12.75 EvalEntry; 0 when empty. Feature: Evaluation_Hash_Table. */
+/**
+ * By low bits of the position's hash: its high 48 bits and its eval in the low
+ * 16, Ethereal 12.75 EvalEntry; 0 when empty. Feature: Evaluation_Hash_Table.
+ */
 const EVAL_CACHE_SIZE = 1 << 14;
 const evalCache = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * EVAL_CACHE_SIZE));
 
@@ -238,7 +260,10 @@ export function clearEvalCache(): void {
   for (let i = 0; i < EVAL_CACHE_SIZE; i++) unchecked((evalCache[i] = 0));
 }
 
-/** the eval for the search, from the cache where it can, Ethereal 12.75 getCachedEvaluation and storeCachedEvaluation. Feature: Evaluation_Hash_Table. */
+/**
+ * The eval for the search, from the cache where it can, Ethereal 12.75
+ * getCachedEvaluation and storeCachedEvaluation. Feature: Evaluation_Hash_Table.
+ */
 export function evalCached(psq: i32): i32 {
   const i = <i32>(hash & <u64>(EVAL_CACHE_SIZE - 1));
   const entry = unchecked(evalCache[i]);
