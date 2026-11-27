@@ -26,7 +26,10 @@ case "${1:-}" in
     cd "$d" && exec "$runtime" host/perft.ts "$@"
     ;;
 esac
+# A ref older than tools/tree.sh gets this launcher beside its own bin/ratchet, which names the build by --release.
+flag=--build
+grep -q -- '--build' "$d/bin/ratchet" || flag=--release
 if [ -f "$d/tunables.json" ]; then
-  exec "$d/bin/ratchet" "$runtime" --release "$d/build/ratchet-spsa.wasm" --tunables "$d/tunables.json" "$@"
+  exec "$d/bin/ratchet" "$runtime" "$flag" "$d/build/ratchet-spsa.wasm" --tunables "$d/tunables.json" "$@"
 fi
-exec "$d/bin/ratchet" "$runtime" --release ratchet "$@"
+exec "$d/bin/ratchet" "$runtime" "$flag" ratchet "$@"

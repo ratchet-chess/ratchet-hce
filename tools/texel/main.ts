@@ -138,13 +138,13 @@ const die = (msg: string): never => {
 /**
  * The adapter --adapter names (wasm, the default, or uci), with the first `count`
  * records loaded. A uci adapter starts --processes engines from the map's uci
- * section; for a map with a "release", {build} and {tunables} are its tuning build.
+ * section; for a map with an "engine", {build} and {tunables} are its tuning build.
  */
 async function openAdapter(m: LoadedMap, records: Uint8Array, count: number): Promise<Adapter> {
   const kind = opt("--adapter") ?? "wasm";
   let a: Adapter;
   if (kind === "uci") {
-    const wasm = m.map.release ? buildTuning(m) : "";
+    const wasm = m.map.engine ? buildTuning(m) : "";
     a = await UciAdapter.open(
       m,
       Number(opt("--processes") ?? 8),

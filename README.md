@@ -111,7 +111,7 @@ bun run build:wasm                             # build/wasi/ratchet.wasm, the WA
 bun vendor/uci-over-wasi/main.ts build/wasi/ratchet.wasm  # the engine: UCI on stdin and stdout
 ```
 
-`bin/ratchet [bun|node|deno] --release ratchet` starts the same engine for a GUI or a match runner. `bun run test`
+`bin/ratchet [bun|node|deno] --build ratchet` starts the same engine for a GUI or a match runner. `bun run test`
 runs the gates. `bun tools/package.ts` builds the files of § Download (`--native ""` skips native builds when Nix,
 gcc or MinGW are absent).
 

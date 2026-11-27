@@ -1,26 +1,26 @@
 #!/bin/sh
-# UCI launcher. Usage: ratchet [node|bun|deno] --release <name> [--nodestime N] [--tunables <path>]   (default bun)
+# UCI launcher. Usage: ratchet [node|bun|deno] --build <name> [--nodestime N] [--tunables <path>]   (default bun)
 #
-# A --release name with a WASI build, build/wasi/<name>.wasm, plays that build under vendor/uci-over-wasi/main.ts:
+# A --build name with a WASI build, build/wasi/<name>.wasm, plays that file under vendor/uci-over-wasi/main.ts:
 # the file that ships is the file a match rates. The build reads --nodestime from its own command line and ignores
 # the words it does not know, so it gets the arguments as they came.
 #
 # Every other start goes to the UCI front end, host/uci/main.ts, with the arguments after the runtime: a name
-# without a WASI build, and a tuning build, which --release names by its path and --tunables by its options file.
+# without a WASI build, and a tuning build, which --build names by its path and --tunables by its options file.
 dir=$(dirname "$(readlink -f "$0")")/..
 case "${1:-}" in
   node | bun | deno) runtime=$1; shift ;;
   '' | -*) runtime=bun ;;
   *) echo "unknown runtime: $1" >&2; exit 2 ;;
 esac
-release='' prev='' front=wasi
+build='' prev='' front=wasi
 for a in "$@"; do
-  [ "$prev" = --release ] && release=$a
+  [ "$prev" = --build ] && build=$a
   [ "$a" = --tunables ] && front=uci
   prev=$a
 done
-wasi="$dir/build/wasi/$release.wasm"
-if [ "$front" = wasi ] && [ -n "$release" ] && [ -f "$wasi" ]; then
+wasi="$dir/build/wasi/$build.wasm"
+if [ "$front" = wasi ] && [ -n "$build" ] && [ -f "$wasi" ]; then
   set -- "$dir/vendor/uci-over-wasi/main.ts" "$wasi" "$@"
 else
   set -- "$dir/host/uci/main.ts" "$@"

@@ -6,7 +6,7 @@
  *
  *   {
  *     "subject": "ratchet",
- *     "release": "ratchet",              // engines/<release>/, for a source subject
+ *     "engine": "ratchet",               // engines/<engine>/, for a source subject
  *     "k": 1.022,                        // optional: the K every tune holds
  *     "eval": { "form": "static" },      // or { "form": "search", "depth": 2 }
  *     "refresh": "initSearch",           // optional, below
@@ -72,7 +72,8 @@ export interface ParameterMap {
   subject: string;
   /** the K every tune holds, instead of fitting one */
   k?: number;
-  release?: string;
+  /** the engine's directory under engines/, for a subject with source */
+  engine?: string;
   eval: EvalForm;
   /** a function in the engine's index.ts scope that the tuning build calls after each set */
   refresh?: string;
@@ -114,8 +115,8 @@ export interface Element {
 export interface LoadedMap {
   path: string;
   map: ParameterMap;
-  /** engines/<release>/, when the subject is a source subject */
-  releaseDir?: string;
+  /** engines/<engine>/, when the subject is a source subject */
+  engineDir?: string;
   elements: Element[];
   /** each source file's declarations that the map reads, by file */
   declarations: Map<string, Map<string, Declaration>>;
@@ -150,12 +151,12 @@ export function loadMap(path: string): LoadedMap {
   const map = JSON.parse(text) as ParameterMap;
   if (!map.subject || !map.eval || !Array.isArray(map.blocks))
     throw new Error(`${path}: needs subject, eval and blocks`);
-  const releaseDir = map.release ? join(REPO, "engines", map.release) : undefined;
+  const engineDir = map.engine ? join(REPO, "engines", map.engine) : undefined;
   const sources = new Map<string, string>();
   const declarations = new Map<string, Map<string, Declaration>>();
   const declOf = (src: SourceRef): Declaration => {
-    if (!releaseDir) throw new Error(`${path}: block sources need "release"`);
-    if (!sources.has(src.file)) sources.set(src.file, readFileSync(join(releaseDir, src.file), "utf8"));
+    if (!engineDir) throw new Error(`${path}: block sources need "engine"`);
+    if (!sources.has(src.file)) sources.set(src.file, readFileSync(join(engineDir, src.file), "utf8"));
     const byFile = declarations.get(src.file) ?? new Map<string, Declaration>();
     declarations.set(src.file, byFile);
     if (!byFile.has(src.symbol)) byFile.set(src.symbol, findDeclaration(sources.get(src.file)!, src.symbol, src.file));
@@ -234,11 +235,11 @@ export function loadMap(path: string): LoadedMap {
   // A build depends on the map, the engine, the core it imports and the writer that made it.
   const hash = createHash("sha256").update(text);
   const files = [
-    ...(releaseDir
-      ? readdirSync(releaseDir)
+    ...(engineDir
+      ? readdirSync(engineDir)
           .filter((f) => f.endsWith(".ts"))
           .sort()
-          .map((f) => join(releaseDir, f))
+          .map((f) => join(engineDir, f))
       : []),
     ...readdirSync(join(REPO, "core"))
       .filter((f) => f.endsWith(".ts"))
@@ -247,5 +248,5 @@ export function loadMap(path: string): LoadedMap {
     ...["map.ts", "source.ts", "write.ts"].map((f) => join(REPO, "tools", "texel", f)),
   ];
   for (const f of files) hash.update(f.slice(REPO.length)).update(readFileSync(f));
-  return { path, map, releaseDir, elements, declarations, hash: hash.digest("hex").slice(0, 12) };
+  return { path, map, engineDir, elements, declarations, hash: hash.digest("hex").slice(0, 12) };
 }

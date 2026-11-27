@@ -2,9 +2,9 @@
  * UCI front end. Reads commands from stdin and forwards engine work to the search
  * worker, so isready and stop are answered while a search runs.
  *
- *   bun host/uci/main.ts --release <name> [--nodestime N] [--tunables <path>]   (or node, deno run -A)
+ *   bun host/uci/main.ts --build <name> [--nodestime N] [--tunables <path>]   (or node, deno run -A)
  *
- * --release names the build to play: build/<name>.wasm, from engines/<name>/,
+ * --build names the build to play: build/<name>.wasm, from engines/<name>/,
  * or a path to a .wasm file, such as a Texel tuning build.
  *
  * --tunables <path> names a tuning build's options file, tunables.json beside its
@@ -32,12 +32,12 @@ import type { GoLimits } from "./limits.ts";
 import type { WorkerCommand } from "./worker.ts";
 
 const args = process.argv.slice(2);
-const release = args.includes("--release") ? args[args.indexOf("--release") + 1] : "";
-if (!release) throw new Error("--release needs a build name");
+const build = args.includes("--build") ? args[args.indexOf("--build") + 1] : "";
+if (!build) throw new Error("--build needs a build name");
 const nodesTime = args.includes("--nodestime") ? Number(args[args.indexOf("--nodestime") + 1]) : 0;
 if (!(nodesTime >= 0)) throw new Error("--nodestime needs nodes per millisecond");
 const stop = new Int32Array(new SharedArrayBuffer(4));
-const worker = new Worker(new URL("./worker.ts", import.meta.url), { workerData: { stop, nodesTime, release } });
+const worker = new Worker(new URL("./worker.ts", import.meta.url), { workerData: { stop, nodesTime, build } });
 let markReady: () => void;
 /** the `id name` the worker sends before it is ready: the own engine's carries its version */
 let idName = "RatchetHCE";

@@ -22,13 +22,13 @@ import { applyEdits, type Edit, mutableEdits, valueEdit } from "./source.ts";
 const REPO = new URL("../../", import.meta.url).pathname;
 
 /** the engine's sources, by file name */
-function releaseFiles(m: LoadedMap): Map<string, string> {
-  if (!m.releaseDir) throw new Error(`${m.path}: the writer needs the map's "release", the engine's directory`);
+function engineFiles(m: LoadedMap): Map<string, string> {
+  if (!m.engineDir) throw new Error(`${m.path}: the writer needs the map's "engine"`);
   const files = new Map<string, string>();
-  for (const f of readdirSync(m.releaseDir)
+  for (const f of readdirSync(m.engineDir)
     .filter((f) => f.endsWith(".ts"))
     .sort())
-    files.set(f, readFileSync(join(m.releaseDir, f), "utf8"));
+    files.set(f, readFileSync(join(m.engineDir, f), "utf8"));
   return files;
 }
 
@@ -55,7 +55,7 @@ export function storable(e: Element, v: number): number {
 /** writes `files` into `dir`, rehomed from the engine's directory */
 function emit(m: LoadedMap, files: Map<string, string>, dir: string): void {
   mkdirSync(dir, { recursive: true });
-  for (const [f, text] of files) writeFileSync(join(dir, f), rehome(text, m.releaseDir!, resolve(dir)));
+  for (const [f, text] of files) writeFileSync(join(dir, f), rehome(text, m.engineDir!, resolve(dir)));
 }
 
 /**
@@ -63,10 +63,10 @@ function emit(m: LoadedMap, files: Map<string, string>, dir: string): void {
  * (AGENTS.md § Tuning). Returns the files changed.
  */
 export function writeInPlace(m: LoadedMap, values: Record<string, number>): string[] {
-  if (!m.releaseDir) throw new Error(`${m.path}: the writer needs the map's "release", the engine's directory`);
+  if (!m.engineDir) throw new Error(`${m.path}: the writer needs the map's "engine"`);
   const byName = new Map(m.elements.map((e) => [e.name, e]));
   for (const n of Object.keys(values)) if (!byName.has(n)) throw new Error(`${m.path}: no element ${n}`);
-  const files = releaseFiles(m);
+  const files = engineFiles(m);
   const edits = new Map<string, Edit[]>();
   for (const e of m.elements) {
     if (!(e.name in values)) continue;
@@ -83,8 +83,8 @@ export function writeInPlace(m: LoadedMap, values: Record<string, number>): stri
   for (const [f, list] of edits) {
     const text = applyEdits(files.get(f)!, list);
     if (text === files.get(f)) continue;
-    writeFileSync(join(m.releaseDir, f), text);
-    changed.push(join(relative(REPO, m.releaseDir), f));
+    writeFileSync(join(m.engineDir, f), text);
+    changed.push(join(relative(REPO, m.engineDir), f));
   }
   return changed;
 }
@@ -121,7 +121,7 @@ export function buildTuning(m: LoadedMap): string {
   }
   rmSync(dir, { recursive: true, force: true });
   const src = join(dir, "src");
-  const files = releaseFiles(m);
+  const files = engineFiles(m);
   const edits = new Map<string, Edit[]>();
   const setters = new Map<string, string[]>();
   for (const [file, decls] of m.declarations) {
@@ -152,7 +152,7 @@ export function buildTuning(m: LoadedMap): string {
     calls.push(`  ${fn}(id, value);`);
   }
   const index = files.get("index.ts");
-  if (!index) throw new Error(`${m.releaseDir}: no index.ts`);
+  if (!index) throw new Error(`${m.engineDir}: no index.ts`);
   // a table the engine fills once from a tuned constant is filled again after each set
   const refresh = m.map.refresh ? `  ${m.map.refresh}();\n` : "";
   files.set(

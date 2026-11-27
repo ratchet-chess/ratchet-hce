@@ -19,15 +19,16 @@ export type WorkerCommand =
 
 interface WorkerInit {
   stop: Int32Array;
-  release: string;
+  /** build/<name>.wasm's name, or a .wasm path, as --build gives it */
+  build: string;
   nodesTime: number;
 }
 
 const data = workerData as WorkerInit;
 const port = parentPort!;
 const stop = data.stop;
-const engine = await Engine.load(data.release);
-if (!engine.clocked) throw new Error(`${data.release} does not time itself, so it cannot play`);
+const engine = await Engine.load(data.build);
+if (!engine.clocked) throw new Error(`${data.build} does not time itself, so it cannot play`);
 let sideToMove = 0;
 /**
  * The TimeRecord option: each search then prints the engine's record of its time use as one

@@ -1,6 +1,6 @@
 {
  "subject": "ratchet-flags",
- "release": "ratchet",
+ "engine": "ratchet",
  "eval": {
   "form": "static"
  },
