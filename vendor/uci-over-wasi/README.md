@@ -1,6 +1,6 @@
 # The host of UCI over WASI
 
-A copy of `host/wasi/wasi.ts`, `host/wasi/main.ts`, `host/wasi/thread.ts`, `host/wasi/browser.ts` from uci-over-wasi, commit 0e678cdc3f98db5434ba9cbfcfb27b47b4b1f7d1 (2026-11-19).
+A copy of `host/wasi/wasi.ts`, `host/wasi/main.ts`, `host/wasi/thread.ts`, `host/wasi/browser.ts` from uci-over-wasi, commit 9b6d6a88d9d1bf1db942d57d5b14beb823b9c536 (2026-11-26).
 The files are under the MIT License, in `LICENSE` beside them. `docs/uci-over-wasi.md` in uci-over-wasi states
 what the host does.
 
