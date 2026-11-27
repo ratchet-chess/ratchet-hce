@@ -143,10 +143,10 @@ The engine's code is its own, and it builds on forms that other engines publishe
 of the function that follows it. `engines/ratchet/SOURCES.md` pins every citation to a commit.
 
 * **GPL-3.0:** Alexandria, Berserk, Ethereal, Incipit, Koivisto, Laser, Stash, Stockfish, Weiss, Xiphos.
-* **AGPL-3.0:** Clockwork (forms and ideas only; zero code is ported, Ratchet HCE is clean-room AssemblyScript,
-  and the web app runs the WASI module client-side with full source published).
+* **AGPL-3.0:** Clockwork (forms, ideas and some starting values; zero code is ported, Ratchet HCE is clean-room
+  AssemblyScript, and the web app runs the WASI module client-side with full source published).
 * **GPL-2.0-or-later:** Fruit 2.1.
 * **MIT:** Lynx.
 
-These are credited for forms and ideas, and for the starting values named above. If you see a problem with a
-credit or a license, please open an issue.
+These are credited for forms and ideas, and for starting values: a comment whose value started from another
+engine's names that engine's value. If you see a problem with a credit or a license, please open an issue.

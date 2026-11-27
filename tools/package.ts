@@ -10,7 +10,7 @@
  *   <name>.js                     the browser Worker (vendor/uci-over-wasi/browser.ts); it loads <name>.wasm beside it
  *   <name>-<os>-<arch>[.exe]      native builds: the WASI build through wasm2c and a C compiler, with
  *                                 host/wasi/native.c, and no runtime
- *   THIRD-PARTY-NOTICES.txt       notices for WABT/wasm2c runtime and SIMDe headers in native builds
+ *   THIRD-PARTY-NOTICES.txt       the Clockwork dataset's ODbL notice, and WABT's and SIMDe's in native builds
  *   SHA256SUMS
  * where <name> is <release>-<version>, and the own engine's is ratchetHCE-<version>, so its files differ from
  * ratchet's. Run `bun run build:wasm` first.
@@ -60,13 +60,31 @@ const NATIVE: Record<string, { cc: string; flags: string[]; exe: string }> = {
 };
 const DEFAULT_NATIVE = ["linux-x86-64", "linux-x86-64-v3", "windows-x86-64", "windows-x86-64-v3"];
 
-const THIRD_PARTY_NOTICES = `Third-Party Notices for Ratchet HCE Native Builds
-=================================================
+/** every package's notices: the eval's data, in every file */
+const DATA_NOTICES = `Third-Party Notices for Ratchet HCE
+===================================
 
 Ratchet HCE itself is licensed under the GNU General Public License, version 3
-or any later version (see LICENSE). Native executables are produced by
-translating the WASI build to C via WABT's wasm2c and compiling it with the
-following third-party components:
+or any later version (see LICENSE).
+
+Data
+----
+
+The evaluation weights in every file of this package were fitted in part on
+Clockwork's v5_25knpm self-play positions.
+
+   Contains information from the Clockwork dataset (https://data.cwchess.org/),
+   which is made available here under the Open Database License (ODbL):
+   https://opendatacommons.org/licenses/odbl/
+`;
+
+/** the native builds' notices, appended when the package has native builds */
+const NATIVE_NOTICES = `
+Native builds
+-------------
+
+Native executables are produced by translating the WASI build to C via WABT's
+wasm2c and compiling it with the following third-party components:
 
 1. WABT (The WebAssembly Binary Toolkit) — wasm2c runtime
    https://github.com/WebAssembly/wabt
@@ -166,9 +184,9 @@ if (nativeTargets.length) {
     ]);
     files.push(file);
   }
-  writeFileSync(join(dir, "THIRD-PARTY-NOTICES.txt"), THIRD_PARTY_NOTICES);
-  files.push("THIRD-PARTY-NOTICES.txt");
 }
+writeFileSync(join(dir, "THIRD-PARTY-NOTICES.txt"), DATA_NOTICES + (nativeTargets.length ? NATIVE_NOTICES : ""));
+files.push("THIRD-PARTY-NOTICES.txt");
 
 // Bun executables (optional; omitted by default)
 const bunTargets = (opt("--bun") ?? "").split(",").filter(Boolean);
