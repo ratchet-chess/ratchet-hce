@@ -2,11 +2,11 @@
  * The WASI build's UCI front end: the conversation a GUI or a match runner holds
  * with the engine over stdin and stdout. It is the AssemblyScript form of
  * host/uci/main.ts and host/uci/worker.ts, and says what they say, line for
- * line, so a release plays alike behind either. At the end of input they differ:
+ * line, so the engine plays alike behind either. At the end of input they differ:
  * here a bounded search still ends with its bestmove, and host/uci quits at once.
- * bin/ratchet starts a release's WASI build when it has one, and host/uci otherwise.
+ * bin/ratchet starts an engine's WASI build when it has one, and host/uci otherwise.
  *
- * A release's `wasi.ts` fills a UciEngine with its functions and calls uciMain.
+ * An engine's `wasi.ts` fills a UciEngine with its functions and calls uciMain.
  * The search reaches this file through core/host.ts: its clock (uciClock), its
  * check for waiting input (uciPoll) and its report after each iteration
  * (uciIteration).
@@ -37,22 +37,16 @@ import {
   readInput,
 } from "./wasi";
 
-/** a release's functions, as the UCI front end calls them; host/wasm.ts Engine wraps the same exports */
+/** the engine's functions, as the UCI front end calls them; host/wasm.ts Engine wraps the same exports */
 export class UciEngine {
   /** the program's name in `id name` */
   name: string = "Ratchet";
-  /** the own engine's version, major << 16 | minor << 8 | patch; -1 for a release, which has none */
-  version: i32 = -1;
+  /** the engine's version, major << 16 | minor << 8 | patch */
+  version: i32 = 0;
   /** the depth of each search in `bench`: bench/search.ts DEPTH */
   benchDepth: i32 = 1;
   /** the table's MB in play until a setoption sets it; `bench` sets 16 */
   hashMb: i32 = 16;
-  /** whether the build reports its table's fill */
-  hasHashfull: bool = false;
-  /** whether the build keeps a record of its time use */
-  hasTimeTrace: bool = false;
-  /** whether the build takes a node limit, from `go nodes`, through setNodeLimit */
-  hasNodeLimit: bool = false;
   clear!: () => void;
   put!: (s: i32, p: i32) => void;
   setState!: (side: i32, castling: i32, ep: i32, halfmove: i32, fullmove: i32) => void;
@@ -127,10 +121,8 @@ let quiet = false;
   putInt(<i64>nodes);
   put(" nps ");
   putInt(<i64>Math.round((nodes * 1000) / Math.max(ms, 1)));
-  if (engine.hasHashfull) {
-    put(" hashfull ");
-    putInt(engine.hashfull());
-  }
+  put(" hashfull ");
+  putInt(engine.hashfull());
   put(" time ");
   putInt(<i64>Math.round(ms));
   put(" pv");
@@ -466,10 +458,9 @@ let ownMs: f64 = NaN;
 let timeRecord = false;
 
 /**
- * `go`, the cursor after it: the side to move's limits pass to the release, which
- * times itself (host/uci/worker.ts go). A node limit goes to a build that takes one;
- * any other ignores it and says so, since no original takes one. In an infinite
- * search the move waits for the GUI's stop.
+ * `go`, the cursor after it: the side to move's limits and a node limit pass to the
+ * engine, which times itself (host/uci/worker.ts go). In an infinite search the move
+ * waits for the GUI's stop.
  */
 function go(): void {
   let wtime = NaN, btime = NaN, winc = NaN, binc = NaN, movestogo = NaN, movetime = NaN, depth = NaN, nodes = NaN;
@@ -485,16 +476,12 @@ function go(): void {
     else if (tokenIs("nodes")) nodes = nextNumber();
     else if (tokenIs("infinite")) infinite = true;
   }
-  const nodeLimited = !isNaN(nodes) && engine.hasNodeLimit;
+  const nodeLimited = !isNaN(nodes);
   if (nodeLimited) engine.setNodeLimit(Math.max(0, nodes));
-  else if (!isNaN(nodes)) {
-    put("info string a release takes no node limit; this one is ignored");
-    endLine();
-  }
   stopped = false;
   const white = sideToMove == 0;
-  // unbounded in the release's own terms: it acts on its own side's clock,
-  // a movetime, a depth and a node limit it takes, and on no other limit
+  // unbounded in the engine's own terms: it acts on its own side's clock,
+  // a movetime, a depth and a node limit, and on no other limit
   unbounded = infinite || (isNaN(white ? wtime : btime) && isNaN(movetime) && isNaN(depth) && !nodeLimited);
   if (nodesTime > 0) {
     const own = white ? wtime : btime;
@@ -516,7 +503,7 @@ function go(): void {
   );
   if (infinite) waitForStop();
   if (nodesTime > 0 && !isNaN(ownMs)) ownMs = Math.max(1, ownMs - engine.nodes() / nodesTime + (isNaN(inc) ? 0 : inc));
-  if (timeRecord && engine.hasTimeTrace) timeTrace();
+  if (timeRecord) timeTrace();
   put("bestmove ");
   if (best) putMove(best);
   else put("0000");
@@ -614,14 +601,13 @@ function setOption(): void {
     }
   }
   if (nameIs("hash") && !isNaN(value)) engine.setHash(<i32>value);
-  if (nameIs("timerecord") && engine.hasTimeTrace) timeRecord = valueTrue;
+  if (nameIs("timerecord")) timeRecord = valueTrue;
 }
 
 function idName(): void {
   put("id name ");
   put(engine.name);
   const v = engine.version;
-  if (v < 0) return;
   putByte(32);
   putInt(v >> 16);
   putByte(46);
@@ -645,10 +631,8 @@ function command(from: i32, to: i32): void {
     endLine();
     put("option name Threads type spin default 1 min 1 max 1");
     endLine();
-    if (engine.hasTimeTrace) {
-      put("option name TimeRecord type check default false");
-      endLine();
-    }
+    put("option name TimeRecord type check default false");
+    endLine();
     put("uciok");
     endLine();
   } else if (tokenIs("isready")) {

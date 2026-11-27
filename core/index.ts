@@ -9,8 +9,6 @@ import { generateMoves } from "./movegen";
 import { MAX_MOVES, MAX_PLY } from "./constants";
 import {
   addPiece,
-  attackedWith,
-  bb,
   board,
   castling,
   clear,
@@ -77,11 +75,6 @@ export function inCheckNow(): bool {
 
 export function rootMove(i: i32): i32 {
   return rootMoves[i];
-}
-
-/** true if color `by` attacks square `s` in the current position */
-export function attacked(s: i32, by: i32): bool {
-  return attackedWith(s, by, bb[0] | bb[8]);
 }
 
 function perftRec(depth: i32, bulk: bool): u64 {

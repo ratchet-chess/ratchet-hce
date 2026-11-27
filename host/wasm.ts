@@ -17,8 +17,6 @@ interface Exports {
   rootMove(i: number): number;
   perft(depth: number, bulk: number): number;
   checkedWalk(depth: number): number;
-  /** build/core.wasm only */
-  attacked?(s: number, by: number): number;
   /** build/core.wasm only: the neutral resolver and the position read back */
   resolveQuiet?(): number;
   pieceAt?(s: number): number;
@@ -392,12 +390,6 @@ export class Engine {
   resolveQuiet(): number {
     if (!this.wasm.resolveQuiet) throw new Error("this build has no resolver: load the core");
     return this.wasm.resolveQuiet();
-  }
-
-  /** whether color `by` (0 White) attacks square `s` in the current position; build/core.wasm only */
-  attacked(s: number, by: number): boolean {
-    if (!this.wasm.attacked) throw new Error("this build has no attack test: load the core");
-    return this.wasm.attacked(s, by) !== 0;
   }
 
   /** incremental-state mismatches found walking the current position's tree to `depth` */
