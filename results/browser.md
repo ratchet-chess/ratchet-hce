@@ -17,8 +17,8 @@ searches.
 
 | browser | isolated | SIMD | relaxed SIMD | threads | tail calls | memory64 | largest memory, MB | clock step, us | commit | date |
 |---|---|---|---|---|---|---|---|---|---|---|
-| chrome 156.0.0.0 | yes | yes | yes | yes | yes | yes | 3840 | 5 | fc42091 | 2026-11-26 |
-| firefox 159.0 | yes | yes | yes | yes | yes | yes | 3840 | 20 | fc42091 | 2026-11-26 |
+| chrome 156.0.0.0 | yes | yes | yes | yes | yes | yes | 3840 | 5 | 958d6c0 | 2026-11-27 |
+| firefox 159.0 | yes | yes | yes | yes | yes | yes | 3840 | 20 | 958d6c0 | 2026-11-27 |
 
 | engine | runtime | passes | hash, MB | depth | node signature | knodes/s | range | cold knodes/s | first searches, cold over warm | protocol | commit | date |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -46,3 +46,7 @@ searches.
 | RatchetHCE 0.3.16 | firefox 159.0 | kept | 128 | 18 | 36168297 | 1422 | 1420 to 1425 | 1421 | 1.01 | one game's 60 positions for White, UCI over WASI, go depth 18, repeat 2, rounds 2 | fc42091 | 2026-11-26 |
 | RatchetHCE 0.3.16 | node 24.21.0 | kept | 16 | 18 | 40647367 | 1458 | 1452 to 1465 | 1454 | 1.01 | one game's 60 positions for White, UCI over WASI, go depth 18, repeat 2, rounds 2 | fc42091 | 2026-11-26 |
 | RatchetHCE 0.3.16 | node 24.21.0 | kept | 128 | 18 | 36168297 | 1444 | 1439 to 1449 | 1444 | 1 | one game's 60 positions for White, UCI over WASI, go depth 18, repeat 2, rounds 2 | fc42091 | 2026-11-26 |
+| RatchetHCE 0.4.0 | bun 1.4.2 | bench | default |  | 15048273 | 1445 | 1442 to 1447 | 1437 |  | UCI over WASI, bench `bench`, repeat 3, rounds 2 | 958d6c0 | 2026-11-27 |
+| RatchetHCE 0.4.0 | chrome 156.0.0.0 | bench | default |  | 15048273 | 1446 | 1443 to 1449 | 1434 |  | UCI over WASI, bench `bench`, repeat 3, rounds 2 | 958d6c0 | 2026-11-27 |
+| RatchetHCE 0.4.0 | firefox 159.0 | bench | default |  | 15048273 | 1414 | 1413 to 1416 | 1387 |  | UCI over WASI, bench `bench`, repeat 3, rounds 2 | 958d6c0 | 2026-11-27 |
+| RatchetHCE 0.4.0 | node 24.21.0 | bench | default |  | 15048273 | 1441 | 1438 to 1444 | 1441 |  | UCI over WASI, bench `bench`, repeat 3, rounds 2 | 958d6c0 | 2026-11-27 |
