@@ -1,9 +1,9 @@
 /**
  * Datasets: labeled positions, independent of any subject. A set from the
- * allow-list (sets.json, the sets whose terms are open: decision
- * licensed-sets-only) is read by its format's reader, merged where a position
- * repeats, split into training and validation by a hash of the position, and packed
- * into one file that every later step reads.
+ * allow-list (sets.json, restricting datasets to sets with open license terms)
+ * is read by its format's reader, merged where a position repeats, split into
+ * training and validation by a hash of the position, and packed into one file
+ * that every later step reads.
  *
  * Packed file: "TXDS", a u32 header length, a JSON header, zero padding to 8 bytes,
  * then 48-byte records, little-endian:
@@ -24,8 +24,7 @@ import { closeSync, createReadStream, openSync, readFileSync, readSync, writeFil
 import { createInterface } from "node:readline";
 import { createGunzip } from "node:zlib";
 import { formatFen, parseFen } from "../../host/fen.ts";
-import type { Engine } from "../../host/wasm.ts";
-import { moveToUci } from "../../host/wasm.ts";
+import { type Engine, moveToUci } from "../../host/wasm.ts";
 import { applyUci, parseGames } from "../pgn.ts";
 
 export interface Position {
@@ -166,11 +165,10 @@ async function* readPgn(
   const gamePermille = Number(options.gamePermille ?? 1000);
   const quiet = Number(options.quiet ?? 0) !== 0;
   const maxCp = Number(options.maxCp ?? 2500);
-  const wasm = (core as unknown as { wasm: { playMove(m: number): void } }).wasm;
   const play = (uci: string) => {
     const m = core.legalMoves().find((x) => moveToUci(x) === uci);
     if (m === undefined) throw new Error(`illegal move ${uci}`);
-    wasm.playMove(m);
+    core.playMove(m);
   };
   let shownFen = "";
   let shownMoves: string[] | null = null;

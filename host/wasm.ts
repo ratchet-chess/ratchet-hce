@@ -157,8 +157,8 @@ export class Engine {
     // an AssemblyScript string: UTF-16 at `ptr`, its byte length in the word before it
     const text = (ptr: number) => {
       if (!ptr || !state.memory) return "";
-      const bytes = new DataView(state.memory.buffer).getUint32(ptr - 4, true);
-      return String.fromCharCode(...new Uint16Array(state.memory.buffer, ptr, bytes >>> 1));
+      const byteLen = new DataView(state.memory.buffer).getUint32(ptr - 4, true);
+      return String.fromCharCode(...new Uint16Array(state.memory.buffer, ptr, byteLen >>> 1));
     };
     const { instance } = await WebAssembly.instantiate(bytes, {
       env: {
@@ -202,6 +202,11 @@ export class Engine {
     w.clear();
     for (let s = 0; s < 64; s++) if (board[s]) w.put(s, board[s]);
     w.setState(side, castling, ep, halfmove, fullmove);
+  }
+
+  /** applies a legal encoded move to the position and makes the result the new root */
+  playMove(m: number): void {
+    this.wasm.playMove(m);
   }
 
   legalMoves(): number[] {

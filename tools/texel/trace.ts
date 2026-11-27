@@ -1,7 +1,7 @@
 /**
  * The probed trace: for every position, the eval as a linear function of the free
- * elements, measured through an adapter with no code in the subject (decision
- * texel-trace-probed).
+ * elements, measured by probing through an adapter so the subject needs no trace
+ * code of its own.
  *
  * Each free element is set to its default + Δ and − Δ, every position scored each
  * time. Where the second difference |s+ − 2·s0 + s−| is within `tol` centipawns
@@ -96,9 +96,10 @@ export async function probe(
         await adapter.set(e.id, v);
         return await adapter.eval();
       } catch (err) {
-        throw new Error(
-          `${e.name} = ${v} stopped the subject: ${(err as Error).message}; give the element bounds in the map`,
-        );
+        const msg = err instanceof Error ? err.message : String(err);
+        throw new Error(`${e.name} = ${v} stopped the subject: ${msg}; give the element bounds in the map`, {
+          cause: err,
+        });
       }
     };
     const plus = await at(e.default + delta);

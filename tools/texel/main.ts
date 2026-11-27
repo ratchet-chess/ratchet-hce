@@ -23,10 +23,10 @@
  *                                                           validation share, repeats merged as in dataset
  *   bun tools/texel/main.ts info <dataset.bin>              a dataset's header and label counts
  * eval, trace and tune take this host's cores, so each runs under a batch allocation
- * of the CPU manager's queue (ratchet-bench's tools/queue.ts alloc, decision
- * batch-hold): it starts once no wall-clock match plays here, and none starts beside
- * it. An allocation waits behind the jobs queued before it; QUEUE_PRIORITY above 0
- * puts it ahead, which needs the user's word or the CPU owner's.
+ * of the CPU manager's queue (ratchet-bench's tools/queue.ts alloc): it starts once
+ * no wall-clock match plays here, and none starts beside it. An allocation waits
+ * behind the jobs queued before it; QUEUE_PRIORITY above 0 puts it ahead, which
+ * needs the user's word or the CPU owner's.
  *
  * eval, trace and tune take --adapter wasm (default; --workers <n>) or uci
  * (--processes <n>, default 8; the map's uci section, uci.ts).
@@ -192,9 +192,11 @@ async function ensureTrace(
   return t;
 }
 
-if (step === "map" || step === "build" || step === "write") {
+// ------------------------------------------------------------------ commands
+
+function cmdMapOrWrite(kind: "map" | "build" | "write"): void {
   const m = loadMap(positional ?? die(usage));
-  if (step === "map") {
+  if (kind === "map") {
     for (const e of m.elements) {
       const slots = e.slots
         .map((s) => {
@@ -212,7 +214,7 @@ if (step === "map" || step === "build" || step === "write") {
     console.log(
       `${m.map.subject}: ${m.elements.length} elements, ${free} free, eval ${m.map.eval.form}${depth}, hash ${m.hash}`,
     );
-  } else if (step === "build") {
+  } else if (kind === "build") {
     console.log(buildTuning(m));
   } else {
     const valuesPath = opt("--values");
@@ -220,7 +222,9 @@ if (step === "map" || step === "build" || step === "write") {
     if (!rest.includes("--in-place")) die(usage);
     console.log(writeInPlace(m, values).join("\n"));
   }
-} else if (step === "dataset") {
+}
+
+async function cmdDataset(): Promise<void> {
   let set: SetEntry;
   let files: string[];
   const pgns = rest.flatMap((a, i) => (a === "--pgn" ? [rest[i + 1]] : []));
@@ -315,7 +319,9 @@ if (step === "map" || step === "build" || step === "write") {
     positions,
   );
   console.log(`${out}: ${read.length} read, ${merged} merged away, ${positions.length} kept`);
-} else if (step === "resolve") {
+}
+
+async function cmdResolve(): Promise<void> {
   const path = positional ?? die(usage);
   const { header, positions } = readDataset(path);
   if (header.resolver !== "none") die(`${path} is already resolved`);
@@ -333,7 +339,9 @@ if (step === "map" || step === "build" || step === "write") {
     resolved,
   );
   console.log(`${out}: ${JSON.stringify(counts)}`);
-} else if (step === "join") {
+}
+
+function cmdJoin(): void {
   const name = opt("--name") ?? die(usage);
   const paths = rest.filter((a, i) => !a.startsWith("--") && rest[i - 1] !== "--name");
   if (paths.length < 2) die(usage);
@@ -376,7 +384,9 @@ if (step === "map" || step === "build" || step === "write") {
   );
   const summary = parts.map((p) => `${p.header.name} ${p.positions.length}`).join(" + ");
   console.log(`${out}: ${summary}, ${merged} merged away, ${positions.length} kept`);
-} else if (step === "info") {
+}
+
+function cmdInfo(): void {
   const { header, positions } = readDataset(positional ?? die(usage));
   const results = new Map<number, number>();
   for (const p of positions) results.set(p.result, (results.get(p.result) ?? 0) + 1);
@@ -390,7 +400,9 @@ if (step === "map" || step === "build" || step === "write") {
   const scored = positions.filter((p) => !Number.isNaN(p.score)).length;
   const valid = positions.filter((p) => p.valid).length;
   console.log(`scores: ${scored}; validation: ${valid}`);
-} else if (step === "eval") {
+}
+
+async function cmdEval(): Promise<void> {
   const m = loadMap(positional ?? die(usage));
   const { header, records } = readDatasetRaw(rest[1] ?? die(usage));
   const count = Math.min(header.count, Number(opt("--limit") ?? header.count));
@@ -405,7 +417,9 @@ if (step === "map" || step === "build" || step === "write") {
     `${count} positions, ${count - usable.length} unusable, mean |score| ${mean.toFixed(1)} cp,` +
       ` ${Math.round(ms)} ms, ${Math.round((count / ms) * 1000)} positions/s`,
   );
-} else if (step === "trace" || step === "tune") {
+}
+
+async function cmdTraceOrTune(kind: "trace" | "tune"): Promise<void> {
   const m = loadMap(positional ?? die(usage));
   const dsPath = rest[1] ?? die(usage);
   const raw = readDatasetRaw(dsPath);
@@ -419,7 +433,7 @@ if (step === "map" || step === "build" || step === "write") {
   const deltaFactor = Number(opt("--delta") ?? 4);
   const tol = Number(opt("--tol") ?? 2);
   const adapter = await openAdapter(m, records, count);
-  if (step === "trace") {
+  if (kind === "trace") {
     await ensureTrace(m, dsPath, header.name, count, subset, adapter, deltaFactor, tol);
   } else {
     const optimizer = opt("--optimizer") ?? die(usage);
@@ -556,10 +570,10 @@ if (step === "map" || step === "build" || step === "write") {
       protocol:
         `${header.name}${sample !== undefined ? `, sample ${sample}‰` : ""}` +
         `${limit !== undefined ? `, first ${count}` : ""}; ` +
-        `${givenK !== undefined ? "K held; " : ""}` +
-        `${holdPrefixes.length ? `hold ${holdPrefixes.join(",")}; ` : ""}` +
-        `${protocol}` +
-        `${trace ? `; trace Δ ×${deltaFactor}, tol ${tol} cp; touched ≥ ${minTouch}` : ""}`,
+        (givenK !== undefined ? "K held; " : "") +
+        (holdPrefixes.length ? `hold ${holdPrefixes.join(",")}; ` : "") +
+        protocol +
+        (trace ? `; trace Δ ×${deltaFactor}, tol ${tol} cp; touched ≥ ${minTouch}` : ""),
       values,
     };
     const linearNote = linear
@@ -582,6 +596,35 @@ if (step === "map" || step === "build" || step === "write") {
     if (r.status !== 0) console.error(`results.ts tuning failed: ${r.stderr}`);
   }
   await adapter.close();
-} else {
-  die(usage);
+}
+
+// ------------------------------------------------------------------ dispatch
+
+switch (step) {
+  case "map":
+  case "build":
+  case "write":
+    cmdMapOrWrite(step);
+    break;
+  case "dataset":
+    await cmdDataset();
+    break;
+  case "resolve":
+    await cmdResolve();
+    break;
+  case "join":
+    cmdJoin();
+    break;
+  case "info":
+    cmdInfo();
+    break;
+  case "eval":
+    await cmdEval();
+    break;
+  case "trace":
+  case "tune":
+    await cmdTraceOrTune(step);
+    break;
+  default:
+    die(usage);
 }

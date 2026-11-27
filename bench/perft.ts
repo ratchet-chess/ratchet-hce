@@ -10,6 +10,7 @@
  */
 import { ENGINES } from "../test/boards/engines.ts";
 import { PERFT_SUITE, type PerftMode } from "../test/boards/suite.ts";
+import { runtime } from "./common.ts";
 import { WORKLOAD } from "./workload.ts";
 
 const args = process.argv.slice(2);
@@ -17,13 +18,6 @@ const opt = (name: string) => (args.includes(name) ? args[args.indexOf(name) + 1
 const filter = opt("--engine");
 const modes: PerftMode[] = opt("--mode") ? [opt("--mode") as PerftMode] : ["make", "bulk"];
 const verbose = args.includes("--verbose");
-
-function runtime(): string {
-  const g = globalThis as { Bun?: { version: string }; Deno?: { version: { deno: string } } };
-  if (g.Bun) return `bun ${g.Bun.version}`;
-  if (g.Deno) return `deno ${g.Deno.version.deno}`;
-  return `node ${process.versions.node}`;
-}
 
 console.log(runtime());
 

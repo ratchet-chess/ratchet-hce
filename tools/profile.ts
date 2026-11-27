@@ -133,7 +133,8 @@ if (import.meta.main) {
       writeFileSync(part, profile(join(out, "prof"), engine, repeat).join("\n") + "\n");
       renameSync(part, join(out, `setup-${host}.txt`));
     } catch (e) {
-      writeFileSync(join(out, `setup-${host}.err`), `${(e as Error).message}\n`);
+      const msg = e instanceof Error ? e.message : String(e);
+      writeFileSync(join(out, `setup-${host}.err`), `${msg}\n`);
       process.exit(1);
     }
     process.exit(0);

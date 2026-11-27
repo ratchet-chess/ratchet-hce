@@ -1,5 +1,5 @@
 /**
- * The optimizer: Texel's loss and the two ways down it (decision texel-local-search).
+ * The optimizer: Texel's loss and two ways down it (full-batch Adam and local search).
  *
  * Loss: the mean of (result − σ(score))² over positions with a result label, where
  * σ(s) = 1 / (1 + 10^(−K·s/400)), s in centipawns from White's view and the result

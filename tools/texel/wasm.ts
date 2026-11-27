@@ -16,7 +16,7 @@ import type { WorkerRequest } from "./wasm-worker.ts";
 
 export class WasmAdapter implements Adapter {
   count = 0;
-  private scores: Float64Array<ArrayBufferLike> = new Float64Array(0);
+  private scores: Float64Array = new Float64Array(0);
   private readonly workers: Worker[];
 
   private constructor(workers: Worker[]) {

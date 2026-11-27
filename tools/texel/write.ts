@@ -26,7 +26,7 @@ function engineFiles(m: LoadedMap): Map<string, string> {
   if (!m.engineDir) throw new Error(`${m.path}: the writer needs the map's "engine"`);
   const files = new Map<string, string>();
   for (const f of readdirSync(m.engineDir)
-    .filter((f) => f.endsWith(".ts"))
+    .filter((name) => name.endsWith(".ts"))
     .sort())
     files.set(f, readFileSync(join(m.engineDir, f), "utf8"));
   return files;

@@ -27,15 +27,9 @@ import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 import { type Adapter, whiteScore } from "./adapter.ts";
 import { blankPosition, decodeRecord, fenOf } from "./dataset.ts";
-import type { LoadedMap } from "./map.ts";
+import type { LoadedMap, UciSection } from "./map.ts";
 
-export interface UciSection {
-  command: string[];
-  options?: Record<string, string | number>;
-  eval:
-    | { form: "search"; depth: number }
-    | { form: "command"; command: string; pattern: string; view?: "side" | "white"; scale?: number };
-}
+export type { UciSection };
 
 const REPO = new URL("../../", import.meta.url).pathname;
 const BATCH = 64;
@@ -95,7 +89,7 @@ class UciProcess {
 
 export class UciAdapter implements Adapter {
   count = 0;
-  private records: Uint8Array<ArrayBufferLike> = new Uint8Array(0);
+  private records: Uint8Array = new Uint8Array(0);
   private readonly engines: UciProcess[];
   private readonly section: UciSection;
   private readonly optionName: string[];
@@ -104,14 +98,14 @@ export class UciAdapter implements Adapter {
   private constructor(engines: UciProcess[], section: UciSection, m: LoadedMap) {
     this.engines = engines;
     this.section = section;
-    const blocks = new Map(m.map.blocks.map((b) => [b.name, b as { uci?: string }]));
+    const blocks = new Map(m.map.blocks.map((b) => [b.name, b]));
     this.optionName = m.elements.map((e) => blocks.get(e.block)?.uci?.replace("{i}", String(e.indices[0])) ?? e.name);
     this.defaults = m.elements.map((e) => e.default);
   }
 
   /** starts `processes` engines from the map's uci section; `subst` fills {build} and {tunables} */
   static async open(m: LoadedMap, processes: number, subst: Record<string, string> = {}): Promise<UciAdapter> {
-    const section = (m.map as { uci?: UciSection }).uci;
+    const section = m.map.uci;
     if (!section) throw new Error(`${m.path} has no uci section`);
     const argv = section.command.map((a) => a.replace(/\{(\w+)\}/g, (w: string, k: string) => subst[k] ?? w));
     const engines = Array.from({ length: processes }, () => new UciProcess(argv));

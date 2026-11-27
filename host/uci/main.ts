@@ -137,15 +137,20 @@ for await (const raw of rl) {
       send({ cmd: "newgame" });
       break;
     case "setoption": {
+      const nameStart = tokens.indexOf("name");
+      if (nameStart < 0) break;
+      const valueIndex = tokens.indexOf("value", nameStart + 1);
       const name = tokens
-        .slice(tokens.indexOf("name") + 1, tokens.indexOf("value"))
+        .slice(nameStart + 1, valueIndex >= 0 ? valueIndex : tokens.length)
         .join(" ")
         .toLowerCase();
-      const value = tokens[tokens.indexOf("value") + 1];
-      if (name === "hash") send({ cmd: "hash", mb: Number(value) });
+      const value = valueIndex >= 0 ? tokens[valueIndex + 1] : undefined;
+      if (value === undefined) break;
+      const num = Number(value);
+      if (name === "hash" && !Number.isNaN(num)) send({ cmd: "hash", mb: num });
       if (name === "timerecord" && timeRecord) send({ cmd: "timerecord", on: value === "true" });
       const t = tunables.find((x) => x.name.toLowerCase() === name);
-      if (t) send({ cmd: "tune", id: t.id, value: Number(value) });
+      if (t && !Number.isNaN(num)) send({ cmd: "tune", id: t.id, value: num });
       break;
     }
     case "position":

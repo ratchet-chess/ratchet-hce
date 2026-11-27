@@ -23,8 +23,8 @@ const { wasm, form, depth, defaults, index, workers } = workerData as {
 };
 
 const engine = await Engine.load(wasm);
-let records: Uint8Array<ArrayBufferLike> = new Uint8Array(0);
-let scores: Float64Array<ArrayBufferLike> = new Float64Array(0);
+let records: Uint8Array = new Uint8Array(0);
+let scores: Float64Array = new Float64Array(0);
 let count = 0;
 const p = blankPosition();
 

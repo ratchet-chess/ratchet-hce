@@ -16,6 +16,7 @@
  * its fd or clock id at 16, a clock's timeout at 24; an event is 32 bytes, its
  * error at 8, its type at 10, a read's byte count at 16 and its flags at 24.
  */
+#include <errno.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,7 +79,11 @@ static long readChunk(unsigned char *chunk, unsigned long cap) {
     Sleep(1);
   }
 #else
-  return (long)read(0, chunk, cap);
+  for (;;) {
+    ssize_t got = read(0, chunk, cap);
+    if (got < 0 && errno == EINTR) continue;
+    return (long)got;
+  }
 #endif
 }
 
@@ -246,7 +251,10 @@ int main(int argc, char **argv) {
   argCount = argc;
   argValues = argv;
   pthread_t reader;
-  pthread_create(&reader, NULL, readStdin, NULL);
+  if (pthread_create(&reader, NULL, readStdin, NULL) != 0) {
+    fprintf(stderr, "error: failed to start stdin reader thread\n");
+    return 1;
+  }
   pthread_detach(reader);
   wasm_rt_init();
   struct w2c_wasi__snapshot__preview1 wasi = {0};

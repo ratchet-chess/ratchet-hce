@@ -61,6 +61,16 @@ export interface Block {
    * and the window gate's plain configuration (test/window.ts) sets it either way
    */
   off?: number;
+  /** UCI option name pattern for the UCI adapter, with {i} for the element's first index */
+  uci?: string;
+}
+
+export interface UciSection {
+  command: string[];
+  options?: Record<string, string | number>;
+  eval:
+    | { form: "search"; depth: number }
+    | { form: "command"; command: string; pattern: string; view?: "side" | "white"; scale?: number };
 }
 
 export interface EvalForm {
@@ -78,6 +88,8 @@ export interface ParameterMap {
   /** a function in the engine's index.ts scope that the tuning build calls after each set */
   refresh?: string;
   defaults?: { type?: string; step?: number };
+  /** UCI command, options and eval configuration for the UCI adapter */
+  uci?: UciSection;
   blocks: Block[];
 }
 
