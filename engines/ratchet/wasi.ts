@@ -9,11 +9,13 @@
  */
 import { UciEngine, uciMain } from "../../core/uci";
 import {
-  clear, evaluate, go, goClock, hashfull, init, legalMoves, newGame, nodesSearched, playMove, put, pvLength, pvMove, rootMove, setHash, setNodeLimit, setState,
+  clear, evaluate, go, goClock, hashfull, initNoTable, legalMoves, newGame, nodesSearched, playMove, put, pvLength, pvMove, rootMove, setHash, setNodeLimit, setState,
   timeTrace, version,
 } from "./index";
 
-init();
+// Allocate UciEngine before any TT allocation so the transposition table stays at the top of the stub heap
+// and setHash() can reclaim it without leaking an initial 16 MB block.
+initNoTable();
 const e = new UciEngine();
 e.name = "RatchetHCE";
 e.version = version();

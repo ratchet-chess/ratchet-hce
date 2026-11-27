@@ -727,6 +727,7 @@ export function uciMain(e: UciEngine): void {
       if (!(nodesTime >= 0)) fail("--nodestime needs nodes per millisecond");
     } else if (argIs(i, "bench")) {
       const d = i + 1 < argc ? argNumber(i + 1) : -1;
+      e.setHash(16);
       bench(d > 0 ? <i32>d : e.benchDepth);
       exit(0);
     }

@@ -37,13 +37,20 @@ const VERSION = (0 << 16) | (3 << 8) | 16;
 /** the table init allocates: a fresh search's, so bench and the node signature run at it; play's default is wasi.ts's */
 const HASH_MB = 16;
 
-export function init(): void {
+export function initNoTable(): void {
   initCore();
   initCycle();
   initEval();
   initSearch();
+  clearHistory();
+  clearCorrection();
+  clearPawns();
+  clearEvalCache();
+}
+
+export function init(): void {
+  initNoTable();
   ttAlloc(HASH_MB);
-  clearTables();
 }
 
 /** empties every table a search fills: the TT, the histories, the correction history, the king-pawn table and the eval cache */

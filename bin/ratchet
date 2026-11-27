@@ -9,8 +9,11 @@
 # without a WASI build, a release at a --level, and a tuning build, which --release names by its path and
 # --tunables by its options file.
 dir=$(dirname "$(readlink -f "$0")")/..
-runtime=${1:-bun}
-[ $# -gt 0 ] && shift
+case "${1:-}" in
+  node | bun | deno) runtime=$1; shift ;;
+  '' | -*) runtime=bun ;;
+  *) echo "unknown runtime: $1" >&2; exit 2 ;;
+esac
 release='' prev='' front=wasi
 for a in "$@"; do
   [ "$prev" = --release ] && release=$a
