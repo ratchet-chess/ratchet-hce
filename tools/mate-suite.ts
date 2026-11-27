@@ -1,6 +1,7 @@
 /**
  * The conversion suite: won basic endings the engine must mate from, and the
- * score of a suite run. Used by ratchet-bench's tools/mate-suite.sh.
+ * score of a suite run. test/window.ts reads its positions for the mate band;
+ * ratchet-bench's tools/mate-suite.sh runs its own copy.
  *
  *   bun tools/mate-suite.ts positions <per-ending>   EPD on stdout
  *   bun tools/mate-suite.ts score <pgn> <engine>     mate rate per ending

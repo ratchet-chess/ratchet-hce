@@ -120,7 +120,7 @@ export interface TimeTrace {
   veto: number;
 }
 
-/** Called after each finished iteration with its score and the nodes so far; a report only. */
+/** Called after each iteration whose line is kept, finished or cut, with its score and nodes so far; a report only. */
 export type OnIteration = (depth: number, score: number, nodes: number) => number;
 
 /** The clock a clocked release reads, in milliseconds; `nodes` is its count in this search. */
@@ -298,7 +298,7 @@ export class Engine {
     this.search.setHash(mb);
   }
 
-  /** empties the transposition table */
+  /** empties every table a search fills */
   newGame(): void {
     this.search.newGame();
   }

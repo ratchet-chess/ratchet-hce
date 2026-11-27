@@ -10,11 +10,15 @@
  *   bun tools/texel/main.ts write <map.json> --in-place --values <values.json>
  *                                                           the own engine's values, written into its own files
  *   bun tools/texel/main.ts dataset --set <name> [--valid <permille>] [--limit <n>]
- *                                                           tmp/texel/datasets/<set>.bin
+ *                                                           tmp/texel/datasets/<set>[-<limit>].bin
  *   bun tools/texel/main.ts dataset --pgn <file> --name <name> [--opt <key>=<value> ...]
  *       [--valid <permille>] [--limit <n>]
  *                                                           the same from games Ratchet played itself, such
  *                                                           as self-play (pgn reader options, dataset.ts)
+ *   bun tools/texel/main.ts dataset --file <path> --format <format> --license <text> --name <name> [--url <url>]
+ *       [--opt <key>=<value> ...] [--valid <permille>] [--limit <n>]
+ *                                                           the same from a local file in one reader's format,
+ *                                                           under the license it states
  *   bun tools/texel/main.ts resolve <dataset.bin>           <set>.resolved.bin, by the neutral resolver
  *   bun tools/texel/main.ts join <a.bin> <b.bin>... --name <name>
  *                                                           one dataset from several of one resolver and
@@ -36,7 +40,8 @@
  *                                                           the probed trace, tmp/texel/traces/; reused when present
  *   bun tools/texel/main.ts tune <map.json> <dataset.bin> --optimizer adam|local [--over trace|adapter]
  *       [--workers <n>] [--sample <permille>] [--limit <n>] [--delta <factor>] [--tol <cp>] [--min-touch <n>]
- *       [--alpha <a>] [--epochs <n>] [--patience <n>] [--passes <n>] [--grow <steps>] [--from <values.json>] [--k <K>]
+ *       [--alpha <a>] [--epochs <n>] [--patience <n>] [--cosine] [--l2 <x>] [--score-weight <w>]
+ *       [--passes <n>] [--grow <steps>] [--from <values.json>] [--k <K>] [--hold <prefixes>]
  *                                                           a run: K, the optimizer, the rounded values verified
  *                                                           through the adapter; tmp/texel/runs/ and results/tuning.md.
  *                                                           local saves its values after every pass, so a stopped
@@ -48,9 +53,10 @@
  * --sample keeps an even share of a dataset's positions, chosen by a hash of each
  * record; --limit then takes the first n of those.
  *
- * values.json maps element names, as `map` prints them, to values.
+ * values.json maps element names, as `map` prints them, to values. --hold holds the
+ * elements whose names start with one of its comma-separated prefixes.
  *
- * `dataset` reads only sets in tools/texel/sets.json, the allow-list of sets with
+ * `dataset --set` reads only sets in tools/texel/sets.json, the allow-list of sets with
  * open terms. Their downloads are in the workspace volume, so it runs there:
  *
  *   bun <BENCH>/tools/ws.ts fetch <url> <sha256>          once per set, as sets.json pins it

@@ -7,7 +7,7 @@
  * It also checks engines/ratchet/FEATURES.md against the comments. A comment names the features it implements as
  * "Feature: Delta_Pruning." or "Features: A, B.", each a CPW page name or "Page#Section". FEATURES.md has one
  * section per feature: a "Used in" line this tool writes from those keys, and dated implementations, each of which
- * cites an engine and revision of SOURCES.md, or a publication in italics. Run by hand; not part of CI.
+ * cites an engine and revision of SOURCES.md, or a publication in italics. CI runs it after the gates.
  *
  *   bun tools/citations.ts            one line per finding, as file:line; exits 1 if any
  *   bun tools/citations.ts --census   also every engine and revision cited, with its count

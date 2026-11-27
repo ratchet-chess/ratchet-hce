@@ -4,8 +4,8 @@
  * result is a native UCI engine with no runtime.
  *
  *   wasm2c build/wasi/ratchet.wasm -n engine -o engine.c
- *   cc -O3 -I<wabt include> -I. engine.c host/wasi/native.c <wabt>/wasm-rt-impl.c <wabt>/wasm-rt-mem-impl.c \
- *     <wabt>/wasm-rt-exceptions-impl.c -lpthread -lm
+ *   cc -O3 -I<wabt include> -I<simde include> -I. engine.c host/wasi/native.c <wabt>/wasm-rt-impl.c \
+ *     <wabt>/wasm-rt-mem-impl.c <wabt>/wasm-rt-exceptions-impl.c -lpthread -lm
  *
  * tools/package.ts runs these steps. As in vendor/uci-over-wasi/wasi.ts, a reader thread
  * moves stdin into a buffer, and the engine's poll_oneoff reads that buffer

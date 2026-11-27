@@ -94,7 +94,7 @@ export function writeVariant(m: LoadedMap, name: string, values: Record<string, 
 
 /**
  * Writes `values` into the subject's own files, for the own engine, whose tuned
- * values are committed in place (AGENTS.md § Own engine). Refuses a release: one
+ * values are committed in place (AGENTS.md § Tuning). Refuses a release: one
  * with a fidelity reference stays untouched. Returns the files changed.
  */
 export function writeInPlace(m: LoadedMap, values: Record<string, number>): string[] {

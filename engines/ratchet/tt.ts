@@ -6,7 +6,7 @@
  *
  * Entry (8 bytes): move u16 | score i16 | raw eval i16 | depth u8 | flags u8,
  * flags = bound (2 bits) | PV (1 bit) << 2 | generation (5 bits) << 3. Bound 0 is
- * an empty slot. The move keeps the core's low 15 bits, and the probe restores its
+ * never stored. The move keeps the core's low 15 bits, and ttMoveOf restores its
  * flags from the board. qsearch stores at depth 0.
  *
  * Features: Transposition_Table, Transposition_Table#Bucket_Systems, Transposition_Table#Aging.
@@ -127,8 +127,8 @@ export function ttProbe(key: u64): bool {
 /**
  * Stores a search result. The slot is the key's own, else an empty slot, else the one with the
  * least depth less 8 per generation of age (Stockfish 9dbb3ae8 TranspositionTable::probe). A result for the
- * same key that is not exact and is more than 2 plies shallower is dropped, and a
- * store without a move keeps the old one (Ethereal 0e47e9b tt_store).
+ * same key that is not exact and is more than 2 plies shallower than an entry of this search is dropped
+ * (TT_AGE_STORE), and a store without a move keeps the old one (Ethereal 0e47e9b tt_store).
  * Features: Transposition_Table#Bucket_Systems, Transposition_Table#Aging, Transposition_Table#Depth-Preferred.
  */
 export function ttStore(key: u64, move: i32, score: i32, rawEval: i32, depth: i32, bound: i32, pv: bool): void {

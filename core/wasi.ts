@@ -184,7 +184,7 @@ const ARGBUF = memory.data(ARGS_CAP);
 /** the number of command-line arguments, the program's name included */
 export let argc = 0;
 
-/** reads the command line; arguments beyond the buffers are dropped */
+/** reads the command line; one of more than 64 arguments or ARGS_CAP bytes is dropped whole */
 export function readArgs(): void {
   if (args_sizes_get(io, io + 4) != 0) return;
   const n = load<u32>(io);

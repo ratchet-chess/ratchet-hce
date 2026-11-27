@@ -2,8 +2,9 @@
  * The WASI build's UCI front end: the conversation a GUI or a match runner holds
  * with the engine over stdin and stdout. It is the AssemblyScript form of
  * host/uci/main.ts and host/uci/worker.ts, and says what they say, line for
- * line, so a release plays alike behind either. bin/ratchet starts a release's
- * WASI build when it has one, and host/uci otherwise.
+ * line, so a release plays alike behind either. At the end of input they differ:
+ * here a bounded search still ends with its bestmove, and host/uci quits at once.
+ * bin/ratchet starts a release's WASI build when it has one, and host/uci otherwise.
  *
  * A release's `wasi.ts` fills a UciEngine with its functions and calls uciMain.
  * The search reaches this file through core/host.ts: its clock (uciClock), its
@@ -44,7 +45,7 @@ export class UciEngine {
   version: i32 = -1;
   /** the depth of each search in `bench`: bench/search.ts DEPTH */
   benchDepth: i32 = 1;
-  /** the table's MB in play until a setoption sets it; `bench` keeps the size the release's init gave */
+  /** the table's MB in play until a setoption sets it; `bench` sets 16 */
   hashMb: i32 = 16;
   /** whether the build reports its table's fill */
   hasHashfull: bool = false;
@@ -741,7 +742,7 @@ function bench(depth: i32): void {
   endLine();
 }
 
-/** runs the UCI conversation until quit or the end of input; the release has run its init */
+/** runs the UCI conversation until quit or the end of input; the engine has run its init, and this sizes the table */
 export function uciMain(e: UciEngine): void {
   engine = e;
   readArgs();

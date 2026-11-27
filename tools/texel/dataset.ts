@@ -100,6 +100,7 @@ function position(fen: string, result: number, score: number): Position {
  * Readers:
  * - epd-c9: four FEN fields, then `c9 "1-0";` (zurichess).
  * - fen-result: a FEN, then `[1.0]`, `[0.5]` or `[0.0]`.
+ * - fen-wdb: a FEN, then `; w`, `; d` or `; b`.
  * - fen-score-result: `FEN; score; [result]`, the score in centipawns; option
  *   scoreView "white" (default) or "side" for the side to move's view.
  * - lichess-eval: lichess_db_eval JSON lines; the deepest eval's first line, cp
@@ -109,7 +110,10 @@ function position(fen: string, result: number, score: number): Position {
  *   left out, and the chosen plies are those with the lowest hash, so a sample is
  *   the same on every run. before: only games whose Date tag gives a year below
  *   it (an undated game is left out). gamePermille: only games whose text's hash,
- *   modulo 1000, is below it, a sample that is the same on every run.
+ *   modulo 1000, is below it, a sample that is the same on every run. A ply's
+ *   score is its move comment's, White's view, NaN without one. quiet: drops games
+ *   whose Termination is not normal or adjudication, and keeps only quiet plies
+ *   with a score within maxCp (2500).
  */
 export async function* readSet(
   path: string,

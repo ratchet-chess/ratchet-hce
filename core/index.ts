@@ -2,8 +2,8 @@
  * WASM exports of the core: position setup, legal moves, perft, the state walk,
  * a position read back square by square, and the Texel tuner's neutral resolver
  * (resolve.ts). The host loads a position square by square, applies game moves
- * with playMove(), then runs perft in a single call. A release's own index
- * re-exports these beside its search.
+ * with playMove(), then runs perft in a single call. The own engine's index
+ * re-exports the position setup, legal moves, perft and the state walk beside its search.
  */
 import { generateMoves } from "./movegen";
 import { MAX_MOVES, MAX_PLY } from "./constants";
@@ -79,7 +79,7 @@ export function rootMove(i: i32): i32 {
   return rootMoves[i];
 }
 
-/** true if color `by` attacks square `s` in the current position; the release gate reads it */
+/** true if color `by` attacks square `s` in the current position */
 export function attacked(s: i32, by: i32): bool {
   return attackedWith(s, by, bb[0] | bb[8]);
 }

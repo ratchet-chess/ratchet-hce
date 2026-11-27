@@ -2,7 +2,7 @@
 # This repo's launcher in a tree. The testing platform, ratchet-bench, starts a player through it, and its
 # tools/player.sh states the arguments a tree's bin/engine takes:
 #
-#   bin/engine [bun|node] [--player ratchet-hce] [--nodestime <n> | --bench | --perft <depth> <fen>]
+#   bin/engine [bun|node [--player ratchet-hce] [--nodestime <n> | --bench | --perft <depth> <fen>]]
 #
 # With no command it speaks UCI, behind bin/ratchet. --bench prints "nodes <count> nps <rate>" from
 # bench/search.ts. --perft prints the core's count (host/perft.ts). In a tuning build's tree, which has

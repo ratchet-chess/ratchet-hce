@@ -106,8 +106,8 @@ export function clearPawns(): void {
 
 /**
  * The king-pawn value, White's view, and the passed sets in passedOf. `cached`
- * probes and fills the table; the tuner and the gates pass false, since a tuning
- * build changes the constants under a filled table.
+ * probes and fills the table; the tuner and `evaluateScratch` pass false, since a tuning
+ * build changes the constants under a filled table, and the eval gate checks the cached path against it.
  */
 export function kingPawn(cached: bool, wk: i32, bk: i32): i32 {
   // the pawn key with both kings, Stash 37 king_pawn_key; never 0 for a real board, so 0 marks an empty slot

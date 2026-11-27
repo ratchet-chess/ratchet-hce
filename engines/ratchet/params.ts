@@ -223,7 +223,7 @@ export const PAWN_DEFENDER_MG: StaticArray<i32> = [0, 109, 74, 76, 172, 502, 0, 
 export const PAWN_DEFENDER_EG: StaticArray<i32> = [0, 76, 67, 171, 523, 748, 0, 0];
 /**
  * A passed pawn, per step of its distance from its own king, by relative rank;
- * seeded by lines through the earlier table, ranks 1 and 2 from Ethereal 12.75
+ * seeded by lines through Stash 37 PassedOurKingDistance's 2-D table, ranks 1 and 2 from Ethereal 12.75
  * PassedFriendlyDistance at its PawnValue 82. Feature: King_Pawn_Tropism.
  */
 export const PASSED_OUR_KING_MG: StaticArray<i32> = [0, -2, 15, 55, 66, -59, -43, 0];
@@ -760,9 +760,10 @@ export const CHECK_EXT = 1;
 
 /**
  * late move pruning's move count at depth d, (BASE + PER_DEPTH * d + PER_DEPTH_SQ * d * d) >> 10, one set not improving
- * and one improving; initSearch fills a table from them up to LMP_DEPTH. The form is Ethereal 1eff740 initSearch, a
- * quadratic by depth per row. The seeds are the values that give Ethereal 12.75 LateMovePruningCounts exactly at depths
- * 1 to 8; the improving row needs the linear term for that. Not taken: Stockfish 7cdd5e89 search's
+ * and one improving; initSearch fills a table from them to LMP_ROW, and the search reads it up to LMP_DEPTH. The form
+ * is Ethereal 1eff740 initSearch, a quadratic by depth per row. The seeds are the values that give Ethereal 12.75
+ * LateMovePruningCounts exactly at depths 1 to 8; the improving row needs the linear term for that. Not taken:
+ * Stockfish 7cdd5e89 search's
  * (3 + depth * depth) / (2 - improving), and Ethereal 1eff740's own coefficients, which each play another tree.
  * search.ts counts moves played against it, where Ethereal counts quiets seen.
  * Features: Futility_Pruning#Move_Count_Based_Pruning, Improving.
@@ -967,7 +968,7 @@ export const HIST_PRIOR_BONUS_DEPTH = 3;
 /**
  * qsearch futility, the per-capture shape of Stash f91e750 qsearch: a capture that gives no check is skipped if stand
  * pat + its victim's MAT_EG + QS_DELTA cannot reach alpha. QS_DELTA is Stash's 98 at its PAWN_MG_SCORE 103, where
- * vendor/cpw/pages/Delta_Pruning.wiki names 200 centipawns, which is 1040 here. The victim is in the eval's unit, as
+ * vendor/cpw/pages/Delta_Pruning.wiki names 200 centipawns, which is 800 here. The victim is in the eval's unit, as
  * stand pat and alpha are, so SEE_VALUE, which is narrower, does not fit this test. Ethereal 12.75 qsearch's one test
  * per node, on the best capture, is the form rejected.
  * QS_SEE 1: when stand pat + QS_DELTA alone cannot reach alpha, a capture that wins nothing by SEE is skipped too

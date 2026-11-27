@@ -682,9 +682,9 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
           skipQuiets = true;
           continue;
         }
-        // history pruning, after Ethereal 12.75 search's Step 11D and 11E (CounterMoveHistoryLimit,
-        // FollowUpMoveHistoryLimit): counter-move and follow-up history, with one limit and depth for both, and with
-        // the killer not exempt, where Ethereal exempts it and the counter move. Feature: History_Leaf_Pruning.
+        // history pruning, Ethereal 0e47e9b search's continuation pruning (params.ts HIST_PRUNE_DEPTH): counter-move
+        // and follow-up history under one limit and depth for both, and with the killer not exempt, where Ethereal
+        // exempts it and the counter move. Feature: History_Leaf_Pruning.
         const imp = improving ? 1 : 0;
         if (lmrDepth <= HIST_PRUNE_DEPTH[imp] && (cmh < HIST_PRUNE_LIMIT[imp] || fmh < HIST_PRUNE_LIMIT[imp])) continue;
       }
@@ -926,7 +926,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
 
 /**
  * The quiescence search: stand pat, then captures and queen promotions that pass
- * SEE >= 0 (Weiss 2568fb7 Quiescence); in check, every evasion. Delta pruning skips a capture
+ * SEE >= 0 (Weiss 2568fb7 Quiescence); in check, every evasion until one scores
+ * above a mate, then only those (QS_EVASIONS). Delta pruning skips a capture
  * that gives no check and whose victim cannot lift stand pat to alpha, and the
  * skip raises the score to that estimate, so the upper bound holds for the skipped
  * capture too (Stash f91e750 qsearch). It probes and stores the TT at depth 0, never

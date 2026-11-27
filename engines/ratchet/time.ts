@@ -192,8 +192,8 @@ export function mayContinue(nodes: f64, bestShare: f64, uncertain: bool, score: 
  * The last timed search's record, by field: 0 the rule that ended it (0 none: its depth, or no move to search; 1 the
  * soft limit; 2 the hard limit between iterations; 3 the hard limit inside one; 4 the host's stop; 5 the node limit),
  * 1 the clock's milliseconds it took, 2 the soft limit, 3 the hard limit, 4 the score factor, 5 the node factor, 6 the
- * iterations that went on past the soft limit because the best move had just changed. Four engines had a time rule dead
- * or wrong for months unseen.
+ * iterations that went on past the soft limit because the best move had just changed. It shows a time rule that is
+ * dead or wrong in a match's trace.
  */
 export function timeTrace(field: i32): f64 {
   switch (field) {

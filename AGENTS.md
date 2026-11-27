@@ -55,7 +55,7 @@ bun test/perft.ts --full      # every perft depth in the suite
 bun test/window.ts --depth 6  # the window gate deeper than `bun run test` runs it
 bun run bench:search          # the node signature and the search speed under Bun (`bench:search:all` adds Node and Deno)
 bun tools/citations.ts        # the citations that `engines/ratchet/SOURCES.md` does not resolve
-bun tools/package.ts          # dist/: the .wasm, the browser Worker, native builds and Bun executables
+bun tools/package.ts          # dist/: the .wasm, the browser Worker, native builds, the notices and SHA256SUMS
 ```
 
 ## Own engine

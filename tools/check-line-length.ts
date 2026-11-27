@@ -1,6 +1,6 @@
 /**
- * Line-length check over tracked TypeScript sources (code and comments). Excludes vendored code and generated data
- * files. Prints one line per finding and exits 1 if any line exceeds the limit.
+ * Line-length check over tracked TypeScript sources (code and comments). Excludes vendored code and the generated
+ * core/bench-fens.ts. Prints one line per finding and exits 1 if any line exceeds the limit.
  *
  *   bun tools/check-line-length.ts
  */

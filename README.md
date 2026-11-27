@@ -50,8 +50,8 @@ Prebuilt releases are published on [GitHub Releases](https://github.com/ratchet-
 | `ratchetHCE-X.Y.Z-linux-x86-64-v3` | Linux, x86-64-v3. |
 | `ratchetHCE-X.Y.Z-windows-x86-64.exe` | Windows, x86-64. A native build. |
 | `ratchetHCE-X.Y.Z-windows-x86-64-v3.exe` | Windows, x86-64-v3. |
-| `ratchetHCE-X.Y.Z-macos-arm64` | macOS, Apple Silicon. A native build. |
-| `THIRD-PARTY-NOTICES.txt` | Notices for the `wasm2c` runtime and SIMDe headers used in native builds. |
+| `ratchetHCE-X.Y.Z-macos-arm64` | macOS, Apple Silicon. A native build, built on macOS with `--native macos-arm64`. |
+| `THIRD-PARTY-NOTICES.txt` | The Clockwork dataset's ODbL notice, and the notices for the `wasm2c` runtime and SIMDe headers in native builds. |
 | `SHA256SUMS` | The sha256 of each file. |
 
 A native build is the WASI build translated to C by wasm2c, with no runtime, and is the recommended download for

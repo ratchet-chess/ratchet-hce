@@ -26,7 +26,7 @@ invariants that span files.
 - **TT entry.** Eight bytes, three to a 32-byte bucket, behind one word that holds their three
   21-bit key fragments. An entry holds the move, the score, the raw eval, the depth, and a flags byte
   of bound (2 bits), PV (1) and generation (5). A fragment of 0 marks an empty slot. The move keeps
-  the core's low 15 bits. A probe restores its flags from the board and checks that it is legal.
+  the core's low 15 bits. `ttMoveOf` restores its flags from the board and checks that it is legal.
   Mate scores are stored relative to the node.
 - **TT cutoffs.** The table lookup cuts only. A stored bound that does not cut is left alone, and
   the window is never tightened from it. `boundCuts` in `search.ts` names the verified form and the

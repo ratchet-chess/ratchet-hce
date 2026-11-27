@@ -5,7 +5,7 @@
  * the pawn key, each color's non-pawn key, the minor key and the major key, each
  * per side to move. An entry is a depth-weighted moving average of how far the
  * search's score fell from the static eval, kept in 1/256 of the engine's unit.
- * The search adds the five entries to the raw eval; the TT keeps the raw one, so
+ * The search adds the weighted entries of all six tables to the raw eval; the TT keeps the raw one, so
  * a probe corrects it again with the tables as they stand.
  *
  * A sixth table is by the last two moves (Clockwork e774be4 get_cont_corr_slot): the continuation

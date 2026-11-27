@@ -4,13 +4,14 @@
  * Loss: the mean of (result − σ(score))² over positions with a result label, where
  * σ(s) = 1 / (1 + 10^(−K·s/400)), s in centipawns from White's view and the result
  * from White's view (1, 1/2, 0, or a mean where a position repeated). K is fitted
- * first, at the defaults, and then held.
+ * first, at the defaults, unless --k or the map's `k` gives it, and then held.
  *
  * - adam: full-batch Adam over a trace's linear eval (trace.ts). Each element's
  *   learning rate is `alpha` times its step, so elements in different units move
  *   alike. Values are clamped to their bounds every step. The validation loss is
  *   read every epoch; the best epoch's values are kept, and the run stops after
- *   `patience` epochs without a better one.
+ *   `patience` epochs without a better one. Options: a cosine decay of the rate, an L2
+ *   penalty, and a score weight that mixes σ(score) into the target.
  * - local: Österlund's local search (2014): for each free element in turn, one
  *   step up, kept if the loss drops, else one step down, kept if it drops; passes
  *   repeat until one changes nothing, or up to a cap. A run may start from saved
