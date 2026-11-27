@@ -59,8 +59,8 @@ const MAJOR_TYPES = (1 << ROOK) | (1 << QUEEN) | (1 << KING);
 export function refresh(): void {
   psq = scratchPsq();
   pawnKey = scratchPawnKey();
-  unchecked((nonPawnKey[0] = scratchNonPawnKey(0)));
-  unchecked((nonPawnKey[1] = scratchNonPawnKey(1)));
+  nonPawnKey[0] = scratchNonPawnKey(0);
+  nonPawnKey[1] = scratchNonPawnKey(1);
   minorKey = scratchTypesKey(MINOR_TYPES);
   majorKey = scratchTypesKey(MAJOR_TYPES);
 }
@@ -85,7 +85,7 @@ function scratchTypesKey(types: i32): u64 {
   let k: u64 = 0;
   for (let s = 0; s < 64; s++) {
     const p = <i32>board[s];
-    if (p && (types >> (p & 7)) & 1) k ^= unchecked(Z_PIECE[(p << 6) + s]);
+    if (p && (types >> (p & 7)) & 1) k ^= Z_PIECE[(p << 6) + s];
   }
   return k;
 }
@@ -95,7 +95,7 @@ export function scratchPawnKey(): u64 {
   let k: u64 = 0;
   for (let s = 0; s < 64; s++) {
     const p = <i32>board[s];
-    if ((p & 7) == PAWN) k ^= unchecked(Z_PIECE[(p << 6) + s]);
+    if ((p & 7) == PAWN) k ^= Z_PIECE[(p << 6) + s];
   }
   return k;
 }
@@ -106,49 +106,49 @@ export function scratchNonPawnKey(color: i32): u64 {
   for (let s = 0; s < 64; s++) {
     const p = <i32>board[s];
     const t = p & 7;
-    if (t != 0 && t != PAWN && t != KING && p >> 3 == color) k ^= unchecked(Z_PIECE[(p << 6) + s]);
+    if (t != 0 && t != PAWN && t != KING && p >> 3 == color) k ^= Z_PIECE[(p << 6) + s];
   }
   return k;
 }
 
 @inline function at(p: i32, s: i32): i32 {
-  return unchecked(PSQ[(p << 6) + s]);
+  return PSQ[(p << 6) + s];
 }
 
 /** applies Zobrist delta `z` for piece `p` to each key that holds it */
 @inline function xorKey(p: i32, z: u64): void {
   const t = p & 7;
   if (t == PAWN) pawnKey ^= z;
-  else if (t != KING) unchecked((nonPawnKey[p >> 3] ^= z));
+  else if (t != KING) nonPawnKey[p >> 3] ^= z;
   if ((MINOR_TYPES >> t) & 1) minorKey ^= z;
   if ((MAJOR_TYPES >> t) & 1) majorKey ^= z;
 }
 
 /** adds or removes piece `p` on square `s` in each key that holds it */
 @inline function toggleKey(p: i32, s: i32): void {
-  xorKey(p, unchecked(Z_PIECE[(p << 6) + s]));
+  xorKey(p, Z_PIECE[(p << 6) + s]);
 }
 
 @inline function saveKeys(): void {
   const i = ply * KEYS;
-  unchecked((keyStack[i] = pawnKey));
-  unchecked((keyStack[i + 1] = nonPawnKey[0]));
-  unchecked((keyStack[i + 2] = nonPawnKey[1]));
-  unchecked((keyStack[i + 3] = minorKey));
-  unchecked((keyStack[i + 4] = majorKey));
+  keyStack[i] = pawnKey;
+  keyStack[i + 1] = nonPawnKey[0];
+  keyStack[i + 2] = nonPawnKey[1];
+  keyStack[i + 3] = minorKey;
+  keyStack[i + 4] = majorKey;
 }
 
 @inline function restoreKeys(): void {
   const i = ply * KEYS;
-  pawnKey = unchecked(keyStack[i]);
-  unchecked((nonPawnKey[0] = keyStack[i + 1]));
-  unchecked((nonPawnKey[1] = keyStack[i + 2]));
-  minorKey = unchecked(keyStack[i + 3]);
-  majorKey = unchecked(keyStack[i + 4]);
+  pawnKey = keyStack[i];
+  nonPawnKey[0] = keyStack[i + 1];
+  nonPawnKey[1] = keyStack[i + 2];
+  minorKey = keyStack[i + 3];
+  majorKey = keyStack[i + 4];
 }
 
 export function doMove(m: i32): void {
-  unchecked((psqStack[ply] = psq));
+  psqStack[ply] = psq;
   saveKeys();
   const from = moveFrom(m);
   const to = moveTo(m);
@@ -161,12 +161,12 @@ export function doMove(m: i32): void {
     const pBase = piece << 6;
     const rBase = rook << 6;
     psq +=
-      unchecked(PSQ[pBase + to]) -
-      unchecked(PSQ[pBase + from]) +
-      unchecked(PSQ[rBase + rt]) -
-      unchecked(PSQ[rBase + rf]);
-    xorKey(piece, unchecked(Z_PIECE[pBase + from]) ^ unchecked(Z_PIECE[pBase + to]));
-    xorKey(rook, unchecked(Z_PIECE[rBase + rf]) ^ unchecked(Z_PIECE[rBase + rt]));
+      PSQ[pBase + to] -
+      PSQ[pBase + from] +
+      PSQ[rBase + rt] -
+      PSQ[rBase + rf];
+    xorKey(piece, Z_PIECE[pBase + from] ^ Z_PIECE[pBase + to]);
+    xorKey(rook, Z_PIECE[rBase + rf] ^ Z_PIECE[rBase + rt]);
     make(m);
     return;
   }
@@ -180,8 +180,8 @@ export function doMove(m: i32): void {
     toggleKey(arrives, to);
   } else {
     const pBase = piece << 6;
-    d = unchecked(PSQ[pBase + to]) - unchecked(PSQ[pBase + from]);
-    xorKey(piece, unchecked(Z_PIECE[pBase + from]) ^ unchecked(Z_PIECE[pBase + to]));
+    d = PSQ[pBase + to] - PSQ[pBase + from];
+    xorKey(piece, Z_PIECE[pBase + from] ^ Z_PIECE[pBase + to]);
   }
   if (captured) {
     d -= at(captured, to);
@@ -199,7 +199,7 @@ export function doMove(m: i32): void {
 
 export function undoMove(m: i32): void {
   unmake(m);
-  psq = unchecked(psqStack[ply]);
+  psq = psqStack[ply];
   restoreKeys();
 }
 

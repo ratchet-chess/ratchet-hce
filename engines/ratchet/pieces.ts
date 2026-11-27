@@ -219,14 +219,14 @@ export let kingSafetyEg = 0;
  */
 @inline function record(us: i32, type: i32, att: u64, weight: i32): void {
   const them = us ^ 1;
-  unchecked((attacked2[us] |= att & attacked[us]));
-  unchecked((attacked[us] |= att));
-  unchecked((attackedBy[(us << 3) | type] |= att));
-  const zone = att & unchecked(kingZone[them]);
+  attacked2[us] |= att & attacked[us];
+  attacked[us] |= att;
+  attackedBy[(us << 3) | type] |= att;
+  const zone = att & kingZone[them];
   if (zone) {
-    unchecked((zoneAttacks[them] += <i32>popcnt(zone)));
-    unchecked((zoneAttackers[them] += 1));
-    unchecked((zoneWeight[them] += weight));
+    zoneAttacks[them] += <i32>popcnt(zone);
+    zoneAttackers[them] += 1;
+    zoneWeight[them] += weight;
   }
 }
 
@@ -239,9 +239,9 @@ export let kingSafetyEg = 0;
  */
 @inline function outpost(us: i32, b: u64): i32 {
   const ranks = us == 0 ? (<u64>0xffffff) << 24 : (<u64>0xffffff) << 16;
-  if (!(b & ranks & ~unchecked(spanOf[us ^ 1]))) return -1;
+  if (!(b & ranks & ~spanOf[us ^ 1])) return -1;
   const outside = (b & (FILE_A | FILE_H)) != 0 ? 2 : 0;
-  return outside + ((b & unchecked(attackedBy[(us << 3) | PAWN])) != 0 ? 1 : 0);
+  return outside + ((b & attackedBy[(us << 3) | PAWN]) != 0 ? 1 : 0);
 }
 
 /**
@@ -251,21 +251,21 @@ export let kingSafetyEg = 0;
  */
 @inline function knights(us: i32, ownKing: i32, theirKing: i32): i32 {
   const weight = S(SAFETY_KNIGHT_MG, SAFETY_KNIGHT_EG);
-  unchecked((attackedBy[(us << 3) | KNIGHT] = 0));
+  attackedBy[(us << 3) | KNIGHT] = 0;
   let v = 0;
   let pieces = bb[(us << 3) | KNIGHT];
   while (pieces) {
     const s = <i32>ctz(pieces);
     const b = bit(s);
-    const att = unchecked(KNIGHT_ATT[s]);
+    const att = KNIGHT_ATT[s];
     record(us, KNIGHT, att, weight);
     const cell = outpost(us, b);
-    if (cell >= 0) v += S(unchecked(OUTPOST_KNIGHT_MG[cell]), unchecked(OUTPOST_KNIGHT_EG[cell]));
-    if (b & unchecked(behindPawn[us])) v += S(BEHIND_KNIGHT_MG, BEHIND_KNIGHT_EG);
+    if (cell >= 0) v += S(OUTPOST_KNIGHT_MG[cell], OUTPOST_KNIGHT_EG[cell]);
+    if (b & behindPawn[us]) v += S(BEHIND_KNIGHT_MG, BEHIND_KNIGHT_EG);
     const far = min(distance(s, ownKing), distance(s, theirKing));
-    if (far >= 4) v += S(unchecked(FAR_KNIGHT_MG[far - 4]), unchecked(FAR_KNIGHT_EG[far - 4]));
-    const n = <i32>popcnt(att & unchecked(mobility[us]));
-    v += S(unchecked(MOB_KNIGHT_MG[n]), unchecked(MOB_KNIGHT_EG[n]));
+    if (far >= 4) v += S(FAR_KNIGHT_MG[far - 4], FAR_KNIGHT_EG[far - 4]);
+    const n = <i32>popcnt(att & mobility[us]);
+    v += S(MOB_KNIGHT_MG[n], MOB_KNIGHT_EG[n]);
     pieces &= pieces - 1;
   }
   return v;
@@ -285,7 +285,7 @@ export let kingSafetyEg = 0;
   const t = them << 3;
   const seen = occ ^ (bb[o | BISHOP] | bb[o | QUEEN]);
   const weight = S(SAFETY_BISHOP_MG, SAFETY_BISHOP_EG);
-  unchecked((attackedBy[o | BISHOP] = 0));
+  attackedBy[o | BISHOP] = 0;
   let v = 0;
   let pieces = bb[o | BISHOP];
   if (pieces & DARK && pieces & ~DARK) v += S(BISHOP_PAIR_MG, BISHOP_PAIR_EG);
@@ -297,25 +297,25 @@ export let kingSafetyEg = 0;
     const shade = b & DARK ? DARK : ~DARK;
     const sameColor = <i32>popcnt(bb[o | PAWN] & shade);
     v += S(BISHOP_PAWNS_MG, BISHOP_PAWNS_EG) * sameColor;
-    v += S(BISHOP_RAMMED_MG, BISHOP_RAMMED_EG) * <i32>popcnt(unchecked(rammed[us]) & shade);
+    v += S(BISHOP_RAMMED_MG, BISHOP_RAMMED_EG) * <i32>popcnt(rammed[us] & shade);
     if (blockedCentral) v += S(BISHOP_BAD_PAWNS_MG, BISHOP_BAD_PAWNS_EG) * (sameColor * blockedCentral);
-    const rays = unchecked(BISHOP_RAYS[s]);
+    const rays = BISHOP_RAYS[s];
     v += S(BISHOP_XRAY_PAWNS_MG, BISHOP_XRAY_PAWNS_EG) * <i32>popcnt(rays & bb[t | PAWN]);
     const cell = outpost(us, b);
-    if (cell >= 0) v += S(unchecked(OUTPOST_BISHOP_MG[cell]), unchecked(OUTPOST_BISHOP_EG[cell]));
-    if (b & unchecked(behindPawn[us])) v += S(BEHIND_BISHOP_MG, BEHIND_BISHOP_EG);
+    if (cell >= 0) v += S(OUTPOST_BISHOP_MG[cell], OUTPOST_BISHOP_EG[cell]);
+    if (b & behindPawn[us]) v += S(BEHIND_BISHOP_MG, BEHIND_BISHOP_EG);
     const onLong = (b & LONG_DIAGONALS & ~CENTER) != 0;
-    const kingRay = !(att & unchecked(kingZone[them])) && (rays & unchecked(kingArea[them])) != 0;
+    const kingRay = !(att & kingZone[them]) && (rays & kingArea[them]) != 0;
     if (onLong || kingRay) {
       const pawnAtt = bishopAttacks(s, pawns);
       if (onLong) {
         const center = pawnAtt & CENTER;
         if (center & (center - 1)) v += S(BISHOP_LONG_MG, BISHOP_LONG_EG);
       }
-      if (kingRay && (pawnAtt & unchecked(kingArea[them])) != 0) v += S(BISHOP_KING_RING_MG, BISHOP_KING_RING_EG);
+      if (kingRay && (pawnAtt & kingArea[them]) != 0) v += S(BISHOP_KING_RING_MG, BISHOP_KING_RING_EG);
     }
-    const n = <i32>popcnt(att & unchecked(mobility[us]));
-    v += S(unchecked(MOB_BISHOP_MG[n]), unchecked(MOB_BISHOP_EG[n]));
+    const n = <i32>popcnt(att & mobility[us]);
+    v += S(MOB_BISHOP_MG[n], MOB_BISHOP_EG[n]);
     pieces &= pieces - 1;
   }
   return v;
@@ -332,7 +332,7 @@ export let kingSafetyEg = 0;
   const seen = occ ^ (bb[o | ROOK] | bb[o | QUEEN]);
   const kingFile = kingSq & 7;
   const weight = S(SAFETY_ROOK_MG, SAFETY_ROOK_EG);
-  unchecked((attackedBy[o | ROOK] = 0));
+  attackedBy[o | ROOK] = 0;
   let v = 0;
   let pieces = bb[o | ROOK];
   while (pieces) {
@@ -343,11 +343,11 @@ export let kingSafetyEg = 0;
     record(us, ROOK, att, weight);
     if (!(file & bb[o | PAWN])) {
       const open = file & bb[t | PAWN] ? 0 : 1;
-      v += S(unchecked(ROOK_FILE_MG[open]), unchecked(ROOK_FILE_EG[open]));
+      v += S(ROOK_FILE_MG[open], ROOK_FILE_EG[open]);
     }
     if (file & bb[t | QUEEN]) v += S(ROOK_QUEEN_FILE_MG, ROOK_QUEEN_FILE_EG);
-    const n = <i32>popcnt(att & unchecked(mobility[us]));
-    v += S(unchecked(MOB_ROOK_MG[n]), unchecked(MOB_ROOK_EG[n]));
+    const n = <i32>popcnt(att & mobility[us]);
+    v += S(MOB_ROOK_MG[n], MOB_ROOK_EG[n]);
     // hemmed in by its own king, Stash 37 RookTrapped: king off the start e-file and between rook and center.
     // Feature: Trapped_Pieces.
     if (n <= 4 && relRank(s, us) <= 1 && kingFile != 4 && kingFile != f && kingFile < f == kingFile > 4) {
@@ -365,15 +365,15 @@ export let kingSafetyEg = 0;
 @inline function queens(us: i32, occ: u64): i32 {
   const o = us << 3;
   const weight = S(SAFETY_QUEEN_MG, SAFETY_QUEEN_EG);
-  unchecked((attackedBy[o | QUEEN] = 0));
+  attackedBy[o | QUEEN] = 0;
   let v = 0;
   let pieces = bb[o | QUEEN];
   while (pieces) {
     const s = <i32>ctz(pieces);
     const att = bishopAttacks(s, occ) | rookAttacks(s, occ);
     record(us, QUEEN, att, weight);
-    const n = <i32>popcnt(att & unchecked(mobility[us]));
-    v += S(unchecked(MOB_QUEEN_MG[n]), unchecked(MOB_QUEEN_EG[n]));
+    const n = <i32>popcnt(att & mobility[us]);
+    v += S(MOB_QUEEN_MG[n], MOB_QUEEN_EG[n]);
     pieces &= pieces - 1;
   }
   return v;
@@ -389,11 +389,11 @@ export let kingSafetyEg = 0;
   const t = them << 3;
   const mask: u64 = us == 0 ? 0x000000003c3c3c00 : 0x003c3c3c00000000;
   const ownPawns = bb[o | PAWN];
-  const safe = mask & ~ownPawns & ~unchecked(attackedBy[t | PAWN]);
+  const safe = mask & ~ownPawns & ~attackedBy[t | PAWN];
   let behind = ownPawns;
   behind |= us == 0 ? behind >> 8 : behind << 8;
   behind |= us == 0 ? behind >> 16 : behind << 16;
-  const bonus = <i32>popcnt(safe) + <i32>popcnt(behind & safe & ~unchecked(attacked[them]));
+  const bonus = <i32>popcnt(safe) + <i32>popcnt(behind & safe & ~attacked[them]);
   const weight = <i32>popcnt(bb[o]) - 3 + min(blockedPawns, 9);
   if (weight <= 0) return 0;
   const factor = bonus * weight * weight;
@@ -415,31 +415,31 @@ export let kingSafetyEg = 0;
   const o = us << 3;
   const t = them << 3;
   const enemyQueens = bb[t | QUEEN];
-  const ours1 = unchecked(attacked[us]);
-  const ours2 = unchecked(attacked2[us]);
-  const theirs1 = unchecked(attacked[them]);
-  const theirs2 = unchecked(attacked2[them]);
-  const flank = unchecked(KING_FLANK[o + (kingSq & 7)]);
+  const ours1 = attacked[us];
+  const ours2 = attacked2[us];
+  const theirs1 = attacked[them];
+  const theirs2 = attacked2[them];
+  const flank = KING_FLANK[o + (kingSq & 7)];
   const flankAttacks = <i32>popcnt(theirs1 & flank);
   const flankAttacks2 = <i32>popcnt(theirs2 & flank);
   const flankValue = -S(FLANK_ATTACK_MG, FLANK_ATTACK_EG) * (flankAttacks + flankAttacks2);
-  if (unchecked(zoneAttackers[us]) <= 1 - <i32>popcnt(enemyQueens)) return flankValue;
-  const weak = theirs1 & ~ours2 & (~ours1 | unchecked(attackedBy[o | QUEEN]) | unchecked(attackedBy[o | KING]));
+  if (zoneAttackers[us] <= 1 - <i32>popcnt(enemyQueens)) return flankValue;
+  const weak = theirs1 & ~ours2 & (~ours1 | attackedBy[o | QUEEN] | attackedBy[o | KING]);
   const safe = ~bb[t] & (~ours1 | (weak & theirs2));
-  const theirB = unchecked(attackedBy[t | BISHOP]);
-  const theirR = unchecked(attackedBy[t | ROOK]);
-  const theirQ = unchecked(attackedBy[t | QUEEN]);
+  const theirB = attackedBy[t | BISHOP];
+  const theirR = attackedBy[t | ROOK];
+  const theirQ = attackedBy[t | QUEEN];
   const bishopRays = (theirB | theirQ) != 0 ? bishopAttacks(kingSq, occ) : 0;
   const rookRays = (theirR | theirQ) != 0 ? rookAttacks(kingSq, occ) : 0;
-  const knightChecks = unchecked(KNIGHT_ATT[kingSq]) & unchecked(attackedBy[t | KNIGHT]);
+  const knightChecks = KNIGHT_ATT[kingSq] & attackedBy[t | KNIGHT];
   const bishopChecks = bishopRays & theirB;
   const rookChecks = rookRays & theirR;
   const queenChecks = (bishopRays | rookRays) & theirQ;
 
   // the endgame half is the eval's largest packed half; its values' scale keeps it within i16 (README, Packed eval)
-  let sum = unchecked(zoneWeight[us]) + unchecked(safetyOf[us]) + S(SAFETY_OFFSET_MG, SAFETY_OFFSET_EG);
-  sum += S(SAFETY_ATTACK_MG, SAFETY_ATTACK_EG) * unchecked(zoneAttacks[us]);
-  sum += S(SAFETY_WEAK_MG, SAFETY_WEAK_EG) * <i32>popcnt(weak & unchecked(kingArea[us]));
+  let sum = zoneWeight[us] + safetyOf[us] + S(SAFETY_OFFSET_MG, SAFETY_OFFSET_EG);
+  sum += S(SAFETY_ATTACK_MG, SAFETY_ATTACK_EG) * zoneAttacks[us];
+  sum += S(SAFETY_WEAK_MG, SAFETY_WEAK_EG) * <i32>popcnt(weak & kingArea[us]);
   if (!enemyQueens) sum += S(SAFETY_NO_QUEEN_MG, SAFETY_NO_QUEEN_EG);
   sum += S(SAFETY_CHECK_QUEEN_MG, SAFETY_CHECK_QUEEN_EG) * <i32>popcnt(queenChecks & safe);
   sum += S(SAFETY_CHECK_ROOK_MG, SAFETY_CHECK_ROOK_EG) * <i32>popcnt(rookChecks & safe);
@@ -472,14 +472,14 @@ export let kingSafetyEg = 0;
  * Features: Passed_Pawn, Tarrasch_Rule, Rule_of_the_Square.
  */
 @inline function passers(us: i32, occ: u64, theirKing: i32): i32 {
-  const mine = unchecked(passedOf[us]);
+  const mine = passedOf[us];
   if (!mine) return 0;
   const them = us ^ 1;
   const o = us << 3;
   const t = them << 3;
   const enemy = bb[t];
-  const ourAtt = unchecked(attacked[us]);
-  const theirAtt = unchecked(attacked[them]);
+  const ourAtt = attacked[us];
+  const theirAtt = attacked[them];
   const enemyNoPieces = (enemy ^ bb[t | KING] ^ bb[t | PAWN]) == 0;
   const enemyToMove = side == them ? 1 : 0;
   let v = 0;
@@ -489,11 +489,11 @@ export let kingSafetyEg = 0;
     const here = bit(s);
     const stop = up(here, us);
     const cell = ((stop & occ ? 0 : 2) + (stop & theirAtt ? 0 : 1)) * 8 + relRank(s, us);
-    v += S(unchecked(PASSED_ADVANCE_MG[cell]), unchecked(PASSED_ADVANCE_EG[cell]));
+    v += S(PASSED_ADVANCE_MG[cell], PASSED_ADVANCE_EG[cell]);
     if (stop & ourAtt) v += S(PASSED_DEFENDED_STOP_MG, PASSED_DEFENDED_STOP_EG);
-    const ahead = unchecked(FORWARD[(us << 6) + s]);
+    const ahead = FORWARD[(us << 6) + s];
     if (!((ahead | here) & (enemy | theirAtt))) v += S(PASSED_SAFE_PATH_MG, PASSED_SAFE_PATH_EG);
-    const behindFile = unchecked(FORWARD[(them << 6) + s]);
+    const behindFile = FORWARD[(them << 6) + s];
     if (behindFile & bb[o | ROOK]) v += S(PASSED_ROOK_BEHIND_MG, PASSED_ROOK_BEHIND_EG);
     if (behindFile & (bb[t | ROOK] | bb[t | QUEEN])) v += S(PASSED_ENEMY_ROOK_BEHIND_MG, PASSED_ENEMY_ROOK_BEHIND_EG);
     if (enemyNoPieces) {
@@ -520,17 +520,17 @@ export let kingSafetyEg = 0;
   const minors = bb[o | KNIGHT] | bb[o | BISHOP];
   const rookSet = bb[o | ROOK];
   const queenSet = bb[o | QUEEN];
-  const byPawns = unchecked(attackedBy[t | PAWN]);
-  const byMinors = unchecked(attackedBy[t | KNIGHT]) | unchecked(attackedBy[t | BISHOP]);
-  const byMajors = unchecked(attackedBy[t | ROOK]) | unchecked(attackedBy[t | QUEEN]);
-  const byKing = unchecked(attackedBy[t | KING]);
-  const ours1 = unchecked(attacked[us]);
-  const ours2 = unchecked(attacked2[us]);
-  const theirs1 = unchecked(attacked[them]);
-  const theirs2 = unchecked(attacked2[them]);
+  const byPawns = attackedBy[t | PAWN];
+  const byMinors = attackedBy[t | KNIGHT] | attackedBy[t | BISHOP];
+  const byMajors = attackedBy[t | ROOK] | attackedBy[t | QUEEN];
+  const byKing = attackedBy[t | KING];
+  const ours1 = attacked[us];
+  const ours2 = attacked2[us];
+  const theirs1 = attacked[them];
+  const theirs2 = attacked2[them];
 
   // attacked and undefended, or attacked twice, defended at most once and not by a pawn
-  const poor = (theirs1 & ~ours1) | (theirs2 & ~ours2 & ~unchecked(attackedBy[o | PAWN]));
+  const poor = (theirs1 & ~ours1) | (theirs2 & ~ours2 & ~attackedBy[o | PAWN]);
   const weakMinors = minors & poor;
   const overloaded = (minors | rookSet | queenSet) & ours1 & ~ours2 & theirs1 & ~theirs2;
 
@@ -539,7 +539,7 @@ export let kingSafetyEg = 0;
   let push = up(pawns, us) & ~occ;
   push |= up(push & ~byPawns & third, us) & ~occ;
   push &= ~byPawns & (ours1 | ~theirs1);
-  const pushAttacks = pawnAttacks(push, us) & bb[t] & ~bb[t | PAWN] & ~unchecked(attackedBy[o | PAWN]);
+  const pushAttacks = pawnAttacks(push, us) & bb[t] & ~bb[t | PAWN] & ~attackedBy[o | PAWN];
 
   let v = S(THREAT_WEAK_PAWN_MG, THREAT_WEAK_PAWN_EG) * <i32>popcnt(pawns & ~byPawns & poor);
   v += S(THREAT_MINOR_BY_PAWN_MG, THREAT_MINOR_BY_PAWN_EG) * <i32>popcnt(minors & byPawns);
@@ -569,39 +569,39 @@ export function pieceTerms(wk: i32, bk: i32, pawns: u64, phase: i32): i32 {
   const bpAtt = bL | bR;
   const wpAtt2 = wL & wR;
   const bpAtt2 = bL & bR;
-  const wkAtt = unchecked(KING_ATT[wk]);
-  const bkAtt = unchecked(KING_ATT[bk]);
-  unchecked((attackedBy[PAWN] = wpAtt));
-  unchecked((attackedBy[8 | PAWN] = bpAtt));
-  unchecked((attackedBy[KING] = wkAtt));
-  unchecked((attackedBy[8 | KING] = bkAtt));
-  unchecked((attacked[0] = wpAtt | wkAtt));
-  unchecked((attacked2[0] = wpAtt & wkAtt));
-  unchecked((attacked[1] = bpAtt | bkAtt));
-  unchecked((attacked2[1] = bpAtt & bkAtt));
+  const wkAtt = KING_ATT[wk];
+  const bkAtt = KING_ATT[bk];
+  attackedBy[PAWN] = wpAtt;
+  attackedBy[8 | PAWN] = bpAtt;
+  attackedBy[KING] = wkAtt;
+  attackedBy[8 | KING] = bkAtt;
+  attacked[0] = wpAtt | wkAtt;
+  attacked2[0] = wpAtt & wkAtt;
+  attacked[1] = bpAtt | bkAtt;
+  attacked2[1] = bpAtt & bkAtt;
   // mobility area, Stash 37 evaldata_init_next: no enemy pawn attacks, own king, or own pawn that is blocked or on
   // its low ranks. Feature: Mobility.
   const wBlocked = wp & (occ >> 8);
   const bBlocked = bp & (occ << 8);
-  unchecked((mobility[0] = ~(bpAtt | bit(wk) | wBlocked | (wp & ((RANK_1 << 8) | (RANK_1 << 16))))));
-  unchecked((mobility[1] = ~(wpAtt | bit(bk) | bBlocked | (bp & ((RANK_1 << 40) | (RANK_1 << 48))))));
-  unchecked((rammed[0] = wp & (bp >> 8)));
-  unchecked((rammed[1] = bp & (wp << 8)));
-  unchecked((behindPawn[0] = pawns >> 8));
-  unchecked((behindPawn[1] = pawns << 8));
-  const wArea = unchecked(KING_AREA[wk]);
-  const bArea = unchecked(KING_AREA[64 + bk]);
-  unchecked((kingArea[0] = wArea));
-  unchecked((kingArea[1] = bArea));
-  unchecked((kingZone[0] = wArea & ~wpAtt2));
-  unchecked((kingZone[1] = bArea & ~bpAtt2));
+  mobility[0] = ~(bpAtt | bit(wk) | wBlocked | (wp & ((RANK_1 << 8) | (RANK_1 << 16))));
+  mobility[1] = ~(wpAtt | bit(bk) | bBlocked | (bp & ((RANK_1 << 40) | (RANK_1 << 48))));
+  rammed[0] = wp & (bp >> 8);
+  rammed[1] = bp & (wp << 8);
+  behindPawn[0] = pawns >> 8;
+  behindPawn[1] = pawns << 8;
+  const wArea = KING_AREA[wk];
+  const bArea = KING_AREA[64 + bk];
+  kingArea[0] = wArea;
+  kingArea[1] = bArea;
+  kingZone[0] = wArea & ~wpAtt2;
+  kingZone[1] = bArea & ~bpAtt2;
   // a color's pawns count on the other's king's area once both areas are set
-  unchecked((zoneAttacks[1] = <i32>popcnt(wpAtt & bArea)));
-  unchecked((zoneAttacks[0] = <i32>popcnt(bpAtt & wArea)));
-  unchecked((zoneAttackers[0] = 0));
-  unchecked((zoneAttackers[1] = 0));
-  unchecked((zoneWeight[0] = 0));
-  unchecked((zoneWeight[1] = 0));
+  zoneAttacks[1] = <i32>popcnt(wpAtt & bArea);
+  zoneAttacks[0] = <i32>popcnt(bpAtt & wArea);
+  zoneAttackers[0] = 0;
+  zoneAttackers[1] = 0;
+  zoneWeight[0] = 0;
+  zoneWeight[1] = 0;
 
   const wBlockedC = <i32>popcnt(wBlocked & CENTRAL_FILES);
   const bBlockedC = <i32>popcnt(bBlocked & CENTRAL_FILES);

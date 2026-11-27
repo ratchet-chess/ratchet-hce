@@ -170,12 +170,12 @@ function bestIndexSimd(from: i32, to: i32): i32 {
   let bs: i32;
   if (to - from >= 8) {
     best = bestIndexSimd(from, to);
-    bs = unchecked(SCORES[best]);
+    bs = SCORES[best];
   } else {
     best = from;
-    bs = unchecked(SCORES[from]);
+    bs = SCORES[from];
     for (let i = from + 1; i < to; i++) {
-      const s = unchecked(SCORES[i]);
+      const s = SCORES[i];
       if (s > bs) {
         bs = s;
         best = i;
@@ -183,11 +183,11 @@ function bestIndexSimd(from: i32, to: i32): i32 {
     }
   }
   if (best != from) {
-    const m = unchecked(MOVES[best]);
-    unchecked((MOVES[best] = MOVES[from]));
-    unchecked((MOVES[from] = m));
-    unchecked((SCORES[best] = SCORES[from]));
-    unchecked((SCORES[from] = bs));
+    const m = MOVES[best];
+    MOVES[best] = MOVES[from];
+    MOVES[from] = m;
+    SCORES[best] = SCORES[from];
+    SCORES[from] = bs;
   }
 }
 
@@ -208,21 +208,21 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
         // in square order so noisy generation avoids a full quiet pass (Stockfish 10 make_promotions,
         // Stash 37 extmove_generate_pawn_noisy). Feature: Move_Ordering.
         if (PROMO_NOISY != 0) {
-          let pawns = unchecked(bb[(side << 3) | PAWN]) & (side == 0 ? RANK_7 : RANK_2);
+          let pawns = bb[(side << 3) | PAWN] & (side == 0 ? RANK_7 : RANK_2);
           if (pawns) {
-            const occ = unchecked(bb[0] | bb[8]);
+            const occ = bb[0] | bb[8];
             pawns &= side == 0 ? ~(occ >> 8) : ~(occ << 8);
             const fwd = side == 0 ? 8 : -8;
             while (pawns) {
               const from = <i32>ctz(pawns);
               pawns &= pawns - 1;
               const m = from | ((from + fwd) << 6) | (QUEEN << 12);
-              if (isLegal(m)) unchecked((MOVES[e++] = m));
+              if (isLegal(m)) MOVES[e++] = m;
             }
           }
         }
         const ct = e > base ? captureThreatsAt(ply) : 0;
-        for (let i = base; i < e; i++) unchecked((SCORES[i] = captureScore(MOVES[i], ct)));
+        for (let i = base; i < e; i++) SCORES[i] = captureScore(MOVES[i], ct);
         cur[ply] = base;
         end[ply] = e;
         badEnd[ply] = base;
@@ -234,15 +234,15 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
         let c = cur[ply];
         while (c < e) {
           selectBest(c, e);
-          const m = unchecked(MOVES[c]);
-          const s = unchecked(SCORES[c]);
+          const m = MOVES[c];
+          const s = SCORES[c];
           c++;
           if (m == tt) continue;
           // Clockwork 26eccaa MovePicker::next: the bar for a good capture falls as its score rises, by a divisor.
           // Feature: Static_Exchange_Evaluation#Move_Ordering.
           if (!seeGe(m, -s / GOOD_CAPTURE_DIV)) {
             const b = badEnd[ply];
-            unchecked((MOVES[b] = m));
+            MOVES[b] = m;
             badEnd[ply] = b + 1;
             continue;
           }
@@ -281,21 +281,21 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
           const ph = pawnHistRow();
           const sb = side << 12;
           for (let i = from; i < e; i++) {
-            const m = unchecked(MOVES[i]);
+            const m = MOVES[i];
             const promo = movePromo(m);
             if (promo) {
-              unchecked((SCORES[i] = promo == QUEEN ? PROMO_SCORE : -PROMO_SCORE));
+              SCORES[i] = promo == QUEEN ? PROMO_SCORE : -PROMO_SCORE;
               continue;
             }
             const pt = pieceTo(m);
             const bits = (<i32>((threats >> <u64>moveFrom(m)) & 1) << 1) | <i32>((threats >> <u64>moveTo(m)) & 1);
-            let s = <i32>unchecked(butterfly[(bits << 13) | sb | (m & 4095)]);
-            if (PAWN_HISTORY != 0) s += <i32>unchecked(pawnHist[ph | pt]);
-            if (cm >= 0) s += <i32>unchecked(contHist[cm + pt]);
-            if (fm >= 0) s += <i32>unchecked(contHist[fm + pt]);
-            if (f4 >= 0) s += <i32>unchecked(contHist[f4 + pt]);
-            if (f6 >= 0) s += <i32>unchecked(contHist[f6 + pt]);
-            unchecked((SCORES[i] = s));
+            let s = <i32>butterfly[(bits << 13) | sb | (m & 4095)];
+            if (PAWN_HISTORY != 0) s += <i32>pawnHist[ph | pt];
+            if (cm >= 0) s += <i32>contHist[cm + pt];
+            if (fm >= 0) s += <i32>contHist[fm + pt];
+            if (f4 >= 0) s += <i32>contHist[f4 + pt];
+            if (f6 >= 0) s += <i32>contHist[f6 + pt];
+            SCORES[i] = s;
           }
         }
         cur[ply] = from;
@@ -314,9 +314,9 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
               best = bestIndexSimd(c, e);
             } else {
               best = c;
-              let bs = unchecked(SCORES[c]);
+              let bs = SCORES[c];
               for (let i = c + 1; i < e; i++) {
-                const s = unchecked(SCORES[i]);
+                const s = SCORES[i];
                 if (s > bs) {
                   bs = s;
                   best = i;
@@ -324,10 +324,10 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
               }
             }
             // one-sided swap instead of selectBest: c advances next, so MOVES[c] and SCORES[c] need no write
-            const m = unchecked(MOVES[best]);
+            const m = MOVES[best];
             if (best != c) {
-              unchecked((MOVES[best] = MOVES[c]));
-              unchecked((SCORES[best] = SCORES[c]));
+              MOVES[best] = MOVES[c];
+              SCORES[best] = SCORES[c];
             }
             c++;
             if (m == tt || m == k || (PROMO_NOISY != 0 && movePromo(m) == QUEEN)) continue;
@@ -344,7 +344,7 @@ export function nextMove(ply: i32, skipQuiets: bool): i32 {
         const e = badEnd[ply];
         let c = cur[ply];
         while (c < e) {
-          const m = unchecked(MOVES[c]);
+          const m = MOVES[c];
           c++;
           if (m == tt) continue;
           cur[ply] = c;

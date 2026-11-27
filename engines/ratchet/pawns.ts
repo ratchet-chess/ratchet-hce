@@ -120,15 +120,15 @@ export function clearPawns(): void {
 export function kingPawn(cached: bool, wk: i32, bk: i32): i32 {
   // the pawn key with both kings, Stash 37 king_pawn_key; never 0 for a real board, so 0 marks an empty slot
   // Feature: Pawn_Hash_Table.
-  const key = pawnKey ^ unchecked(Z_PIECE[(KING << 6) + wk]) ^ unchecked(Z_PIECE[((8 | KING) << 6) + bk]);
+  const key = pawnKey ^ Z_PIECE[(KING << 6) + wk] ^ Z_PIECE[((8 | KING) << 6) + bk];
   const entry = kpTable + (<usize>(key & <u64>(SIZE - 1)) << 6);
   if (cached && load<u64>(entry, KP_KEY) == key) {
-    unchecked((safetyOf[0] = load<i32>(entry, KP_SAFETY_W)));
-    unchecked((safetyOf[1] = load<i32>(entry, KP_SAFETY_B)));
-    unchecked((passedOf[0] = load<u64>(entry, KP_PASSED_W)));
-    unchecked((passedOf[1] = load<u64>(entry, KP_PASSED_B)));
-    unchecked((spanOf[0] = load<u64>(entry, KP_SPAN_W)));
-    unchecked((spanOf[1] = load<u64>(entry, KP_SPAN_B)));
+    safetyOf[0] = load<i32>(entry, KP_SAFETY_W);
+    safetyOf[1] = load<i32>(entry, KP_SAFETY_B);
+    passedOf[0] = load<u64>(entry, KP_PASSED_W);
+    passedOf[1] = load<u64>(entry, KP_PASSED_B);
+    spanOf[0] = load<u64>(entry, KP_SPAN_W);
+    spanOf[1] = load<u64>(entry, KP_SPAN_B);
     return load<i32>(entry, KP_VALUE);
   }
   const wp = bb[PAWN];
@@ -144,12 +144,12 @@ export function kingPawn(cached: bool, wk: i32, bk: i32): i32 {
   if (cached) {
     store<u64>(entry, key, KP_KEY);
     store<i32>(entry, v, KP_VALUE);
-    store<i32>(entry, unchecked(safetyOf[0]), KP_SAFETY_W);
-    store<i32>(entry, unchecked(safetyOf[1]), KP_SAFETY_B);
-    store<u64>(entry, unchecked(passedOf[0]), KP_PASSED_W);
-    store<u64>(entry, unchecked(passedOf[1]), KP_PASSED_B);
-    store<u64>(entry, unchecked(spanOf[0]), KP_SPAN_W);
-    store<u64>(entry, unchecked(spanOf[1]), KP_SPAN_B);
+    store<i32>(entry, safetyOf[0], KP_SAFETY_W);
+    store<i32>(entry, safetyOf[1], KP_SAFETY_B);
+    store<u64>(entry, passedOf[0], KP_PASSED_W);
+    store<u64>(entry, passedOf[1], KP_PASSED_B);
+    store<u64>(entry, spanOf[0], KP_SPAN_W);
+    store<u64>(entry, spanOf[1], KP_SPAN_B);
   }
   return v;
 }
@@ -175,11 +175,11 @@ function sideValue(
   let span: u64 = 0;
   let b = ours;
   while (b) {
-    span |= unchecked(SPAN[(us << 6) + <i32>ctz(b)]);
+    span |= SPAN[(us << 6) + <i32>ctz(b)];
     b &= b - 1;
   }
 
-  unchecked((spanOf[us] = span));
+  spanOf[us] = span;
 
   // isolated, per pawn, split by open vs closed file (Stockfish 8c3d9d99 WeakUnopposed); flat Weiss 2.0 EvalPawns
   // and file-count Stash 37 evaluate_doubled_isolated not taken. Feature: Isolated_Pawn.
@@ -214,7 +214,7 @@ function sideValue(
     let closed: u64 = 0;
     b = theirs;
     while (b) {
-      closed |= unchecked(FORWARD[(them << 6) + <i32>ctz(b)]);
+      closed |= FORWARD[(them << 6) + <i32>ctz(b)];
       b &= b - 1;
     }
     if (isolated) {
@@ -231,13 +231,13 @@ function sideValue(
   let phalanx = ours & ((ours >> 1) & ~FILE_H);
   while (phalanx) {
     const r = relRank(<i32>ctz(phalanx), us);
-    v += S(unchecked(PAWN_PHALANX_MG[r]), unchecked(PAWN_PHALANX_EG[r]));
+    v += S(PAWN_PHALANX_MG[r], PAWN_PHALANX_EG[r]);
     phalanx &= phalanx - 1;
   }
   let defenders = ours & pawnAttacks(ours, them);
   while (defenders) {
     const r = relRank(<i32>ctz(defenders), us);
-    v += S(unchecked(PAWN_DEFENDER_MG[r]), unchecked(PAWN_DEFENDER_EG[r]));
+    v += S(PAWN_DEFENDER_MG[r], PAWN_DEFENDER_EG[r]);
     defenders &= defenders - 1;
   }
 
@@ -249,19 +249,19 @@ function sideValue(
   b = ours;
   while (b) {
     const s = <i32>ctz(b);
-    const path = unchecked(FORWARD[(us << 6) + s]);
+    const path = FORWARD[(us << 6) + s];
     if (!(path & (ours | theirs))) {
       const r = relRank(s, us);
-      if (!(unchecked(SPAN[(us << 6) + s]) & theirs)) {
-        v += S(unchecked(PAWN_PASSED_MG[r]), unchecked(PAWN_PASSED_EG[r]));
+      if (!(SPAN[(us << 6) + s] & theirs)) {
+        v += S(PAWN_PASSED_MG[r], PAWN_PASSED_EG[r]);
         passed |= (<u64>1) << <u64>s;
       } else if (!(path & theirAtt & ~ourAtt) && !(path & theirAtt2 & ~ourAtt2)) {
-        v += S(unchecked(PAWN_CANDIDATE_MG[r]), unchecked(PAWN_CANDIDATE_EG[r]));
+        v += S(PAWN_CANDIDATE_MG[r], PAWN_CANDIDATE_EG[r]);
       }
     }
     b &= b - 1;
   }
-  unchecked((passedOf[us] = passed));
+  passedOf[us] = passed;
 
   // each passer, by both kings' distance to it, linear per rank, Ethereal 12.75 evaluatePassed; Stash 37
   // evaluate_passed_pos PassedOurKingDistance is a 2-D table, which adds cells that only sparse data fills
@@ -270,8 +270,8 @@ function sideValue(
   while (b) {
     const s = <i32>ctz(b);
     const r = relRank(s, us);
-    v += S(unchecked(PASSED_OUR_KING_MG[r]), unchecked(PASSED_OUR_KING_EG[r])) * distance(ourKing, s);
-    v += S(unchecked(PASSED_THEIR_KING_MG[r]), unchecked(PASSED_THEIR_KING_EG[r])) * distance(theirKing, s);
+    v += S(PASSED_OUR_KING_MG[r], PASSED_OUR_KING_EG[r]) * distance(ourKing, s);
+    v += S(PASSED_THEIR_KING_MG[r], PASSED_THEIR_KING_EG[r]) * distance(theirKing, s);
     b &= b - 1;
   }
 
@@ -301,16 +301,16 @@ function shelter(us: i32, ours: u64, theirs: u64, king: i32): i32 {
     const theirDist = rankDistance(theirs & file, us, kingRank);
     const onKing = f == kingFile ? 1 : 0;
     const sh = (onKing << 6) | (f << 3) | ownDist;
-    v += S(unchecked(SHELTER_MG[sh]), unchecked(SHELTER_EG[sh]));
+    v += S(SHELTER_MG[sh], SHELTER_EG[sh]);
     const sa = (onKing << 3) | ownDist;
-    safety += S(unchecked(SAFETY_SHELTER_MG[sa]), unchecked(SAFETY_SHELTER_EG[sa]));
+    safety += S(SAFETY_SHELTER_MG[sa], SAFETY_SHELTER_EG[sa]);
     const blocked = theirDist != 7 && ownDist == theirDist - 1 ? 1 : 0;
     const st = (blocked << 5) | (min(f, 7 - f) << 3) | theirDist;
-    v += S(unchecked(STORM_MG[st]), unchecked(STORM_EG[st]));
+    v += S(STORM_MG[st], STORM_EG[st]);
     const ss = (blocked << 3) | theirDist;
-    safety += S(unchecked(SAFETY_STORM_MG[ss]), unchecked(SAFETY_STORM_EG[ss]));
+    safety += S(SAFETY_STORM_MG[ss], SAFETY_STORM_EG[ss]);
   }
-  unchecked((safetyOf[us] = safety));
+  safetyOf[us] = safety;
   return v;
 }
 

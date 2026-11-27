@@ -155,7 +155,7 @@ function endgameScale(eg: i32, wKing: i32, bKing: i32, phase: i32): i32 {
   // Stockfish 16836f39 and 67818ee9, Stash 37 eval_scale_endgame. Feature: Draw_Evaluation.
   if (phase == 4 && oneWing && popcnt(bb[ROOK]) == 1 && popcnt(bb[8 | ROOK]) == 1) {
     const wPawns = bb[(weak << 3) | PAWN];
-    if (sPawnCount <= <i32>popcnt(wPawns) + 1 && (unchecked(KING_ATT[weak == 0 ? wKing : bKing]) & wPawns) != 0) {
+    if (sPawnCount <= <i32>popcnt(wPawns) + 1 && (KING_ATT[weak == 0 ? wKing : bKing] & wPawns) != 0) {
       return 130;
     }
   }
@@ -257,7 +257,7 @@ const EVAL_CACHE_SIZE = 1 << 14;
 const evalCache = changetype<StaticArray<u64>>(memory.data(sizeof<u64>() * EVAL_CACHE_SIZE));
 
 export function clearEvalCache(): void {
-  for (let i = 0; i < EVAL_CACHE_SIZE; i++) unchecked((evalCache[i] = 0));
+  for (let i = 0; i < EVAL_CACHE_SIZE; i++) evalCache[i] = 0;
 }
 
 /**
@@ -266,10 +266,10 @@ export function clearEvalCache(): void {
  */
 export function evalCached(psq: i32): i32 {
   const i = <i32>(hash & <u64>(EVAL_CACHE_SIZE - 1));
-  const entry = unchecked(evalCache[i]);
+  const entry = evalCache[i];
   if ((entry ^ hash) >> 16 == 0 && entry != 0) return <i32><i16>entry;
   const v = evalWith(psq, true);
-  unchecked((evalCache[i] = (hash & ~<u64>0xffff) | <u64><u16>v));
+  evalCache[i] = (hash & ~<u64>0xffff) | <u64><u16>v;
   return v;
 }
 

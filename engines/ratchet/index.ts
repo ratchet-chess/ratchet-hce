@@ -245,10 +245,10 @@ export function evalBenchRun(reps: i32, withEval: bool): i32 {
   let sum = 0;
   for (let r = 0; r < reps; r++) {
     for (let at = 0; at < words; at += BENCH_WORDS) {
-      for (let i = 0; i < 16; i++) unchecked((bb[i] = set[at + i]));
-      const state = unchecked(set[at + 16]);
+      for (let i = 0; i < 16; i++) bb[i] = set[at + i];
+      const state = set[at + 16];
       setState(<i32>state & 1, <i32>(state >> 1) & 15, -1, 0, 1);
-      setPawnKey(unchecked(set[at + 17]));
+      setPawnKey(set[at + 17]);
       const packed = <i32>(state >> 32);
       sum = sum * 31 + (withEval ? evalWith(packed, true) : packed);
     }

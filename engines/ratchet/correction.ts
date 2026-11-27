@@ -43,8 +43,8 @@ const corr = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 5 * 2 * SI
 const contCorr = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * 1024 * 1024));
 
 export function clearCorrection(): void {
-  for (let i = 0; i < 5 * 2 * SIZE; i++) unchecked((corr[i] = 0));
-  if (CORR_CONT != 0) for (let i = 0; i < 1024 * 1024; i++) unchecked((contCorr[i] = 0));
+  for (let i = 0; i < 5 * 2 * SIZE; i++) corr[i] = 0;
+  if (CORR_CONT != 0) for (let i = 0; i < 1024 * 1024; i++) contCorr[i] = 0;
 }
 
 /**
@@ -66,12 +66,12 @@ export function clearCorrection(): void {
  */
 @inline export function correction(stm: i32, cont: i32): i32 {
   const sum =
-    (cont >= 0 ? CORR_W_CONT * unchecked(contCorr[cont]) : 0) +
-    CORR_W_PAWN * unchecked(corr[slot(0, stm, pawnKey)]) +
-    CORR_W_NONPAWN_US * unchecked(corr[slot(1 + stm, stm, unchecked(nonPawnKey[stm]))]) +
-    CORR_W_NONPAWN_THEM * unchecked(corr[slot(1 + (stm ^ 1), stm, unchecked(nonPawnKey[stm ^ 1]))]) +
-    CORR_W_MINOR * unchecked(corr[slot(3, stm, minorKey)]) +
-    CORR_W_MAJOR * unchecked(corr[slot(4, stm, majorKey)]);
+    (cont >= 0 ? CORR_W_CONT * contCorr[cont] : 0) +
+    CORR_W_PAWN * corr[slot(0, stm, pawnKey)] +
+    CORR_W_NONPAWN_US * corr[slot(1 + stm, stm, nonPawnKey[stm])] +
+    CORR_W_NONPAWN_THEM * corr[slot(1 + (stm ^ 1), stm, nonPawnKey[stm ^ 1])] +
+    CORR_W_MINOR * corr[slot(3, stm, minorKey)] +
+    CORR_W_MAJOR * corr[slot(4, stm, majorKey)];
   return sum / (GRAIN * WEIGHT_SCALE);
 }
 
@@ -81,8 +81,8 @@ export function clearCorrection(): void {
  * Feature: Static_Evaluation_Correction_History.
  */
 @inline function update(table: StaticArray<i32>, i: i32, w: i32, diff: i32): void {
-  const v = (unchecked(table[i]) * (WEIGHT_SCALE - w) + diff * GRAIN * w) / WEIGHT_SCALE;
-  unchecked((table[i] = max(-CORR_MAX * GRAIN, min(CORR_MAX * GRAIN, v))));
+  const v = (table[i] * (WEIGHT_SCALE - w) + diff * GRAIN * w) / WEIGHT_SCALE;
+  table[i] = max(-CORR_MAX * GRAIN, min(CORR_MAX * GRAIN, v));
 }
 
 /**
@@ -95,8 +95,8 @@ export function clearCorrection(): void {
 export function updateCorrection(stm: i32, depth: i32, diff: i32, cont: i32): void {
   const w = (min(CORR_WEIGHT_MAX, 1 + depth) * CORR_RATE) >> 4;
   update(corr, slot(0, stm, pawnKey), w, diff);
-  update(corr, slot(1, stm, unchecked(nonPawnKey[0])), w, diff);
-  update(corr, slot(2, stm, unchecked(nonPawnKey[1])), w, diff);
+  update(corr, slot(1, stm, nonPawnKey[0]), w, diff);
+  update(corr, slot(2, stm, nonPawnKey[1]), w, diff);
   update(corr, slot(3, stm, minorKey), w, diff);
   update(corr, slot(4, stm, majorKey), w, diff);
   if (cont >= 0) update(contCorr, cont, w, diff);

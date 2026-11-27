@@ -53,13 +53,13 @@ export const captureHist = changetype<StaticArray<i16>>(memory.data(sizeof<i16>(
 export const killers = changetype<StaticArray<i32>>(memory.data(sizeof<i32>() * (MAX_PLY + 2)));
 
 export function clearHistory(): void {
-  for (let i = 0; i < 4 * 2 * 4096; i++) unchecked((butterfly[i] = 0));
-  for (let i = 0; i < PAWN_STRUCTURES * 1024; i++) unchecked((pawnHist[i] = 0));
+  for (let i = 0; i < 4 * 2 * 4096; i++) butterfly[i] = 0;
+  for (let i = 0; i < PAWN_STRUCTURES * 1024; i++) pawnHist[i] = 0;
   // no position hashes to all ones in practice, and a false match would only reuse a stale set for one node
-  for (let i = 0; i < MAX_PLY + 2; i++) unchecked((threatKey[i] = ~(<u64>0)));
-  for (let i = 0; i < 1024 * 1024; i++) unchecked((contHist[i] = 0));
-  for (let i = 0; i < 4 * 16 * 64 * 8; i++) unchecked((captureHist[i] = 0));
-  for (let i = 0; i < MAX_PLY + 2; i++) unchecked((killers[i] = 0));
+  for (let i = 0; i < MAX_PLY + 2; i++) threatKey[i] = ~(<u64>0);
+  for (let i = 0; i < 1024 * 1024; i++) contHist[i] = 0;
+  for (let i = 0; i < 4 * 16 * 64 * 8; i++) captureHist[i] = 0;
+  for (let i = 0; i < MAX_PLY + 2; i++) killers[i] = 0;
 }
 
 /** the bonus for the move that cut at `depth`, Weiss c735b8f Bonus. Feature: History_Heuristic. */
@@ -73,14 +73,14 @@ export function clearHistory(): void {
 }
 
 @inline export function gravity(table: StaticArray<i16>, i: i32, bonus: i32): void {
-  const e = <i32>unchecked(table[i]);
-  unchecked((table[i] = <i16>(e + bonus - (e * abs(bonus)) / HIST_MAX)));
+  const e = <i32>table[i];
+  table[i] = <i16>(e + bonus - (e * abs(bonus)) / HIST_MAX);
 }
 
 /** gravity within `limit` instead of HIST_MAX; |bonus| stays under the limit */
 @inline export function gravityWithin(table: StaticArray<i16>, i: i32, bonus: i32, limit: i32): void {
-  const e = <i32>unchecked(table[i]);
-  unchecked((table[i] = <i16>(e + bonus - (e * abs(bonus)) / limit)));
+  const e = <i32>table[i];
+  table[i] = <i16>(e + bonus - (e * abs(bonus)) / limit);
 }
 
 /**
@@ -89,7 +89,7 @@ export function clearHistory(): void {
  * Feature: Threat_History.
  */
 @inline export function attackedAt(p: i32): u64 {
-  if (unchecked(threatKey[p]) == hash) return unchecked(threatSet[p]);
+  if (threatKey[p] == hash) return threatSet[p];
   return makeThreats(p);
 }
 
@@ -109,28 +109,28 @@ export function clearHistory(): void {
 /** makes and keeps the set attackedAt returns; apart from it so that a kept set costs its callers no call */
 function makeThreats(p: i32): u64 {
   const c = (side ^ 1) << 3;
-  const occ = unchecked(bb[0] | bb[8]);
-  const pawns = unchecked(bb[c | PAWN]);
+  const occ = bb[0] | bb[8];
+  const pawns = bb[c | PAWN];
   let t = pawnAttacks(pawns, c >> 3);
-  t |= unchecked(KING_ATT[<i32>ctz(bb[c | KING])]);
-  let n = unchecked(bb[c | KNIGHT]);
+  t |= KING_ATT[<i32>ctz(bb[c | KING])];
+  let n = bb[c | KNIGHT];
   while (n) {
-    t |= unchecked(KNIGHT_ATT[<i32>ctz(n)]);
+    t |= KNIGHT_ATT[<i32>ctz(n)];
     n &= n - 1;
   }
-  const queens = unchecked(bb[c | QUEEN]);
-  let d = unchecked(bb[c | BISHOP]) | queens;
+  const queens = bb[c | QUEEN];
+  let d = bb[c | BISHOP] | queens;
   while (d) {
     t |= bishopAttacks(<i32>ctz(d), occ);
     d &= d - 1;
   }
-  let r = unchecked(bb[c | ROOK]) | queens;
+  let r = bb[c | ROOK] | queens;
   while (r) {
     t |= rookAttacks(<i32>ctz(r), occ);
     r &= r - 1;
   }
-  unchecked((threatKey[p] = hash));
-  unchecked((threatSet[p] = t));
+  threatKey[p] = hash;
+  threatSet[p] = t;
   return t;
 }
 
@@ -161,6 +161,6 @@ function makeThreats(p: i32): u64 {
  * Feature: History_Heuristic#Continuation_History.
  */
 @inline export function gravityFrom(table: StaticArray<i16>, i: i32, base: i32, bonus: i32): void {
-  const e = <i32>unchecked(table[i]) + bonus - (base * abs(bonus)) / HIST_MAX;
-  unchecked((table[i] = <i16>max(-HIST_MAX, min(HIST_MAX, e))));
+  const e = <i32>table[i] + bonus - (base * abs(bonus)) / HIST_MAX;
+  table[i] = <i16>max(-HIST_MAX, min(HIST_MAX, e));
 }
