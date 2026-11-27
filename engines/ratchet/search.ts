@@ -411,6 +411,33 @@ function updateHistories(best: i32, depth: i32, bonusDepth: i32, p: i32, quiets:
   }
 }
 
+/**
+ * Replaces `evalScore` with the TT score when TT cutoffs are allowed and the
+ * stored bound says the TT score is tighter (Clockwork 6bf993b tt_adjusted_eval).
+ * The halfmove < 90 guard is Ratchet's own, matching the TT cutoff rule.
+ * Feature: TT_Adjusted_Eval.
+ */
+@inline function ttAdjustedEval(evalScore: i32, hit: bool, tBound: i32, tScore: i32): i32 {
+  if (
+    hit &&
+    halfmove < 90 &&
+    (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > evalScore : tScore < evalScore))
+  ) {
+    return tScore;
+  }
+  return evalScore;
+}
+
+/** copies `m` and the child PV at `p + 1` into the PV row at `p` */
+@inline function updatePv(p: i32, m: i32): void {
+  const row = p * MAX_PLY;
+  const child = (p + 1) * MAX_PLY;
+  pvTable[row + p] = m;
+  const n = pvLen[p + 1];
+  for (let i = p + 1; i < n; i++) pvTable[row + i] = pvTable[child + i];
+  pvLen[p] = max(n, p + 1);
+}
+
 // ---------------------------------------------------------------- search
 
 function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
@@ -496,8 +523,8 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     tMove = ttMoveOf(ttMove);
   }
 
-  // the static eval, and the eval the pruning reads: the TT score where its bound says it is better
-  // (Clockwork 6bf993b tt_adjusted_eval). Features: TT_Adjusted_Eval, Static_Evaluation_Correction_History.
+  // the static eval and the pruning eval (correction.ts + ttAdjustedEval).
+  // Feature: Static_Evaluation_Correction_History.
   let staticEval = EVAL_NONE;
   let raw = EVAL_NONE;
   let pruneEval = EVAL_NONE;
@@ -509,15 +536,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
     // fifty-move damping outside evalCached and ttEval, Weiss a7d7783 CorrectEval (Stockfish 3af083a7).
     // Feature: Fifty-move_Eval_Scaling.
     if (halfmove > 12) staticEval = (staticEval * (256 - halfmove)) / 256;
-    pruneEval = staticEval;
-    // the TT score stands in only where a TT cut may, before the fifty-move count nears its end: Ratchet's guard
-    if (
-      hit &&
-      halfmove < 90 &&
-      (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > pruneEval : tScore < pruneEval))
-    ) {
-      pruneEval = tScore;
-    }
+    pruneEval = ttAdjustedEval(staticEval, hit, tBound, tScore);
     // improving, Alexandria 829daf4 Negamax: against two plies up, else four, else true. Feature: Improving.
     const s2 = ssStatic[p + SS - 2];
     const s4 = ssStatic[p + SS - 4];
@@ -861,12 +880,7 @@ function search(alpha: i32, beta: i32, depth: i32, cutNode: bool): i32 {
       if (v > alpha) {
         bestMove = m;
         if (pvNode) {
-          const row = p * MAX_PLY;
-          const child = (p + 1) * MAX_PLY;
-          pvTable[row + p] = m;
-          const n = pvLen[p + 1];
-          for (let i = p + 1; i < n; i++) pvTable[row + i] = pvTable[child + i];
-          pvLen[p] = max(n, p + 1);
+          updatePv(p, m);
           if (root) rootRaise = v;
         }
         if (v >= beta) {
@@ -965,9 +979,7 @@ function qsearch(alpha: i32, beta: i32): i32 {
     raw = hit && ttEval != EVAL_NONE ? ttEval : evalCached(psq);
     best = raw + correction(side, contSlot(ssCont[p + SS - 1], ssCont[p + SS - 2]));
     if (halfmove > 12) best = (best * (256 - halfmove)) / 256;
-    if (hit && halfmove < 90 && (tBound == BOUND_EXACT || (tBound == BOUND_LOWER ? tScore > best : tScore < best))) {
-      best = tScore;
-    }
+    best = ttAdjustedEval(best, hit, tBound, tScore);
     if (best >= beta) return best;
     if (best > alpha) alpha = best;
   }

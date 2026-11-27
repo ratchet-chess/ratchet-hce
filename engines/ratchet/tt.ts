@@ -93,6 +93,17 @@ export function ttNewSearch(): void {
   return f ? f : 1;
 }
 
+/** SWAR mask with the high bit set in each 21-bit lane of `frags` that equals `target` */
+@inline function matchMask(frags: u64, target: u64): u64 {
+  const zeros = (target * FRAG_LSB) ^ frags;
+  return (zeros - FRAG_LSB) & ~zeros & FRAG_MSB;
+}
+
+/** first matching slot index from matchMask: ctz is 20, 41 or 62 -> slot 0, 1 or 2 without division */
+@inline function matchSlot(mask: u64): i32 {
+  return (<i32>ctz(mask) * 3) >> 6;
+}
+
 /**
  * the permille of entries in the first 1000 buckets that this search stored, for UCI's hashfull: Weiss c735b8f
  * HashFull counts only the current generation, where Ethereal 0e47e9b tt_hashfull counts every filled entry.
@@ -113,13 +124,9 @@ export function ttHashfull(): i32 {
 /** finds `key`; on a hit sets the tt* fields and returns true */
 export function ttProbe(key: u64): bool {
   const b = bucketOf(key);
-  const frag = fragmentOf(key);
-  const zeros = (frag * FRAG_LSB) ^ load<u64>(b);
-  const matches = (zeros - FRAG_LSB) & ~zeros & FRAG_MSB;
+  const matches = matchMask(load<u64>(b), fragmentOf(key));
   if (!matches) return false;
-  // ctz(matches) is 20, 41 or 62 -> slot 0, 1 or 2 without division
-  const idx = (<i32>ctz(matches) * 3) >> 6;
-  const e = b + BUCKET_ENTRIES + (<usize>idx << 3);
+  const e = b + BUCKET_ENTRIES + (<usize>matchSlot(matches) << 3);
   const flags = <i32>load<u8>(e, ENTRY_FLAGS);
   ttMove = <i32>load<u16>(e, ENTRY_MOVE);
   ttScore = <i32>load<i16>(e, ENTRY_SCORE);
@@ -143,11 +150,10 @@ export function ttStore(key: u64, move: i32, score: i32, rawEval: i32, depth: i3
   const b = bucketOf(key);
   const frag = fragmentOf(key);
   const frags = load<u64>(b);
-  const zeros = (frag * FRAG_LSB) ^ frags;
-  const matches = (zeros - FRAG_LSB) & ~zeros & FRAG_MSB;
+  const matches = matchMask(frags, frag);
   let idx = 0;
   if (matches) {
-    idx = (<i32>ctz(matches) * 3) >> 6;
+    idx = matchSlot(matches);
     const e = b + BUCKET_ENTRIES + (<usize>idx << 3);
     const flags = <i32>load<u8>(e, ENTRY_FLAGS);
     if (
@@ -159,9 +165,9 @@ export function ttStore(key: u64, move: i32, score: i32, rawEval: i32, depth: i3
     }
     if (!stored) stored = <i32>load<u16>(e, ENTRY_MOVE);
   } else {
-    const empty = (frags - FRAG_LSB) & ~frags & FRAG_MSB;
+    const empty = matchMask(frags, 0);
     if (empty) {
-      idx = (<i32>ctz(empty) * 3) >> 6;
+      idx = matchSlot(empty);
     } else {
       let worst = i32.MAX_VALUE;
       for (let i = 0; i < ENTRIES; i++) {

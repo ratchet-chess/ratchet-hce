@@ -1082,7 +1082,7 @@ Used in: `params.ts` SEE_DEPTH, SEE_HISTORY; `search.ts` search, qsearch.
 
 ## TT_Adjusted_Eval
 <!-- used-in -->
-Used in: `search.ts` search.
+Used in: `search.ts` ttAdjustedEval.
 <!-- /used-in -->
 - 2019-02-06, Laser 1.7 PVS, quiescence: the table score replaces the static eval where its bound says it is better:
   an upper bound below it, a lower bound above it, or an exact score.
