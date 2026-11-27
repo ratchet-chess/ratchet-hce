@@ -10,10 +10,11 @@ as its own engine. `ratchet` is the line that gets a net.
 Ratchet HCE is developed with AI coding agents throughout. The user directs the work. The agents write the code,
 run the tests and keep the records. These rules decide where the engine's knowledge comes from:
 
-* **Sources are read first:** before an agent writes a feature, it reads the feature's page in the vendored
-  Chess Programming Wiki. It also reads the code of two other engines.
+* **Sources are read first:** before an agent writes a feature, it reads the feature's page on the
+  [Chess Programming Wiki](https://www.chessprogramming.org). It also reads the code of two other engines.
 * **Every function cites its origin:** its comment names the form it follows and the form it rejected, by engine,
-  revision and symbol. `engines/ratchet/SOURCES.md` maps each revision to an exact commit.
+  revision and symbol. `engines/ratchet/SOURCES.md` maps each revision to an exact commit, and
+  `engines/ratchet/FEATURES.md` indexes every feature's dated implementations and where they are used.
 * **No code is ported:** the engine's code is its own, in its own structure.
 * **Some constants started elsewhere:** a search constant may start from a cited engine's value, scaled to
   the engine's units. SPSA then tunes it on the engine's own games.
@@ -24,18 +25,22 @@ The language models that do the work were trained on this literature, and probab
 These rules cannot undo that. They govern what an agent reads while it works, and what the code must cite.
 
 **The name:** Ratchet started as the strength-building side project of Iterative Deepening, an open edutainment
-incremental game that walks through the history of chess engines. The programs of that history are in
-`ratchet-historical`. HCE is short for hand-crafted evaluation, the field's name for an eval written by hand.
+incremental game that walks through the history of chess engines. HCE is short for hand-crafted evaluation, the
+field's name for an eval written by hand.
 
-**Status:** Ratchet HCE is in development, and no release is published yet. `results/ratings.md` has the rating
-of each rated version, and the tag `v<version>` marks its commit. The versions up to 0.3.15 are Ratchet's, from before the copy.
+**Play online:** [ratchetchess.com](https://ratchetchess.com/) runs Ratchet HCE and adapted WASI chess engines
+directly in your browser.
+
+**Status:** `results/ratings.md` has the rating of each rated version, and the tag `v<version>` marks its commit.
+The versions up to 0.3.15 are Ratchet's, from before the copy.
 
 **License:** Ratchet HCE is free software under the GNU General Public License, version 3 or any later version. See
 `LICENSE`.
 
 ## Download
 
-No release is published yet. `tools/package.ts` builds these files for one version:
+Prebuilt releases are published on [GitHub Releases](https://github.com/ratchet-chess/ratchet-hce/releases).
+`tools/package.ts` builds these files for one version:
 
 | File | For |
 |---|---|
@@ -45,14 +50,16 @@ No release is published yet. `tools/package.ts` builds these files for one versi
 | `ratchetHCE-X.Y.Z-linux-x86-64-v3` | Linux, x86-64-v3. |
 | `ratchetHCE-X.Y.Z-windows-x86-64.exe` | Windows, x86-64. A native build. |
 | `ratchetHCE-X.Y.Z-windows-x86-64-v3.exe` | Windows, x86-64-v3. |
-| `ratchetHCE-X.Y.Z-bun-<os>-<arch>` | A Bun executable: Bun with the WASI build and its host inside. |
+| `ratchetHCE-X.Y.Z-macos-arm64` | macOS, Apple Silicon. A native build. |
+| `THIRD-PARTY-NOTICES.txt` | Notices for the `wasm2c` runtime and SIMDe headers used in native builds. |
 | `SHA256SUMS` | The sha256 of each file. |
 
-A native build is the WASI build translated to C by wasm2c, with no runtime. The x86-64-v3 files need AVX2 and
-BMI2 (Intel Haswell or AMD Zen 1 and later). Every file plays the same search: `bench` prints one node signature
-for all of them. The ratings in `results/ratings.md` are measured on the WASI build under Bun.
+A native build is the WASI build translated to C by wasm2c, with no runtime, and is the recommended download for
+desktop GUIs and rating lists. The x86-64-v3 files need AVX2 and BMI2 (Intel Haswell or AMD Zen 1 and later).
+Every file plays the same search: `bench` prints one node signature for all of them. The ratings in
+`results/ratings.md` are measured on the WASI build under Bun.
 
-The spec, in the `uci-over-wasi` repo, states what a WASI host must give the module.
+The spec, in [uci-over-wasi](https://github.com/ratchet-chess/uci-over-wasi), states what a WASI host must give the module.
 
 ## Features
 
@@ -105,8 +112,8 @@ bun vendor/uci-over-wasi/main.ts build/wasi/ratchet.wasm  # the engine: UCI on s
 ```
 
 `bin/ratchet [bun|node|deno] --release ratchet` starts the same engine for a GUI or a match runner. `bun run test`
-runs the gates. `bun tools/package.ts` builds the files of § Download; the native builds also need Nix, gcc and
-MinGW's gcc.
+runs the gates. `bun tools/package.ts` builds the files of § Download (`--native ""` skips native builds when Nix,
+gcc or MinGW are absent).
 
 ## Credits
 
@@ -115,7 +122,8 @@ Ratchet HCE is built, tested and tuned with these tools:
 * [AssemblyScript](https://www.assemblyscript.org): the language and its compiler.
 * [Bun](https://bun.sh): runs the build, the tools and the rated games. The TypeScript also runs under Node and
   Deno.
-* `ratchet-bench`: the testing platform. Its queue plays the SPRT matches, the SPSA tunes and the rating runs.
+* [uci-over-wasi](https://github.com/ratchet-chess/uci-over-wasi): the UCI over WASI spec and reference host.
+* `ratchet-bench`: the internal testing platform that runs SPRT matches, SPSA tunes and rating gauntlets.
 * [fastchess](https://github.com/Disservin/fastchess) by Disservin: plays the matches.
 * [WABT](https://github.com/WebAssembly/wabt)'s wasm2c and [SIMDe](https://github.com/simd-everywhere/simde):
   the native builds.
@@ -123,19 +131,22 @@ Ratchet HCE is built, tested and tuned with these tools:
 * [CCRL](https://computerchess.org.uk/ccrl/404/): the published Blitz ratings of the anchor engines, which set
   the rating scale.
 * Texel's tuning method, by Peter Österlund. The eval is tuned on the engine's own self-play from Stefan Pohl's
-  `UHO_Lichess` openings, and on Clockwork's `v5_25knpm` self-play positions. Contains information from the
-  [Clockwork dataset](https://data.cwchess.org/), which is made available under the ODbL. Versions up to 0.3.15
-  were tuned on the quiet-labeled positions of the [zurichess tuner](https://bitbucket.org/zurichess/tuner), by
-  Alexandru Moșoi (BSD-3-Clause), and positions from the engine's own games.
+  [UHO_Lichess](https://www.sp-cc.de/) openings, and on Clockwork's `v5_25knpm` self-play positions. Contains
+  information from the [Clockwork dataset](https://data.cwchess.org/), which is made available under the
+  [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/). Versions up to 0.3.15 were tuned
+  on the quiet-labeled positions of the [zurichess tuner](https://bitbucket.org/zurichess/tuner), by Alexandru
+  Moșoi (BSD-3-Clause), and positions from the engine's own games.
 
 ### Engines we learned from
 
 The engine's code is its own, and it builds on forms that other engines published. Each is credited in the comment
 of the function that follows it. `engines/ratchet/SOURCES.md` pins every citation to a commit.
 
-* **GPL-3.0:** Alexandria, Berserk, Ethereal, Koivisto, Laser, Stash, Stockfish, Weiss, Xiphos.
-* **AGPL-3.0:** Clockwork.
+* **GPL-3.0:** Alexandria, Berserk, Ethereal, Incipit, Koivisto, Laser, Stash, Stockfish, Weiss, Xiphos.
+* **AGPL-3.0:** Clockwork (forms and ideas only; zero code is ported, Ratchet HCE is clean-room AssemblyScript,
+  and the web app runs the WASI module client-side with full source published).
 * **GPL-2.0-or-later:** Fruit 2.1.
+* **MIT:** Lynx.
 
 These are credited for forms and ideas, and for the starting values named above. If you see a problem with a
 credit or a license, please open an issue.

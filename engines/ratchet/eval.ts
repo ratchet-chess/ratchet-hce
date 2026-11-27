@@ -60,8 +60,8 @@ export function initEval(): void {
  * queening square. The king holds it when it is within one step (Stockfish 11 Endgame<KBPsK>), or when it wins the
  * race there against the other king and the front pawn, with the tempo (CPW "Wrong Color Bishop and Rook Pawn", Uri's
  * rule). Stash 37 scale_kbpsk's graded scale beyond one step is not taken: the positions these tests leave are won
- * more often than drawn. Stockfish 11's second rule, the blocked b- or g-pawn, is not taken. Read against the Syzygy
- * tables in <artifacts>/runs/hce-reads/wrong-bishop-forms.txt: no won position called a draw against a bare king.
+ * more often than drawn. Stockfish 11's second rule, the blocked b- or g-pawn, is not taken. Checked against the
+ * Syzygy tables: no won position called a draw against a bare king.
  * Feature: Wrong_Color_Bishop_and_Rook_Pawn.
  */
 function wrongBishop(strong: i32, wKing: i32, bKing: i32): bool {

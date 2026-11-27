@@ -35,6 +35,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Engine } from "../host/wasm.ts";
 import { baseBuild, median, root, runtime } from "./common.ts";
 
@@ -55,7 +56,7 @@ const hash = opt("--hash");
 const keep = args.includes("--keep");
 if (against && (hash || keep)) throw new Error("--hash and --keep do not apply to --against, whose child passes use the defaults");
 const repeat = Number(opt("--repeat") ?? (against ? 6 : 3));
-const positionsPath = opt("--positions") ?? new URL("./positions.txt", import.meta.url).pathname;
+const positionsPath = opt("--positions") ?? fileURLToPath(new URL("./positions.txt", import.meta.url));
 const positions = readFileSync(positionsPath, "utf8")
   .trim()
   .split("\n")

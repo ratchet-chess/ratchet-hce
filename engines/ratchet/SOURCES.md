@@ -51,13 +51,14 @@ disputed clone's row says so; a citation of it names the program it is assumed t
 | Ethereal | fcb6f77 | https://github.com/AndyGrant/Ethereal | fcb6f774674fbe1554a12534a64a2c3353d68a76 | - |
 | Fruit | 1.0 | fruit_10.zip, Wayback copy of WBEC Ridderkerk: https://web.archive.org/web/20120708151511id_/http://wbec-ridderkerk.nl/html/downloada/fruit/fruit_10.zip | sha256:3720c6959fba13c99f7e46421f13a2f35f33b8768a4e0adc5609b31fe3c98d0d | - |
 | Fruit | 2.0 | fruit_20upd.rar, WBEC's updated distribution, Wayback copy of WBEC Ridderkerk: https://web.archive.org/web/20120710211433id_/http://wbec-ridderkerk.nl/html/downloada/fruit/fruit_20upd.rar | sha256:90f31804694a97245e0ed00223b8f23eaa754b59283af4618198dbc5227b9194 | - |
-| Fruit | 2.1 | fruit_21.zip, WBEC Ridderkerk (inventory/fruit-2.1.md) | sha256:45112b37d0c31db931d9d1c941dfbb9d0f453aec32ed27eb8afbaf3f75b4a7e2 | - |
+| Fruit | 2.1 | fruit_21.zip, WBEC Ridderkerk | sha256:45112b37d0c31db931d9d1c941dfbb9d0f453aec32ed27eb8afbaf3f75b4a7e2 | - |
 | Glaurung | 1.0.2 | glaurung102-src.tar.gz, Wayback copy of glaurungchess.com: https://web.archive.org/web/20060506122208id_/http://www.glaurungchess.com:80/glaurung102-src.tar.gz | sha256:c8f1e4cb5936acb1e4cbc69374b59d77ab6728bac7bf4d2255f69c8673883245 | - |
 | Glaurung | Mainz | mainz-src.tar.gz, Wayback copy of glaurungchess.com: https://web.archive.org/web/20051102063744id_/http://www.glaurungchess.com:80/mainz-src.tar.gz | sha256:c06009121e325722ee5ecc83aa6b56e44f02835e010e05c23d72491fafce42db | - |
 | Glaurung | g070804 | g070804.tar.gz, a 2.0 beta, Wayback copy of glaurungchess.com: https://web.archive.org/web/20070812024045id_/http://www.glaurungchess.com/beta/g070804.tar.gz | sha256:0ce60212b2fe7c7ad5771eca84cd0c9558dd1edc747d06de69f37eff67125147 | - |
 | Glaurung | g071001 | g071001-src.tar.gz, a 2.0 beta, Wayback copy of glaurungchess.com: https://web.archive.org/web/20071001171551id_/http://www.glaurungchess.com/beta/g071001-src.tar.gz | sha256:4f939de16f4ce711a2ad556a5e94fa1f39dc1a74132c8eaa733ebb48fc8dd770 | - |
 | GNU Chess | 4.0.74 | gnuchess 4.0 patchlevel 74, Debian snapshot: https://snapshot.debian.org/file/deccaa10cbae3a5bec284b42a2e8356a4937b7c1 | sha256:809f047b1bcf0a41815f413531430e3bed51525faff35c9c3e3f81e2a140cd8b | - |
 | Incipit | be29d4f | https://github.com/adamtwiss/incipit | be29d4f32f9abc720c92e0ef45dc5d318f85b808 | - |
+| Incipit | e1fe754 | https://github.com/adamtwiss/incipit | e1fe754c2da7dbd714a709e4f18b9d2cf9469972 | - |
 | IPPOLIT | 2009 | IPPOLIT.c, Wayback copy of ippolit.wikispaces.com; a disputed clone, assumed Rybka 3: https://web.archive.org/web/20100316040725id_/http://ippolit.wikispaces.com:80/file/view/IPPOLIT.c/74307253/IPPOLIT.c | sha256:f5ed3bbccae3a0eecea2d58b33d484074999848069516ede4c5d1f54351322d8 | - |
 | Koivisto | 2bce075 | https://github.com/Luecx/Koivisto | 2bce0753224ab66c40cabefa23f83f9baca4696c | - |
 | Koivisto | 51747be9 | https://github.com/Luecx/Koivisto | 51747be9f239e611d60e1b736cd6ef8589041338 | - |

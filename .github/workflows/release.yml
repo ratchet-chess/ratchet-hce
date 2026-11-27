@@ -1,0 +1,239 @@
+name: Release Ratchet HCE
+
+# Builds and verifies v* release assets across Linux, Windows, and macOS, then publishes a GitHub release.
+# Guarded by github.server_url so Gitea ignores these jobs when mirroring.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish or update a GitHub release for the checked-out tag (false = dry-run artifacts only)
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  wasm:
+    if: github.server_url == 'https://github.com'
+    runs-on: ubuntu-latest
+    outputs:
+      name: ${{ steps.info.outputs.name }}
+      depth: ${{ steps.info.outputs.depth }}
+      signature: ${{ steps.info.outputs.signature }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build WASI module and run gates
+        run: |
+          bun run typecheck
+          bun run build:wasm
+          bun run test
+          bun tools/citations.ts
+
+      - name: Install wasm2c and SIMDe
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq wabt libsimde-dev gcc-mingw-w64-x86-64
+
+      - name: Package WASI, Worker, Linux and Windows native builds
+        id: info
+        run: |
+          # Build WASI, JS Worker, Linux x86-64/v3, Windows x86-64/v3, and THIRD-PARTY-NOTICES.txt
+          out=$(bun tools/package.ts --wabt /usr --simde /usr/include)
+          dir=$(printf '%s\n' "$out" | head -n1)
+          name=$(basename "$dir")
+          sig_line=$(bun bench/search.ts --engine ratchet --repeat 1 --warmup 1 | grep -oE 'd[0-9]+[[:space:]]+signature [0-9]+' | head -n1)
+          depth=$(printf '%s\n' "$sig_line" | awk '{print substr($1, 2)}')
+          sig=$(printf '%s\n' "$sig_line" | awk '{print $3}')
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "depth=$depth" >> "$GITHUB_OUTPUT"
+          echo "signature=$sig" >> "$GITHUB_OUTPUT"
+          echo "packaged $name (d$depth signature $sig)"
+          # Keep wasm2c C output for macOS native compilation
+          mkdir -p dist/wasm2c-src
+          cp "tmp/package/$name/engine.c" "tmp/package/$name/engine.h" dist/wasm2c-src/
+          cp /usr/share/wabt/wasm2c/wasm-rt*.c /usr/share/wabt/wasm2c/wasm-rt*.h dist/wasm2c-src/
+
+      - name: Upload WASI, Linux, Windows and C translation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-core
+          path: |
+            dist/${{ steps.info.outputs.name }}/${{ steps.info.outputs.name }}.wasm
+            dist/${{ steps.info.outputs.name }}/${{ steps.info.outputs.name }}.js
+            dist/${{ steps.info.outputs.name }}/${{ steps.info.outputs.name }}-linux-x86-64
+            dist/${{ steps.info.outputs.name }}/${{ steps.info.outputs.name }}-linux-x86-64-v3
+            dist/${{ steps.info.outputs.name }}/${{ steps.info.outputs.name }}-windows-x86-64.exe
+            dist/${{ steps.info.outputs.name }}/${{ steps.info.outputs.name }}-windows-x86-64-v3.exe
+            dist/${{ steps.info.outputs.name }}/THIRD-PARTY-NOTICES.txt
+            dist/wasm2c-src/
+
+  verify-windows:
+    if: github.server_url == 'https://github.com'
+    needs: wasm
+    runs-on: windows-latest
+    env:
+      NAME: ${{ needs.wasm.outputs.name }}
+      DEPTH: ${{ needs.wasm.outputs.depth }}
+      SIGNATURE: ${{ needs.wasm.outputs.signature }}
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-core
+          path: dist
+
+      - name: Verify Windows native binaries match exact node signature
+        shell: pwsh
+        run: |
+          foreach ($bin in @("$env:NAME-windows-x86-64.exe", "$env:NAME-windows-x86-64-v3.exe")) {
+            $path = Join-Path "dist/$env:NAME" $bin
+            $out = & $path bench $env:DEPTH | Out-String
+            Write-Host $out
+            if ($out -notmatch "Nodes searched\s*:\s*(\d+)") { throw "$bin did not print Nodes searched" }
+            $nodes = $Matches[1]
+            if ($nodes -ne $env:SIGNATURE) { throw "$bin gave $nodes nodes, expected $env:SIGNATURE" }
+            Write-Host "PASS ${bin}: $nodes nodes"
+          }
+
+  build-macos:
+    if: github.server_url == 'https://github.com'
+    needs: wasm
+    runs-on: macos-latest
+    env:
+      NAME: ${{ needs.wasm.outputs.name }}
+      DEPTH: ${{ needs.wasm.outputs.depth }}
+      SIGNATURE: ${{ needs.wasm.outputs.signature }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download wasm2c C sources
+        uses: actions/download-artifact@v4
+        with:
+          name: release-core
+          path: dist
+
+      - name: Install SIMDe
+        run: brew install simde
+
+      - name: Compile and verify macOS arm64 native binary
+        run: |
+          SIMDE_INC="$(brew --prefix simde)/include"
+          mkdir -p "dist/$NAME"
+          clang -O3 -arch arm64 \
+            -I dist/wasm2c-src -I "$SIMDE_INC" \
+            dist/wasm2c-src/engine.c \
+            host/wasi/native.c \
+            dist/wasm2c-src/wasm-rt-impl.c \
+            dist/wasm2c-src/wasm-rt-mem-impl.c \
+            dist/wasm2c-src/wasm-rt-exceptions-impl.c \
+            -lpthread -lm \
+            -o "dist/$NAME/$NAME-macos-arm64"
+          out=$("dist/$NAME/$NAME-macos-arm64" bench "$DEPTH")
+          printf '%s\n' "$out"
+          nodes=$(printf '%s\n' "$out" | awk -F: '/Nodes searched/ { gsub(/[^0-9]/, "", $2); print $2 }')
+          if [ "$nodes" != "$SIGNATURE" ]; then
+            echo "$NAME-macos-arm64 gave $nodes nodes, expected $SIGNATURE" >&2
+            exit 1
+          fi
+          echo "PASS $NAME-macos-arm64: $nodes nodes"
+
+      - name: Upload macOS native binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-macos
+          path: dist/${{ env.NAME }}/${{ env.NAME }}-macos-arm64
+
+  publish:
+    if: github.server_url == 'https://github.com'
+    needs: [wasm, verify-windows, build-macos]
+    runs-on: ubuntu-latest
+    env:
+      NAME: ${{ needs.wasm.outputs.name }}
+      DEPTH: ${{ needs.wasm.outputs.depth }}
+      SIGNATURE: ${{ needs.wasm.outputs.signature }}
+      PUBLISH: ${{ github.event_name == 'push' || inputs.publish }}
+    steps:
+      - name: Download core artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-core
+          path: stage
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-macos
+          path: stage/${{ env.NAME }}
+
+      - name: Assemble final release directory and SHA256SUMS
+        run: |
+          rm -rf stage/wasm2c-src
+          chmod +x "stage/$NAME/$NAME-linux-x86-64" "stage/$NAME/$NAME-linux-x86-64-v3" "stage/$NAME/$NAME-macos-arm64"
+          cd "stage/$NAME"
+          sha256sum \
+            "$NAME.wasm" \
+            "$NAME.js" \
+            "$NAME-linux-x86-64" \
+            "$NAME-linux-x86-64-v3" \
+            "$NAME-windows-x86-64.exe" \
+            "$NAME-windows-x86-64-v3.exe" \
+            "$NAME-macos-arm64" \
+            THIRD-PARTY-NOTICES.txt > SHA256SUMS
+          sha256sum -c SHA256SUMS
+
+      - name: Upload dry-run release bundle
+        if: env.PUBLISH != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-final-${{ env.NAME }}
+          path: stage/${{ env.NAME }}/
+
+      - name: Publish GitHub release
+        if: env.PUBLISH == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          {
+            echo "Ratchet HCE \`$TAG\`."
+            echo ""
+            echo "- **Node signature (bench depth $DEPTH):** \`$SIGNATURE\` (verified identical across WASI, Linux, Windows, and macOS builds)"
+            echo "- **Recommended desktop binary:** \`$NAME-linux-x86-64-v3\`, \`$NAME-windows-x86-64-v3.exe\`, or \`$NAME-macos-arm64\` (use non-v3 if your x86-64 CPU lacks AVX2/BMI2)"
+            echo "- **Play online:** https://ratchetchess.com/"
+            echo ""
+            echo "## SHA256SUMS"
+            echo '```'
+            cat "stage/$NAME/SHA256SUMS"
+            echo '```'
+          } > stage/RELEASE_NOTES.md
+          assets=(
+            "stage/$NAME/$NAME.wasm"
+            "stage/$NAME/$NAME.js"
+            "stage/$NAME/$NAME-linux-x86-64"
+            "stage/$NAME/$NAME-linux-x86-64-v3"
+            "stage/$NAME/$NAME-windows-x86-64.exe"
+            "stage/$NAME/$NAME-windows-x86-64-v3.exe"
+            "stage/$NAME/$NAME-macos-arm64"
+            "stage/$NAME/THIRD-PARTY-NOTICES.txt"
+            "stage/$NAME/SHA256SUMS"
+          )
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" --clobber "${assets[@]}"
+            gh release edit "$TAG" --title "Ratchet HCE $TAG" --notes-file stage/RELEASE_NOTES.md
+          else
+            gh release create "$TAG" --verify-tag --title "Ratchet HCE $TAG" --notes-file stage/RELEASE_NOTES.md "${assets[@]}"
+          fi

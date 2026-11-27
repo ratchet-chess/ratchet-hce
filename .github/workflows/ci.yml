@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "results/**"
+      - "README.md"
+      - "AGENTS.md"
+      - "CLAUDE.md"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "results/**"
+      - "README.md"
+      - "AGENTS.md"
+      - "CLAUDE.md"
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Type check
+        run: bun run typecheck
+
+      - name: Build engine
+        run: bun run build:wasm
+
+      - name: Engine gates
+        run: bun run test
+
+      - name: Citation check
+        run: bun tools/citations.ts

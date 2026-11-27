@@ -16,7 +16,7 @@ invariants that span files.
   its halves stay unpacked (`pieces.ts`), and `eval.ts` bounds the eval. King safety's packed sum has the
   largest endgame half. Its `SAFETY_*_EG` values are a quarter of their seeds' scale, with a divisor to match
   (`pieces.ts` `KS_DIV_EG`), which keeps that half within i16. The bound is measured, not proved:
-  `<artifacts>/scripts/ks-probe` reads the sum's range. A fit that raises those values is followed by that read.
+  an off-tree probe checks the sum's range. A fit that raises those values is followed by that read.
 - **Eval cache.** `evalCached` keys the eval by the position's hash alone, so the eval reads nothing the hash
   does not cover. A build that changes an eval constant at run time clears the cache or scores through
   `evaluateScratch`.

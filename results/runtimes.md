@@ -14,6 +14,6 @@ workload and by engine, so every engine is measured under Bun, Node and Deno.
 
 | engine | runtime | depth | node signature | knodes/s | protocol | commit | date |
 |---|---|---|---|---|---|---|---|
-| ratchet | bun 1.4.4 | 12 | 14398479 | 4984 | bench/positions.txt, a fresh go(depth) per position, median of 3 timed passes after a warm-up; local, idle but for light desktop and agent load (load average 2.1 of 32 threads) | c7dd806 | 2026-11-03 |
-| ratchet | deno 2.9.8 | 12 | 14398479 | 4456 | bench/positions.txt, a fresh go(depth) per position, median of 3 timed passes after a warm-up; local, idle but for light desktop and agent load (load average 2.1 of 32 threads) | c7dd806 | 2026-11-03 |
-| ratchet | node 26.12.1 | 12 | 14398479 | 4964 | bench/positions.txt, a fresh go(depth) per position, median of 3 timed passes after a warm-up; local, idle but for light desktop and agent load (load average 2.1 of 32 threads) | c7dd806 | 2026-11-03 |
+| ratchet | bun 1.4.4 | 12 | 14398479 | 4984 | bench/positions.txt, a fresh go(depth) per position, median of 3 timed passes after a warm-up; quiet desktop | c7dd806 | 2026-11-03 |
+| ratchet | deno 2.9.8 | 12 | 14398479 | 4456 | bench/positions.txt, a fresh go(depth) per position, median of 3 timed passes after a warm-up; quiet desktop | c7dd806 | 2026-11-03 |
+| ratchet | node 26.12.1 | 12 | 14398479 | 4964 | bench/positions.txt, a fresh go(depth) per position, median of 3 timed passes after a warm-up; quiet desktop | c7dd806 | 2026-11-03 |
